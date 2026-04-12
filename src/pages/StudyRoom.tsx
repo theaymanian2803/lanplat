@@ -20,7 +20,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { openDictionary } from '@/lib/dictionary'
 import { extractVideoId, formatTimestamp } from '@/lib/youtube'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookOpen, ImagePlus, PenTool, StickyNote, Trash2 } from 'lucide-react'
+import { BookOpen, ImagePlus, PenTool, StickyNote, Trash2, Plus, Minus } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -43,15 +43,18 @@ const StudyRoom = () => {
   const [noteDialogOpen, setNoteDialogOpen] = useState(false)
   const [noteContent, setNoteContent] = useState('')
   const [currentTime, setCurrentTime] = useState(0)
+
   const [whiteboardOpen, setWhiteboardOpen] = useState(false)
   const [whiteboardHeight, setWhiteboardHeight] = useState(50) // vh units
+
+  // 0 means it conforms to the layout. Values > 0 represent raw vw (viewport width)
+  const [outerWidth, setOuterWidth] = useState(0)
 
   // A-B Loop state
   const [loopA, setLoopA] = useState<number | null>(null)
   const [loopB, setLoopB] = useState<number | null>(null)
   const loopIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Load YouTube IFrame API
   useEffect(() => {
     if (window.YT && window.YT.Player) {
       setApiReady(true)
@@ -75,7 +78,6 @@ const StudyRoom = () => {
 
   const videoId = video ? extractVideoId(video.youtube_url) : null
 
-  // Initialize player
   useEffect(() => {
     if (!apiReady || !videoId || !playerContainerRef.current) return
     if (playerRef.current) playerRef.current.destroy()
@@ -94,7 +96,6 @@ const StudyRoom = () => {
     playerRef.current?.seekTo?.(seconds, true)
   }, [])
 
-  // A-B Loop polling
   useEffect(() => {
     if (loopA !== null && loopB !== null) {
       loopIntervalRef.current = setInterval(() => {
@@ -107,14 +108,12 @@ const StudyRoom = () => {
     }
   }, [loopA, loopB, getCurrentPlayerTime, seekTo])
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName
       const isInput =
         tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable
 
-      // Ctrl/Cmd+Enter always works — focus note input
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
         setCurrentTime(getCurrentPlayerTime())
@@ -123,7 +122,6 @@ const StudyRoom = () => {
         return
       }
 
-      // Other shortcuts only when not in an input
       if (isInput) return
 
       if (e.code === 'Space') {
@@ -143,7 +141,6 @@ const StudyRoom = () => {
     return () => window.removeEventListener('keydown', handler)
   }, [getCurrentPlayerTime, seekTo])
 
-  // Notes queries
   const { data: notes = [] } = useQuery({
     queryKey: ['notes', id],
     queryFn: async () => {
@@ -185,7 +182,6 @@ const StudyRoom = () => {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notes', id] }),
   })
 
-  // Screenshots queries
   const { data: screenshots = [] } = useQuery({
     queryKey: ['screenshots', id],
     queryFn: async () => {
@@ -232,11 +228,21 @@ const StudyRoom = () => {
   })
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) uploadScreenshot.mutate(file)
-    e.target.value = ''
-  }
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0]
+      if (file) uploadScreenshot.mutate(file)
+      e.target.value = ''
+    },
+    [uploadScreenshot]
+  )
+
+  // Width Controls
+  const increaseOuterWidth = useCallback(
+    () => setOuterWidth((w) => (w === 0 ? 80 : Math.min(98, w + 5))),
+    []
+  )
+  const decreaseOuterWidth = useCallback(() => setOuterWidth((w) => (w <= 80 ? 0 : w - 5)), [])
 
   if (!video)
     return (
@@ -247,83 +253,123 @@ const StudyRoom = () => {
 
   return (
     <Layout>
-      <div className="space-y-4">
+      <div className="space-y-4 relative">
         <h1 className="text-xl font-bold tracking-tight truncate">{video.title}</h1>
 
-        {/* Player + Whiteboard with Resizable Split */}
-        <ResizablePanelGroup
-          direction="horizontal"
-          className={`rounded-lg border border-border overflow-hidden ${!whiteboardOpen ? 'aspect-video' : ''}`}
-          style={{ height: whiteboardOpen ? `${whiteboardHeight}vh` : 'auto' }}>
-          {whiteboardOpen && (
-            <>
-              <ResizablePanel defaultSize={50} minSize={20} maxSize={80}>
-                <Whiteboard
-                  onClose={() => setWhiteboardOpen(false)}
-                  height={whiteboardHeight}
-                  onHeightChange={setWhiteboardHeight}
-                />
-              </ResizablePanel>
-              <ResizableHandle withHandle />
-            </>
-          )}
-          <ResizablePanel defaultSize={whiteboardOpen ? 50 : 100} minSize={20} maxSize={100}>
-            <div className="w-full h-full bg-black overflow-hidden">
-              <div ref={playerContainerRef} className="w-full h-full" />
-            </div>
-          </ResizablePanel>
-        </ResizablePanelGroup>
+        {/* ROBUST FULL-BLEED WRAPPER: 
+          This uses negative margins to cleanly break out of max-width containers 
+          without breaking standard layout flow or causing weird horizontal scroll clipping.
+        */}
+        <div
+          className="transition-all duration-300 ease-in-out space-y-4 z-10"
+          style={{
+            width: outerWidth === 0 ? '100%' : `${outerWidth}vw`,
+            marginLeft: outerWidth === 0 ? '0' : `calc(-${outerWidth / 2}vw + 50%)`,
+            marginRight: outerWidth === 0 ? '0' : `calc(-${outerWidth / 2}vw + 50%)`,
+            maxWidth: '100vw',
+          }}>
+          {/* Player + Whiteboard */}
+          <ResizablePanelGroup
+            direction="horizontal"
+            className={`rounded-lg border border-border overflow-hidden bg-background ${!whiteboardOpen ? 'aspect-video' : ''}`}
+            style={{ height: whiteboardOpen ? `${whiteboardHeight}vh` : 'auto' }}>
+            {whiteboardOpen && (
+              <>
+                <ResizablePanel defaultSize={50} minSize={20} maxSize={80}>
+                  <Whiteboard
+                    onClose={() => setWhiteboardOpen(false)}
+                    height={whiteboardHeight}
+                    onHeightChange={setWhiteboardHeight}
+                  />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+              </>
+            )}
+            <ResizablePanel defaultSize={whiteboardOpen ? 50 : 100} minSize={20} maxSize={100}>
+              <div className="w-full h-full bg-black overflow-hidden">
+                <div ref={playerContainerRef} className="w-full h-full" />
+              </div>
+            </ResizablePanel>
+          </ResizablePanelGroup>
 
-        {/* Video Controls Bar */}
-        <VideoControls
-          playerRef={playerRef}
-          loopA={loopA}
-          loopB={loopB}
-          onSetA={() => setLoopA(getCurrentPlayerTime())}
-          onSetB={() => setLoopB(getCurrentPlayerTime())}
-          onClearLoop={() => {
-            setLoopA(null)
-            setLoopB(null)
-          }}
-        />
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <Button
-            onClick={() => {
-              setCurrentTime(getCurrentPlayerTime())
-              setNoteDialogOpen(true)
+          {/* Video Controls Bar */}
+          <VideoControls
+            playerRef={playerRef}
+            loopA={loopA}
+            loopB={loopB}
+            onSetA={() => setLoopA(getCurrentPlayerTime())}
+            onSetB={() => setLoopB(getCurrentPlayerTime())}
+            onClearLoop={() => {
+              setLoopA(null)
+              setLoopB(null)
             }}
-            className="gap-2 font-mono text-xs">
-            <StickyNote className="h-4 w-4" />
-            Add Note
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => fileInputRef.current?.click()}
-            className="gap-2 font-mono text-xs"
-            disabled={uploadScreenshot.isPending}>
-            <ImagePlus className="h-4 w-4" />
-            {uploadScreenshot.isPending ? 'Uploading…' : 'Screenshot'}
-          </Button>
-          <Button
-            variant={whiteboardOpen ? 'default' : 'secondary'}
-            onClick={() => setWhiteboardOpen((v) => !v)}
-            className="gap-2 font-mono text-xs">
-            <PenTool className="h-4 w-4" />
-            {whiteboardOpen ? 'Close Board' : 'Whiteboard'}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFileChange}
           />
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              onClick={() => {
+                setCurrentTime(getCurrentPlayerTime())
+                setNoteDialogOpen(true)
+              }}
+              className="gap-2 font-mono text-xs">
+              <StickyNote className="h-4 w-4" />
+              Add Note
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => fileInputRef.current?.click()}
+              className="gap-2 font-mono text-xs"
+              disabled={uploadScreenshot.isPending}>
+              <ImagePlus className="h-4 w-4" />
+              {uploadScreenshot.isPending ? 'Uploading…' : 'Screenshot'}
+            </Button>
+            <Button
+              variant={whiteboardOpen ? 'default' : 'secondary'}
+              onClick={() => setWhiteboardOpen((v) => !v)}
+              className="gap-2 font-mono text-xs">
+              <PenTool className="h-4 w-4" />
+              {whiteboardOpen ? 'Close Board' : 'Whiteboard'}
+            </Button>
+
+            {/* Breakout Width Controls */}
+            <div className="flex items-center gap-1 bg-muted/50 rounded-md border border-border px-1 h-9 ml-auto shrink-0">
+              <span className="text-[10px] font-mono font-bold px-2 flex flex-col leading-none">
+                <span className="text-muted-foreground font-normal text-[8px]">OVERALL</span>
+                WIDTH
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 hover:bg-background"
+                onClick={decreaseOuterWidth}
+                disabled={outerWidth === 0}>
+                <Minus className="h-3 w-3" />
+              </Button>
+              <span className="text-[10px] font-mono w-10 text-center text-muted-foreground">
+                {outerWidth === 0 ? 'Auto' : `${outerWidth}vw`}
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 hover:bg-background"
+                onClick={increaseOuterWidth}
+                disabled={outerWidth >= 98}>
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
         </div>
 
-        {/* Keyboard hints */}
-        <div className="flex gap-3 text-[10px] text-muted-foreground font-mono">
+        <div className="flex gap-3 text-[10px] text-muted-foreground font-mono mt-2">
           <span>Space: play/pause</span>
           <span>←→: ±5s</span>
           <span>Ctrl+Enter: quick note</span>
@@ -413,7 +459,6 @@ const StudyRoom = () => {
         </Tabs>
       </div>
 
-      {/* Note Dialog */}
       <Dialog open={noteDialogOpen} onOpenChange={setNoteDialogOpen}>
         <DialogContent>
           <DialogHeader>

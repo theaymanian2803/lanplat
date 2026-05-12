@@ -20,7 +20,7 @@ import { supabase } from '@/integrations/supabase/client'
 import { openDictionary } from '@/lib/dictionary'
 import { extractVideoId, formatTimestamp } from '@/lib/youtube'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookOpen, ImagePlus, PenTool, StickyNote, Trash2, Plus, Minus } from 'lucide-react'
+import { BookOpen, ImagePlus, Minus, PenTool, Plus, StickyNote, Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -247,14 +247,16 @@ const StudyRoom = () => {
   if (!video)
     return (
       <Layout>
-        <p className="text-muted-foreground text-sm">Loading…</p>
+        <p className="text-muted-foreground text-sm font-medium animate-pulse">Loading…</p>
       </Layout>
     )
 
   return (
     <Layout>
-      <div className="space-y-4 relative">
-        <h1 className="text-xl font-bold tracking-tight truncate">{video.title}</h1>
+      <div className="space-y-6 relative">
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-blue-500 bg-clip-text text-transparent truncate pb-1">
+          {video.title}
+        </h1>
 
         {/* ROBUST FULL-BLEED WRAPPER: 
           This uses negative margins to cleanly break out of max-width containers 
@@ -271,7 +273,7 @@ const StudyRoom = () => {
           {/* Player + Whiteboard */}
           <ResizablePanelGroup
             direction="horizontal"
-            className={`rounded-lg border border-border overflow-hidden bg-background ${!whiteboardOpen ? 'aspect-video' : ''}`}
+            className={`rounded-xl border border-primary/20 shadow-xl shadow-primary/5 overflow-hidden bg-background ${!whiteboardOpen ? 'aspect-video' : ''}`}
             style={{ height: whiteboardOpen ? `${whiteboardHeight}vh` : 'auto' }}>
             {whiteboardOpen && (
               <>
@@ -282,11 +284,14 @@ const StudyRoom = () => {
                     onHeightChange={setWhiteboardHeight}
                   />
                 </ResizablePanel>
-                <ResizableHandle withHandle />
+                <ResizableHandle
+                  withHandle
+                  className="bg-primary/20 hover:bg-primary/40 transition-colors"
+                />
               </>
             )}
             <ResizablePanel defaultSize={whiteboardOpen ? 50 : 100} minSize={20} maxSize={100}>
-              <div className="w-full h-full bg-black overflow-hidden">
+              <div className="w-full h-full bg-black overflow-hidden relative">
                 <div ref={playerContainerRef} className="w-full h-full" />
               </div>
             </ResizablePanel>
@@ -306,20 +311,20 @@ const StudyRoom = () => {
           />
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 p-2 bg-card rounded-xl border border-border/50 shadow-sm">
             <Button
               onClick={() => {
                 setCurrentTime(getCurrentPlayerTime())
                 setNoteDialogOpen(true)
               }}
-              className="gap-2 font-mono text-xs">
+              className="gap-2 font-mono text-xs bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-md hover:shadow-primary/25 transition-all hover:scale-[1.02] active:scale-[0.98]">
               <StickyNote className="h-4 w-4" />
               Add Note
             </Button>
             <Button
               variant="secondary"
               onClick={() => fileInputRef.current?.click()}
-              className="gap-2 font-mono text-xs"
+              className="gap-2 font-mono text-xs shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
               disabled={uploadScreenshot.isPending}>
               <ImagePlus className="h-4 w-4" />
               {uploadScreenshot.isPending ? 'Uploading…' : 'Screenshot'}
@@ -327,32 +332,32 @@ const StudyRoom = () => {
             <Button
               variant={whiteboardOpen ? 'default' : 'secondary'}
               onClick={() => setWhiteboardOpen((v) => !v)}
-              className="gap-2 font-mono text-xs">
+              className="gap-2 font-mono text-xs shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]">
               <PenTool className="h-4 w-4" />
               {whiteboardOpen ? 'Close Board' : 'Whiteboard'}
             </Button>
 
             {/* Breakout Width Controls */}
-            <div className="flex items-center gap-1 bg-muted/50 rounded-md border border-border px-1 h-9 ml-auto shrink-0">
+            <div className="flex items-center gap-1 bg-background/80 rounded-lg border border-border/60 px-1 h-9 ml-auto shrink-0 shadow-inner">
               <span className="text-[10px] font-mono font-bold px-2 flex flex-col leading-none">
-                <span className="text-muted-foreground font-normal text-[8px]">OVERALL</span>
+                <span className="text-muted-foreground font-medium text-[8px]">OVERALL</span>
                 WIDTH
               </span>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 hover:bg-background"
+                className="h-7 w-7 hover:bg-muted text-foreground/80 hover:text-foreground transition-colors"
                 onClick={decreaseOuterWidth}
                 disabled={outerWidth === 0}>
                 <Minus className="h-3 w-3" />
               </Button>
-              <span className="text-[10px] font-mono w-10 text-center text-muted-foreground">
+              <span className="text-[10px] font-mono w-10 text-center text-muted-foreground font-medium">
                 {outerWidth === 0 ? 'Auto' : `${outerWidth}vw`}
               </span>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 hover:bg-background"
+                className="h-7 w-7 hover:bg-muted text-foreground/80 hover:text-foreground transition-colors"
                 onClick={increaseOuterWidth}
                 disabled={outerWidth >= 98}>
                 <Plus className="h-3 w-3" />
@@ -369,51 +374,80 @@ const StudyRoom = () => {
           </div>
         </div>
 
-        <div className="flex gap-3 text-[10px] text-muted-foreground font-mono mt-2">
-          <span>Space: play/pause</span>
-          <span>←→: ±5s</span>
-          <span>Ctrl+Enter: quick note</span>
+        <div className="flex items-center gap-4 text-[11px] text-muted-foreground/80 font-mono mt-2 bg-muted/20 px-3 py-1.5 rounded-lg w-fit border border-border/30">
+          <span className="flex items-center gap-1">
+            <kbd className="bg-muted px-1.5 py-0.5 rounded border border-border/50 shadow-sm text-[9px] font-sans">
+              Space
+            </kbd>{' '}
+            play/pause
+          </span>
+          <span className="flex items-center gap-1">
+            <kbd className="bg-muted px-1.5 py-0.5 rounded border border-border/50 shadow-sm text-[9px] font-sans">
+              ←→
+            </kbd>{' '}
+            ±5s
+          </span>
+          <span className="flex items-center gap-1">
+            <kbd className="bg-muted px-1.5 py-0.5 rounded border border-border/50 shadow-sm text-[9px] font-sans">
+              Ctrl+Enter
+            </kbd>{' '}
+            quick note
+          </span>
         </div>
 
         {/* Notes & Screenshots Tabs */}
-        <Tabs defaultValue="notes">
-          <TabsList>
-            <TabsTrigger value="notes" className="font-mono text-xs">
+        <Tabs defaultValue="notes" className="w-full">
+          <TabsList className="bg-muted/40 border border-border/30 p-1 rounded-xl">
+            <TabsTrigger
+              value="notes"
+              className="font-mono text-xs rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
               Notes ({notes.length})
             </TabsTrigger>
-            <TabsTrigger value="screenshots" className="font-mono text-xs">
+            <TabsTrigger
+              value="screenshots"
+              className="font-mono text-xs rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all">
               Screenshots ({screenshots.length})
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="notes" className="space-y-2 mt-4">
+          <TabsContent value="notes" className="space-y-3 mt-6">
             {notes.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No notes yet.</p>
+              <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-border/50 rounded-xl bg-card/30">
+                <StickyNote className="h-8 w-8 text-muted-foreground/30 mb-3" />
+                <p className="text-muted-foreground text-sm font-medium">No notes yet.</p>
+                <p className="text-muted-foreground/70 text-xs mt-1">
+                  Press Ctrl+Enter to take a quick note while watching.
+                </p>
+              </div>
             ) : (
               notes.map((n) => (
-                <Card key={n.id} className="p-3 flex items-start gap-3 border-border/50">
+                <Card
+                  key={n.id}
+                  className="p-4 flex items-start gap-3 border-border/40 bg-card hover:border-primary/30 hover:shadow-md transition-all group rounded-xl">
                   <Badge
                     variant="outline"
-                    className="cursor-pointer font-mono text-[11px] shrink-0 hover:bg-primary/20 transition-colors"
+                    className="cursor-pointer font-mono text-[11px] shrink-0 bg-primary/5 text-primary border-primary/20 hover:bg-primary/20 transition-colors shadow-sm"
                     onClick={() => seekTo(n.timestamp)}>
                     {formatTimestamp(n.timestamp)}
                   </Badge>
-                  <p className="text-sm flex-1 min-w-0">{n.content}</p>
-                  <div className="flex items-center gap-1 shrink-0">
+                  <p className="text-sm flex-1 min-w-0 leading-relaxed text-foreground/90">
+                    {n.content}
+                  </p>
+                  <div className="flex items-center gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 text-muted-foreground hover:text-primary"
+                      className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-colors"
                       title="Look up in dictionary"
                       onClick={() => openDictionary(n.content.split(/\s+/)[0], video.language)}>
-                      <BookOpen className="h-3 w-3" />
+                      <BookOpen className="h-3.5 w-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
                       onClick={() => deleteNote.mutate(n.id)}>
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </Card>
@@ -421,35 +455,40 @@ const StudyRoom = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="screenshots" className="mt-4">
+          <TabsContent value="screenshots" className="mt-6">
             {screenshots.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No screenshots yet.</p>
+              <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-border/50 rounded-xl bg-card/30">
+                <ImagePlus className="h-8 w-8 text-muted-foreground/30 mb-3" />
+                <p className="text-muted-foreground text-sm font-medium">No screenshots yet.</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {screenshots.map((s) => (
                   <div
                     key={s.id}
-                    className="group relative rounded-lg overflow-hidden border border-border/50">
+                    className="group relative rounded-xl overflow-hidden border border-border/40 shadow-sm hover:shadow-xl hover:border-primary/40 transition-all duration-300">
                     <img
                       src={s.image_url}
                       alt=""
-                      className="w-full aspect-video object-cover"
+                      className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-500"
                       loading="lazy"
                     />
-                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/70 to-transparent flex items-end justify-between">
-                      <Badge
-                        variant="outline"
-                        className="cursor-pointer font-mono text-[10px] bg-black/50 border-white/20 text-white hover:bg-white/20"
-                        onClick={() => seekTo(s.timestamp)}>
-                        {formatTimestamp(s.timestamp)}
-                      </Badge>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-white/60 hover:text-red-400 opacity-0 group-hover:opacity-100"
-                        onClick={() => deleteScreenshot.mutate(s.id)}>
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3 pointer-events-none">
+                      <div className="flex items-end justify-between pointer-events-auto">
+                        <Badge
+                          variant="outline"
+                          className="cursor-pointer font-mono text-[10px] bg-black/60 backdrop-blur-md border-white/20 text-white hover:bg-white/20 hover:border-white/40 transition-all shadow-sm"
+                          onClick={() => seekTo(s.timestamp)}>
+                          {formatTimestamp(s.timestamp)}
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 bg-black/40 backdrop-blur-md text-white/80 hover:text-red-400 hover:bg-red-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0"
+                          onClick={() => deleteScreenshot.mutate(s.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -460,14 +499,17 @@ const StudyRoom = () => {
       </div>
 
       <Dialog open={noteDialogOpen} onOpenChange={setNoteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md border-primary/20 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="font-mono">
-              Add Note at {formatTimestamp(currentTime)}
+            <DialogTitle className="font-mono flex items-center gap-2">
+              <StickyNote className="h-4 w-4 text-primary" />
+              Add Note at <span className="text-primary">{formatTimestamp(currentTime)}</span>
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label>Note</Label>
+          <div className="space-y-3 py-2">
+            <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+              Note Content
+            </Label>
             <Input
               ref={noteInputRef}
               placeholder="Type your note…"
@@ -476,13 +518,14 @@ const StudyRoom = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && noteContent) addNote.mutate()
               }}
+              className="bg-muted/30 focus-visible:ring-primary/30"
             />
           </div>
           <DialogFooter>
             <Button
               onClick={() => addNote.mutate()}
               disabled={!noteContent || addNote.isPending}
-              className="font-mono text-xs">
+              className="font-mono text-xs w-full sm:w-auto bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all shadow-md">
               Save Note
             </Button>
           </DialogFooter>

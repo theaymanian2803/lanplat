@@ -42,7 +42,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        // Adjusted to include the trailing slash to exactly match your Supabase configuration
+        redirectTo: `${window.location.origin}/`,
       },
     })
   }

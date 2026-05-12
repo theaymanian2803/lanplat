@@ -10,6 +10,7 @@ import Login from './pages/Login'
 import NotFound from './pages/NotFound'
 import StudyRoom from './pages/StudyRoom'
 import VocabBank from './pages/VocabBank'
+
 const queryClient = new QueryClient()
 
 const ProtectedRoutes = () => {

@@ -1,52 +1,43 @@
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { Toaster } from '@/components/ui/toaster'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { AuthProvider, useAuth } from '@/hooks/useAuth'
+import AccessGate from '@/components/AccessGate'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import FlashcardQuiz from './pages/FlashcardQuiz'
-import Index from './pages/Index'
-import Login from './pages/Login'
-import NotFound from './pages/NotFound'
-import StudyRoom from './pages/StudyRoom'
-import VocabBank from './pages/VocabBank'
 
-const queryClient = new QueryClient()
+const Index = lazy(() => import('./pages/Index'))
+const StudyRoom = lazy(() => import('./pages/StudyRoom'))
+const VocabBank = lazy(() => import('./pages/VocabBank'))
+const FlashcardQuiz = lazy(() => import('./pages/FlashcardQuiz'))
+const Languages = lazy(() => import('./pages/Languages'))
+const NotFound = lazy(() => import('./pages/NotFound'))
 
-const ProtectedRoutes = () => {
-  const { user, loading } = useAuth()
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <p className="text-muted-foreground font-mono text-sm animate-pulse">Loading…</p>
-      </div>
-    )
-  }
-
-  if (!user) return <Login />
-
-  return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/video/:id" element={<StudyRoom />} />
-      <Route path="/vocab" element={<VocabBank />} />
-      <Route path="/quiz" element={<FlashcardQuiz />} />
-      <Route path="*" element={<NotFound />} />
-    </Routes>
-  )
-}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 30_000, refetchOnWindowFocus: false, retry: 1 },
+  },
+})
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <AuthProvider>
-        <BrowserRouter>
-          <ProtectedRoutes />
-        </BrowserRouter>
-      </AuthProvider>
+      <BrowserRouter>
+        <AccessGate>
+          <Suspense fallback={null}>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/video/:id" element={<StudyRoom />} />
+              <Route path="/vocab" element={<VocabBank />} />
+              <Route path="/quiz" element={<FlashcardQuiz />} />
+              <Route path="/languages" element={<Languages />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </AccessGate>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 )

@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { languagesDb, vocabularyDb } from "@/integrations/turso/db";
 import { openDictionary } from "@/lib/dictionary";
 import { computeSrs, type SrsGrade } from "@/lib/srs";
 import Layout from "@/components/Layout";
@@ -14,16 +13,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Search, Download, BookOpen } from "lucide-react";
 import { toast } from "sonner";
-import type { Database } from "@/integrations/supabase/types";
 
-type Language = Database["public"]["Enums"]["app_language"];
-const LANGUAGES: Language[] = ["Danish", "Japanese", "Spanish"];
-
-const langColors: Record<Language, string> = {
+const langColors: Record<string, string> = {
   Danish: "bg-red-500/20 text-red-400 border-red-500/30",
   Japanese: "bg-pink-500/20 text-pink-400 border-pink-500/30",
   Spanish: "bg-amber-500/20 text-amber-400 border-amber-500/30",
 };
+
+const getLangColor = (lang: string) =>
+  langColors[lang] || "bg-slate-500/20 text-slate-400 border-slate-500/30";
 
 const masteryColors: Record<number, string> = {
   0: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30",
@@ -35,7 +33,6 @@ const masteryColors: Record<number, string> = {
 };
 
 const VocabBank = () => {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [langFilter, setLangFilter] = useState<string>("all");
@@ -43,31 +40,35 @@ const VocabBank = () => {
   const [word, setWord] = useState("");
   const [translation, setTranslation] = useState("");
   const [contextNote, setContextNote] = useState("");
-  const [lang, setLang] = useState<Language>("Danish");
+  const [lang, setLang] = useState<string>("Danish");
 
   const { data: vocab = [], isLoading } = useQuery({
     queryKey: ["vocabulary", langFilter],
-    queryFn: async () => {
-      let q = supabase.from("vocabulary").select("*").order("created_at", { ascending: false });
-      if (langFilter !== "all") q = q.eq("language", langFilter as Language);
-      const { data, error } = await q;
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => vocabularyDb.list(langFilter === "all" ? undefined : langFilter),
   });
 
-  const filtered = vocab.filter(
-    (v) =>
-      v.word.toLowerCase().includes(search.toLowerCase()) ||
-      v.translation.toLowerCase().includes(search.toLowerCase())
+  const { data: languages = [] } = useQuery({
+    queryKey: ["languages"],
+    queryFn: languagesDb.list,
+  });
+
+  const searchLower = search.toLowerCase();
+  const filtered = useMemo(
+    () =>
+      vocab.filter(
+        (v) =>
+          v.word.toLowerCase().includes(searchLower) ||
+          v.translation.toLowerCase().includes(searchLower) ||
+          v.language.toLowerCase().includes(searchLower)
+      ),
+    [vocab, searchLower]
   );
 
   const addWord = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("vocabulary").insert({
-        user_id: user!.id, language: lang, word, translation, context_note: contextNote || null,
+      await vocabularyDb.insert({
+        language: lang, word, translation, context_note: contextNote || null,
       });
-      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vocabulary"] });
@@ -80,8 +81,7 @@ const VocabBank = () => {
 
   const deleteWord = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("vocabulary").delete().eq("id", id);
-      if (error) throw error;
+      await vocabularyDb.remove(id);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["vocabulary"] }),
   });
@@ -89,8 +89,7 @@ const VocabBank = () => {
   const gradeWord = useMutation({
     mutationFn: async ({ id, level, grade }: { id: string; level: number; grade: SrsGrade }) => {
       const result = computeSrs(level, grade);
-      const { error } = await supabase.from("vocabulary").update(result).eq("id", id);
-      if (error) throw error;
+      await vocabularyDb.updateSrs(id, result);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["vocabulary"] }),
   });
@@ -139,7 +138,7 @@ const VocabBank = () => {
             <SelectTrigger className="w-36"><SelectValue placeholder="Language" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              {LANGUAGES.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+              {languages.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -168,7 +167,7 @@ const VocabBank = () => {
                     <TableCell className="font-medium">{v.word}</TableCell>
                     <TableCell>{v.translation}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={`text-[10px] font-mono ${langColors[v.language]}`}>
+                      <Badge variant="outline" className={`text-[10px] font-mono ${getLangColor(v.language)}`}>
                         {v.language}
                       </Badge>
                     </TableCell>
@@ -237,10 +236,10 @@ const VocabBank = () => {
             </div>
             <div className="space-y-2">
               <Label>Language</Label>
-              <Select value={lang} onValueChange={(v) => setLang(v as Language)}>
+              <Select value={lang} onValueChange={(v) => setLang(v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {LANGUAGES.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                  {languages.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>

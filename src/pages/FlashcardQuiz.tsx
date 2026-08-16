@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { vocabularyDb } from "@/integrations/turso/db";
 import { computeSrs, type SrsGrade } from "@/lib/srs";
 import { openDictionary } from "@/lib/dictionary";
 import Layout from "@/components/Layout";
@@ -11,9 +10,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen, RotateCcw, CheckCircle2, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import type { Database } from "@/integrations/supabase/types";
-
-type VocabRow = Database["public"]["Tables"]["vocabulary"]["Row"];
 
 const gradeConfig: { grade: SrsGrade; label: string; color: string; key: string }[] = [
   { grade: "fail", label: "Fail", color: "bg-red-500/20 text-red-400 border-red-500/40 hover:bg-red-500/30", key: "1" },
@@ -29,7 +25,6 @@ const langColors: Record<string, string> = {
 };
 
 const FlashcardQuiz = () => {
-  const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -38,22 +33,13 @@ const FlashcardQuiz = () => {
 
   const { data: dueWords = [], isLoading } = useQuery({
     queryKey: ["vocabulary-due"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("vocabulary")
-        .select("*")
-        .lte("next_review_date", new Date().toISOString())
-        .order("next_review_date", { ascending: true });
-      if (error) throw error;
-      return data;
-    },
+    queryFn: () => vocabularyDb.listDue(new Date().toISOString()),
   });
 
   const gradeWord = useMutation({
     mutationFn: async ({ id, level, grade }: { id: string; level: number; grade: SrsGrade }) => {
       const result = computeSrs(level, grade);
-      const { error } = await supabase.from("vocabulary").update(result).eq("id", id);
-      if (error) throw error;
+      await vocabularyDb.updateSrs(id, result);
     },
     onSuccess: () => {
       setRevealed(false);

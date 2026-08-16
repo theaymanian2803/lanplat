@@ -1,29 +1,21 @@
+import AddWordPanel from '@/components/AddWordPanel'
 import Layout from '@/components/Layout'
+import NoteEditor from '@/components/NoteEditor'
 import VideoControls from '@/components/VideoControls'
-import Whiteboard from '@/components/Whiteboard'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useAuth } from '@/hooks/useAuth'
-import { supabase } from '@/integrations/supabase/client'
-import { openDictionary } from '@/lib/dictionary'
-import { extractVideoId, formatTimestamp } from '@/lib/youtube'
+import { NoteList, ScreenshotList } from '@/components/StudyRoomLists'
+import { notesDb, screenshotsDb, videosDb } from '@/integrations/turso/db'
+import { extractVideoId } from '@/lib/youtube'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookOpen, ImagePlus, Minus, PenTool, Plus, StickyNote, Trash2 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { BookMarked, Eraser, ImagePlus, Loader2, Minus, PenTool, Plus, StickyNote, Trash2, X } from 'lucide-react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
+
+const Whiteboard = lazy(() => import('@/components/Whiteboard'))
+const Sheet = lazy(() => import('@/components/Sheet'))
 
 declare global {
   interface Window {
@@ -32,20 +24,24 @@ declare global {
   }
 }
 
+const DRAW_COLORS = ['#FFD60A', '#FF3B30', '#00E5FF', '#FFFFFF', '#9BFF00', '#FF2D92']
+
 const StudyRoom = () => {
   const { id } = useParams<{ id: string }>()
-  const { user } = useAuth()
   const queryClient = useQueryClient()
   const playerRef = useRef<any>(null)
   const playerContainerRef = useRef<HTMLDivElement>(null)
-  const noteInputRef = useRef<HTMLInputElement>(null)
   const [apiReady, setApiReady] = useState(false)
-  const [noteDialogOpen, setNoteDialogOpen] = useState(false)
-  const [noteContent, setNoteContent] = useState('')
+  const [playerError, setPlayerError] = useState<number | null>(null)
+  const [retryToken, setRetryToken] = useState(0)
+  const [noteOpen, setNoteOpen] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
+
+  const [addWordOpen, setAddWordOpen] = useState(false)
 
   const [whiteboardOpen, setWhiteboardOpen] = useState(false)
   const [whiteboardHeight, setWhiteboardHeight] = useState(50) // vh units
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   // 0 means it conforms to the layout. Values > 0 represent raw vw (viewport width)
   const [outerWidth, setOuterWidth] = useState(0)
@@ -55,24 +51,41 @@ const StudyRoom = () => {
   const [loopB, setLoopB] = useState<number | null>(null)
   const loopIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // Drawing overlay state
+  const [isDrawingMode, setIsDrawingMode] = useState(false)
+  const [strokeColor, setStrokeColor] = useState(DRAW_COLORS[0])
+  const [isEraser, setIsEraser] = useState(false)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const strokesRef = useRef<Array<{ color: string; eraser: boolean; points: Array<[number, number]> }>>([])
+  const drawingRef = useRef({ active: false, lastX: 0, lastY: 0 })
+
   useEffect(() => {
     if (window.YT && window.YT.Player) {
       setApiReady(true)
       return
     }
-    const tag = document.createElement('script')
-    tag.src = 'https://www.youtube.com/iframe_api'
-    document.head.appendChild(tag)
-    window.onYouTubeIframeAPIReady = () => setApiReady(true)
+    let existing = document.querySelector<HTMLScriptElement>('script[src*="iframe_api"]')
+    if (!existing) {
+      existing = document.createElement('script')
+      existing.src = 'https://www.youtube.com/iframe_api'
+      document.head.appendChild(existing)
+    }
+    const prev = window.onYouTubeIframeAPIReady
+    window.onYouTubeIframeAPIReady = () => {
+      setApiReady(true)
+      if (typeof prev === 'function') {
+        try {
+          prev()
+        } catch {
+          /* no-op */
+        }
+      }
+    }
   }, [])
 
   const { data: video } = useQuery({
     queryKey: ['video', id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('videos').select('*').eq('id', id!).single()
-      if (error) throw error
-      return data
-    },
+    queryFn: () => videosDb.get(id!),
     enabled: !!id,
   })
 
@@ -80,12 +93,35 @@ const StudyRoom = () => {
 
   useEffect(() => {
     if (!apiReady || !videoId || !playerContainerRef.current) return
-    if (playerRef.current) playerRef.current.destroy()
-    playerRef.current = new window.YT.Player(playerContainerRef.current, {
+    if (playerRef.current) {
+      playerRef.current.destroy()
+      playerRef.current = null
+    }
+    setPlayerError(null)
+    const host = playerContainerRef.current
+    host.innerHTML = ''
+    const mount = document.createElement('div')
+    mount.style.width = '100%'
+    mount.style.height = '100%'
+    host.appendChild(mount)
+    playerRef.current = new window.YT.Player(mount, {
       videoId,
-      playerVars: { modestbranding: 1, rel: 0 },
+      host: 'https://www.youtube-nocookie.com',
+      playerVars: { modestbranding: 1, rel: 0, playsinline: 1 },
+      onReady: () => setPlayerError(null),
+      onError: (e: any) => setPlayerError(e?.data ?? -1),
+      onStateChange: (e: any) => {
+        if (e?.data === 1) setPlayerError(null)
+      },
     })
-  }, [apiReady, videoId])
+  }, [apiReady, videoId, retryToken])
+
+  useEffect(() => {
+    return () => {
+      playerRef.current?.destroy()
+      playerRef.current = null
+    }
+  }, [])
 
   const getCurrentPlayerTime = useCallback((): number => {
     if (playerRef.current?.getCurrentTime) return Math.floor(playerRef.current.getCurrentTime())
@@ -110,19 +146,24 @@ const StudyRoom = () => {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName
-      const isInput =
-        tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable
+      const target = e.target as HTMLElement | null
+      const tag = target?.tagName
+      const isInteractive =
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'BUTTON' ||
+        tag === 'SELECT' ||
+        tag === 'A' ||
+        target?.isContentEditable === true
 
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
         setCurrentTime(getCurrentPlayerTime())
-        setNoteDialogOpen(true)
-        setTimeout(() => noteInputRef.current?.focus(), 100)
+        setNoteOpen(true)
         return
       }
 
-      if (isInput) return
+      if (isInteractive) return
 
       if (e.code === 'Space') {
         e.preventDefault()
@@ -143,74 +184,40 @@ const StudyRoom = () => {
 
   const { data: notes = [] } = useQuery({
     queryKey: ['notes', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('notes')
-        .select('*')
-        .eq('video_id', id!)
-        .order('timestamp', { ascending: true })
-      if (error) throw error
-      return data
-    },
+    queryFn: () => notesDb.listByVideo(id!),
     enabled: !!id,
-  })
-
-  const addNote = useMutation({
-    mutationFn: async () => {
-      const { error } = await supabase.from('notes').insert({
-        video_id: id!,
-        user_id: user!.id,
-        timestamp: currentTime,
-        content: noteContent,
-      })
-      if (error) throw error
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes', id] })
-      setNoteDialogOpen(false)
-      setNoteContent('')
-      toast.success('Note added')
-    },
-    onError: (e) => toast.error(e.message),
   })
 
   const deleteNote = useMutation({
     mutationFn: async (noteId: string) => {
-      const { error } = await supabase.from('notes').delete().eq('id', noteId)
-      if (error) throw error
+      await notesDb.remove(noteId)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['notes', id] }),
   })
 
   const { data: screenshots = [] } = useQuery({
     queryKey: ['screenshots', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('screenshots')
-        .select('*')
-        .eq('video_id', id!)
-        .order('timestamp', { ascending: true })
-      if (error) throw error
-      return data
-    },
+    queryFn: () => screenshotsDb.listByVideo(id!),
     enabled: !!id,
   })
+
+  const fileToDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(file)
+    })
 
   const uploadScreenshot = useMutation({
     mutationFn: async (file: File) => {
       const ts = getCurrentPlayerTime()
-      const ext = file.name.split('.').pop()
-      const path = `${user!.id}/${id}/${Date.now()}.${ext}`
-      const { error: uploadError } = await supabase.storage.from('screenshots').upload(path, file)
-      if (uploadError) throw uploadError
-      const { data: urlData } = supabase.storage.from('screenshots').getPublicUrl(path)
-      const { error } = await supabase.from('screenshots').insert({
+      const imageUrl = await fileToDataUrl(file)
+      await screenshotsDb.insert({
         video_id: id!,
-        user_id: user!.id,
         timestamp: ts,
-        image_url: urlData.publicUrl,
+        image_url: imageUrl,
       })
-      if (error) throw error
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['screenshots', id] })
@@ -221,8 +228,7 @@ const StudyRoom = () => {
 
   const deleteScreenshot = useMutation({
     mutationFn: async (ssId: string) => {
-      const { error } = await supabase.from('screenshots').delete().eq('id', ssId)
-      if (error) throw error
+      await screenshotsDb.remove(ssId)
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['screenshots', id] }),
   })
@@ -236,6 +242,106 @@ const StudyRoom = () => {
     },
     [uploadScreenshot]
   )
+
+  // Drawing overlay: full-viewport canvas sized to the window while Pen mode is open
+  useEffect(() => {
+    if (!isDrawingMode) return
+    strokesRef.current = []
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const redraw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      for (const stroke of strokesRef.current) {
+        ctx.globalCompositeOperation = stroke.eraser ? 'destination-out' : 'source-over'
+        ctx.strokeStyle = stroke.color
+        ctx.lineWidth = stroke.eraser ? 24 : 3
+        ctx.beginPath()
+        stroke.points.forEach(([x, y], i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)))
+        ctx.stroke()
+      }
+      ctx.globalCompositeOperation = 'source-over'
+    }
+
+    let resizeRAF: number | null = null
+    const resize = () => {
+      if (resizeRAF !== null) cancelAnimationFrame(resizeRAF)
+      resizeRAF = requestAnimationFrame(() => {
+        resizeRAF = null
+        const dpr = window.devicePixelRatio || 1
+        canvas.width = Math.max(1, Math.floor(window.innerWidth * dpr))
+        canvas.height = Math.max(1, Math.floor(window.innerHeight * dpr))
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+        redraw()
+      })
+    }
+
+    resize()
+    window.addEventListener('resize', resize)
+    return () => {
+      window.removeEventListener('resize', resize)
+      if (resizeRAF !== null) cancelAnimationFrame(resizeRAF)
+      strokesRef.current = []
+    }
+  }, [isDrawingMode])
+
+  const getCanvasPoint = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const rect = canvasRef.current!.getBoundingClientRect()
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top }
+  }
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!isDrawingMode) return
+    e.preventDefault()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    const p = getCanvasPoint(e)
+    drawingRef.current = { active: true, lastX: p.x, lastY: p.y }
+    const ctx = canvasRef.current!.getContext('2d')!
+    ctx.globalCompositeOperation = isEraser ? 'destination-out' : 'source-over'
+    ctx.strokeStyle = isEraser ? '#ffffff' : strokeColor
+    ctx.lineWidth = isEraser ? 24 : 3
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.beginPath()
+    ctx.moveTo(p.x, p.y)
+    ctx.lineTo(p.x + 0.01, p.y + 0.01)
+    ctx.stroke()
+    strokesRef.current.push({ color: isEraser ? '#ffffff' : strokeColor, eraser: isEraser, points: [[p.x, p.y]] })
+  }
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current.active) return
+    e.preventDefault()
+    const p = getCanvasPoint(e)
+    const ctx = canvasRef.current!.getContext('2d')!
+    ctx.beginPath()
+    ctx.moveTo(drawingRef.current.lastX, drawingRef.current.lastY)
+    ctx.lineTo(p.x, p.y)
+    ctx.stroke()
+    strokesRef.current[strokesRef.current.length - 1].points.push([p.x, p.y])
+    drawingRef.current.lastX = p.x
+    drawingRef.current.lastY = p.y
+  }
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current.active) return
+    e.preventDefault()
+    drawingRef.current.active = false
+    if (e.currentTarget.hasPointerCapture?.(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    }
+  }
+
+  const clearCanvas = () => {
+    strokesRef.current = []
+    const canvas = canvasRef.current
+    const ctx = canvas?.getContext('2d')
+    if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height)
+  }
 
   // Width Controls
   const increaseOuterWidth = useCallback(
@@ -258,18 +364,93 @@ const StudyRoom = () => {
           {video.title}
         </h1>
 
-        {/* ROBUST FULL-BLEED WRAPPER: 
-          This uses negative margins to cleanly break out of max-width containers 
-          without breaking standard layout flow or causing weird horizontal scroll clipping.
-        */}
-        <div
-          className="transition-all duration-300 ease-in-out space-y-4 z-10"
-          style={{
-            width: outerWidth === 0 ? '100%' : `${outerWidth}vw`,
-            marginLeft: outerWidth === 0 ? '0' : `calc(-${outerWidth / 2}vw + 50%)`,
-            marginRight: outerWidth === 0 ? '0' : `calc(-${outerWidth / 2}vw + 50%)`,
-            maxWidth: '100vw',
-          }}>
+        {/* Main Layout: flex row */}
+        <div className="flex flex-row w-full gap-4 items-start">
+          {/* Left Panel: Note Editor */}
+          {noteOpen && (
+            <NoteEditor videoId={id!} timestamp={currentTime} onClose={() => setNoteOpen(false)} />
+          )}
+          {addWordOpen && (
+            <AddWordPanel defaultLanguage={video.language} onClose={() => setAddWordOpen(false)} />
+          )}
+
+          {/* Right Section: Video Player */}
+          <div className="flex-1 min-w-0 flex gap-3 items-start">
+            {/* Action Buttons — beside the video */}
+            <div className="flex flex-col gap-2 shrink-0">
+              <Button
+                size="icon"
+                variant="default"
+                title="Add Note (Ctrl+Enter)"
+                onClick={() => {
+                  setCurrentTime(getCurrentPlayerTime())
+                  setNoteOpen(true)
+                }}>
+                <StickyNote className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="default"
+                title="Add Word"
+                onClick={() => setAddWordOpen(true)}>
+                <BookMarked className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="secondary"
+                title="Screenshot"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadScreenshot.isPending}>
+                {uploadScreenshot.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ImagePlus className="h-4 w-4" />
+                )}
+              </Button>
+              <Button
+                size="icon"
+                variant={whiteboardOpen ? 'default' : 'secondary'}
+                title={whiteboardOpen ? 'Close Board' : 'Whiteboard'}
+                onClick={() => setWhiteboardOpen((v) => !v)}>
+                <PenTool className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant={isDrawingMode ? 'default' : 'secondary'}
+                title={isDrawingMode ? 'Close drawing overlay' : 'Pen / Draw'}
+                onClick={() => setIsDrawingMode((v) => !v)}>
+                <span className="font-mono font-bold text-sm leading-none">P</span>
+              </Button>
+              <Button
+                size="icon"
+                variant={sheetOpen ? 'default' : 'secondary'}
+                title={sheetOpen ? 'Close Sheet' : 'Open Sheet'}
+                onClick={() => setSheetOpen((v) => !v)}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                <span className="font-mono font-bold text-sm leading-none">S</span>
+              </Button>
+            </div>
+            <div className="flex-1 min-w-0">
+              {/* VIDEO CONTAINER: 
+                When the side panel is CLOSED the player is centered and constrained
+                (80% tablet, 70% desktop). When the panel is OPEN it expands to fill the
+                remaining flex width (w-full) so the video stays large. The breakout Width
+                controls override this with inline full-bleed styles when outerWidth > 0.
+              */}
+            <div
+              className={`transition-all duration-300 ease-in-out space-y-4 z-10 ${
+                noteOpen || addWordOpen ? 'w-full' : 'w-full md:w-[80%] lg:w-[70%] mx-auto'
+              }`}
+              style={
+                outerWidth === 0
+                  ? {}
+                  : {
+                      width: `${outerWidth}vw`,
+                      marginLeft: `calc(-${outerWidth / 2}vw + 50%)`,
+                      marginRight: `calc(-${outerWidth / 2}vw + 50%)`,
+                      maxWidth: '100vw',
+                    }
+              }>
           {/* Player + Whiteboard */}
           <ResizablePanelGroup
             direction="horizontal"
@@ -278,11 +459,13 @@ const StudyRoom = () => {
             {whiteboardOpen && (
               <>
                 <ResizablePanel defaultSize={50} minSize={20} maxSize={80}>
-                  <Whiteboard
-                    onClose={() => setWhiteboardOpen(false)}
-                    height={whiteboardHeight}
-                    onHeightChange={setWhiteboardHeight}
-                  />
+                  <Suspense fallback={<div className="w-full h-full animate-pulse bg-muted" />}>
+                    <Whiteboard
+                      onClose={() => setWhiteboardOpen(false)}
+                      height={whiteboardHeight}
+                      onHeightChange={setWhiteboardHeight}
+                    />
+                  </Suspense>
                 </ResizablePanel>
                 <ResizableHandle
                   withHandle
@@ -293,6 +476,32 @@ const StudyRoom = () => {
             <ResizablePanel defaultSize={whiteboardOpen ? 50 : 100} minSize={20} maxSize={100}>
               <div className="w-full h-full bg-black overflow-hidden relative">
                 <div ref={playerContainerRef} className="w-full h-full" />
+
+                {playerError !== null && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/90 text-white text-center p-6">
+                    <p className="font-semibold text-sm sm:text-base">
+                      This video can&apos;t play embedded (error {playerError}).
+                    </p>
+                    <p className="text-xs text-white/60 max-w-md">
+                      It may not allow embedding, or your browser is blocking YouTube. Open it
+                      directly instead.
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <Button
+                        variant="default"
+                        onClick={() => window.open(video.youtube_url, '_blank', 'noopener')}
+                        className="gap-2 text-xs">
+                        Watch on YouTube
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setRetryToken((t) => t + 1)}
+                        className="gap-2 text-xs text-white border-white/30 hover:bg-white/10">
+                        Retry
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
             </ResizablePanel>
           </ResizablePanelGroup>
@@ -310,34 +519,8 @@ const StudyRoom = () => {
             }}
           />
 
-          {/* Action Buttons */}
+          {/* Width Controls */}
           <div className="flex flex-wrap items-center gap-3 p-2 bg-card rounded-xl border border-border/50 shadow-sm">
-            <Button
-              onClick={() => {
-                setCurrentTime(getCurrentPlayerTime())
-                setNoteDialogOpen(true)
-              }}
-              className="gap-2 font-mono text-xs bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary text-primary-foreground shadow-md hover:shadow-primary/25 transition-all hover:scale-[1.02] active:scale-[0.98]">
-              <StickyNote className="h-4 w-4" />
-              Add Note
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => fileInputRef.current?.click()}
-              className="gap-2 font-mono text-xs shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
-              disabled={uploadScreenshot.isPending}>
-              <ImagePlus className="h-4 w-4" />
-              {uploadScreenshot.isPending ? 'Uploading…' : 'Screenshot'}
-            </Button>
-            <Button
-              variant={whiteboardOpen ? 'default' : 'secondary'}
-              onClick={() => setWhiteboardOpen((v) => !v)}
-              className="gap-2 font-mono text-xs shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]">
-              <PenTool className="h-4 w-4" />
-              {whiteboardOpen ? 'Close Board' : 'Whiteboard'}
-            </Button>
-
-            {/* Breakout Width Controls */}
             <div className="flex items-center gap-1 bg-background/80 rounded-lg border border-border/60 px-1 h-9 ml-auto shrink-0 shadow-inner">
               <span className="text-[10px] font-mono font-bold px-2 flex flex-col leading-none">
                 <span className="text-muted-foreground font-medium text-[8px]">OVERALL</span>
@@ -372,6 +555,9 @@ const StudyRoom = () => {
               onChange={handleFileChange}
             />
           </div>
+          </div>
+        </div>
+        </div>
         </div>
 
         <div className="flex items-center gap-4 text-[11px] text-muted-foreground/80 font-mono mt-2 bg-muted/20 px-3 py-1.5 rounded-lg w-fit border border-border/30">
@@ -410,128 +596,91 @@ const StudyRoom = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="notes" className="space-y-3 mt-6">
-            {notes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-border/50 rounded-xl bg-card/30">
-                <StickyNote className="h-8 w-8 text-muted-foreground/30 mb-3" />
-                <p className="text-muted-foreground text-sm font-medium">No notes yet.</p>
-                <p className="text-muted-foreground/70 text-xs mt-1">
-                  Press Ctrl+Enter to take a quick note while watching.
-                </p>
-              </div>
-            ) : (
-              notes.map((n) => (
-                <Card
-                  key={n.id}
-                  className="p-4 flex items-start gap-3 border-border/40 bg-card hover:border-primary/30 hover:shadow-md transition-all group rounded-xl">
-                  <Badge
-                    variant="outline"
-                    className="cursor-pointer font-mono text-[11px] shrink-0 bg-primary/5 text-primary border-primary/20 hover:bg-primary/20 transition-colors shadow-sm"
-                    onClick={() => seekTo(n.timestamp)}>
-                    {formatTimestamp(n.timestamp)}
-                  </Badge>
-                  <p className="text-sm flex-1 min-w-0 leading-relaxed text-foreground/90">
-                    {n.content}
-                  </p>
-                  <div className="flex items-center gap-1 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-colors"
-                      title="Look up in dictionary"
-                      onClick={() => openDictionary(n.content.split(/\s+/)[0], video.language)}>
-                      <BookOpen className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
-                      onClick={() => deleteNote.mutate(n.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </Card>
-              ))
-            )}
+          <TabsContent value="notes" className="mt-6">
+            <NoteList
+              notes={notes}
+              language={video.language}
+              onSeek={seekTo}
+              onDelete={deleteNote.mutate}
+            />
           </TabsContent>
 
           <TabsContent value="screenshots" className="mt-6">
-            {screenshots.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-border/50 rounded-xl bg-card/30">
-                <ImagePlus className="h-8 w-8 text-muted-foreground/30 mb-3" />
-                <p className="text-muted-foreground text-sm font-medium">No screenshots yet.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {screenshots.map((s) => (
-                  <div
-                    key={s.id}
-                    className="group relative rounded-xl overflow-hidden border border-border/40 shadow-sm hover:shadow-xl hover:border-primary/40 transition-all duration-300">
-                    <img
-                      src={s.image_url}
-                      alt=""
-                      className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3 pointer-events-none">
-                      <div className="flex items-end justify-between pointer-events-auto">
-                        <Badge
-                          variant="outline"
-                          className="cursor-pointer font-mono text-[10px] bg-black/60 backdrop-blur-md border-white/20 text-white hover:bg-white/20 hover:border-white/40 transition-all shadow-sm"
-                          onClick={() => seekTo(s.timestamp)}>
-                          {formatTimestamp(s.timestamp)}
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 bg-black/40 backdrop-blur-md text-white/80 hover:text-red-400 hover:bg-red-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0"
-                          onClick={() => deleteScreenshot.mutate(s.id)}>
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <ScreenshotList
+              screenshots={screenshots}
+              onSeek={seekTo}
+              onDelete={deleteScreenshot.mutate}
+            />
           </TabsContent>
         </Tabs>
       </div>
 
-      <Dialog open={noteDialogOpen} onOpenChange={setNoteDialogOpen}>
-        <DialogContent className="sm:max-w-md border-primary/20 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="font-mono flex items-center gap-2">
-              <StickyNote className="h-4 w-4 text-primary" />
-              Add Note at <span className="text-primary">{formatTimestamp(currentTime)}</span>
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-              Note Content
-            </Label>
-            <Input
-              ref={noteInputRef}
-              placeholder="Type your note…"
-              value={noteContent}
-              onChange={(e) => setNoteContent(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && noteContent) addNote.mutate()
-              }}
-              className="bg-muted/30 focus-visible:ring-primary/30"
-            />
+      {isDrawingMode && (
+        <>
+          <canvas
+            ref={canvasRef}
+            className="fixed inset-0 z-[100] w-screen h-screen bg-transparent touch-none cursor-crosshair"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+          />
+          <div className="fixed left-0 top-1/2 -translate-y-1/2 z-[110] flex flex-col items-center gap-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/15 p-2 shadow-lg">
+          <div className="flex flex-col gap-1.5 items-center">
+            {DRAW_COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                title={c}
+                onClick={() => {
+                  setIsEraser(false)
+                  setStrokeColor(c)
+                }}
+                className={`h-5 w-5 rounded-full border-2 transition-transform hover:scale-110 ${
+                  strokeColor === c && !isEraser
+                    ? 'border-white scale-110'
+                    : 'border-white/30'
+                }`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
           </div>
-          <DialogFooter>
-            <Button
-              onClick={() => addNote.mutate()}
-              disabled={!noteContent || addNote.isPending}
-              className="font-mono text-xs w-full sm:w-auto bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all shadow-md">
-              Save Note
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </Layout>
+          <div className="h-px w-full bg-white/15" />
+          <Button
+            size="icon"
+            title="Eraser"
+            onClick={() => setIsEraser((v) => !v)}
+            className={`h-8 w-8 rounded-lg transition-colors ${
+              isEraser
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                : 'bg-white/10 text-white hover:bg-white/25'
+            }`}>
+            <Eraser className="h-4 w-4" />
+          </Button>
+          <Button
+            size="icon"
+            title="Clear canvas"
+            onClick={clearCanvas}
+            className="h-8 w-8 rounded-lg bg-white/10 text-white hover:bg-white/25 transition-colors">
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          <Button
+            size="icon"
+            title="Close overlay"
+            onClick={() => setIsDrawingMode(false)}
+            className="h-8 w-8 rounded-lg bg-white/10 text-white hover:bg-red-500/60 transition-colors">
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        </>
+      )}
+    {sheetOpen && (
+      <Suspense fallback={null}>
+        <Sheet onClose={() => setSheetOpen(false)} />
+      </Suspense>
+    )}
+
+      </Layout>
   )
 }
 

@@ -1,10 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
-import { LogOut, BookOpen, Home, Zap } from "lucide-react";
+import { BookOpen, Home, Languages, Settings2, Zap } from "lucide-react";
 
-const Navbar = () => {
-  const { signOut } = useAuth();
+interface NavbarProps {
+  onOpenSettings: () => void;
+}
+
+const Navbar = ({ onOpenSettings }: NavbarProps) => {
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
@@ -48,16 +51,33 @@ const Navbar = () => {
                   Quiz
                 </Button>
               </Link>
+              <Link to="/languages">
+                <Button
+                  variant={isActive("/languages") ? "secondary" : "ghost"}
+                  size="sm"
+                  className="gap-2 font-mono text-xs"
+                >
+                  <Languages className="h-3.5 w-3.5" />
+                  Languages
+                </Button>
+              </Link>
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={signOut} className="gap-2 text-xs text-muted-foreground">
-            <LogOut className="h-3.5 w-3.5" />
-            Sign Out
-          </Button>
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onOpenSettings}
+              className="gap-2 font-mono text-xs text-muted-foreground hover:text-foreground"
+            >
+              <Settings2 className="h-3.5 w-3.5" />
+              Settings
+            </Button>
+          </div>
         </div>
       </div>
     </nav>
   );
 };
 
-export default Navbar;
+export default memo(Navbar);

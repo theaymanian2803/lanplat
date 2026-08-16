@@ -12,6 +12,17 @@ dist
 dist-ssr
 *.local
 
+# Deploy / build tooling
+.vercel
+*.tsbuildinfo
+
+# Packaging output
+lingo/
+
+# Package manager locks (buyers install via npm)
+bun.lock
+bun.lockb
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -23,3 +34,4 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.env*

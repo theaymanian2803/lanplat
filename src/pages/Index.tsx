@@ -19,18 +19,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { useAuth } from '@/hooks/useAuth'
-import { supabase } from '@/integrations/supabase/client'
+import { languagesDb, videosDb } from '@/integrations/turso/db'
 import { extractVideoId, getThumbnailUrl } from '@/lib/youtube'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Play, Plus, Trash2 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
-// Changed to string to allow dynamic languages added by the user
 type Language = string
-const DEFAULT_LANGUAGES: Language[] = ['Danish', 'Japanese', 'Spanish']
 
 const getLangColor = (lang: Language) => {
   const colors: Record<string, string> = {
@@ -43,50 +40,38 @@ const getLangColor = (lang: Language) => {
 }
 
 const Index = () => {
-  const { user } = useAuth()
   const queryClient = useQueryClient()
   const [filter, setFilter] = useState<string>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [newUrl, setNewUrl] = useState('')
   const [newTitle, setNewTitle] = useState('')
   const [newLang, setNewLang] = useState<Language>('Danish')
-  const [isAddingNewLang, setIsAddingNewLang] = useState(false)
 
   const { data: videos = [], isLoading } = useQuery({
     queryKey: ['videos', filter],
-    queryFn: async () => {
-      let q = supabase.from('videos').select('*').order('created_at', { ascending: false })
-      if (filter !== 'all') q = q.eq('language', filter)
-      const { data, error } = await q
-      if (error) throw error
-      return data
-    },
+    queryFn: async () => videosDb.list(filter === 'all' ? undefined : filter),
   })
 
-  // Combine default languages with any dynamic languages present in the database
-  const allLanguages = useMemo(() => {
-    const dbLanguages = videos.map((v) => v.language).filter(Boolean)
-    return Array.from(new Set([...DEFAULT_LANGUAGES, ...dbLanguages]))
-  }, [videos])
+  const { data: languages = [] } = useQuery({
+    queryKey: ['languages'],
+    queryFn: languagesDb.list,
+  })
 
   const addVideo = useMutation({
     mutationFn: async () => {
       const videoId = extractVideoId(newUrl)
       if (!videoId) throw new Error('Invalid YouTube URL')
-      const { error } = await supabase.from('videos').insert({
+      await videosDb.insert({
         youtube_url: newUrl,
         title: newTitle,
         language: newLang,
-        user_id: user!.id,
-      } as any) // Cast as any to bypass strict Enum typing on Supabase if not yet updated
-      if (error) throw error
+      })
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['videos'] })
       setDialogOpen(false)
       setNewUrl('')
       setNewTitle('')
-      setIsAddingNewLang(false)
       toast.success('Video added')
     },
     onError: (e) => toast.error(e.message),
@@ -94,8 +79,7 @@ const Index = () => {
 
   const deleteVideo = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('videos').delete().eq('id', id)
-      if (error) throw error
+      await videosDb.remove(id)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['videos'] })
@@ -124,7 +108,7 @@ const Index = () => {
           <ToggleGroupItem value="all" className="font-mono text-xs">
             All
           </ToggleGroupItem>
-          {allLanguages.map((l) => (
+          {languages.map((l) => (
             <ToggleGroupItem key={l} value={l} className="font-mono text-xs">
               {l}
             </ToggleGroupItem>
@@ -215,50 +199,18 @@ const Index = () => {
             </div>
             <div className="space-y-2">
               <Label>Language</Label>
-              {isAddingNewLang ? (
-                <div className="flex gap-2 items-center">
-                  <Input
-                    placeholder="Type new language"
-                    value={newLang}
-                    onChange={(e) => setNewLang(e.target.value)}
-                    autoFocus
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setIsAddingNewLang(false)
-                      setNewLang('Danish')
-                    }}>
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex gap-2 items-center">
-                  <Select value={newLang} onValueChange={(v) => setNewLang(v)}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allLanguages.map((l) => (
-                        <SelectItem key={l} value={l}>
-                          {l}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    title="Add custom language"
-                    onClick={() => {
-                      setIsAddingNewLang(true)
-                      setNewLang('')
-                    }}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
+              <Select value={newLang} onValueChange={(v) => setNewLang(v)}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {languages.map((l) => (
+                    <SelectItem key={l} value={l}>
+                      {l}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>

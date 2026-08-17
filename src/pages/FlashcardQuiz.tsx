@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { vocabularyDb } from "@/integrations/turso/db";
+import { getLangBadgeClasses, getLangDotClass } from "@/lib/langColors";
 import { computeSrs, type SrsGrade } from "@/lib/srs";
 import { openDictionary } from "@/lib/dictionary";
 import Layout from "@/components/Layout";
@@ -12,17 +13,11 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
 const gradeConfig: { grade: SrsGrade; label: string; color: string; key: string }[] = [
-  { grade: "fail", label: "Fail", color: "bg-red-500/20 text-red-400 border-red-500/40 hover:bg-red-500/30", key: "1" },
-  { grade: "hard", label: "Hard", color: "bg-orange-500/20 text-orange-400 border-orange-500/40 hover:bg-orange-500/30", key: "2" },
-  { grade: "good", label: "Good", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30", key: "3" },
-  { grade: "easy", label: "Easy", color: "bg-cyan-500/20 text-cyan-400 border-cyan-500/40 hover:bg-cyan-500/30", key: "4" },
+  { grade: "fail", label: "Fail", color: "bg-red-500/15 text-red-300 border-red-500/40 hover:bg-red-500/30", key: "1" },
+  { grade: "hard", label: "Hard", color: "bg-orange-500/15 text-orange-300 border-orange-500/40 hover:bg-orange-500/30", key: "2" },
+  { grade: "good", label: "Good", color: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40 hover:bg-emerald-500/30", key: "3" },
+  { grade: "easy", label: "Easy", color: "bg-teal-500/15 text-teal-300 border-teal-500/40 hover:bg-teal-500/30", key: "4" },
 ];
-
-const langColors: Record<string, string> = {
-  Danish: "bg-red-500/20 text-red-400 border-red-500/30",
-  Japanese: "bg-pink-500/20 text-pink-400 border-pink-500/30",
-  Spanish: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-};
 
 const FlashcardQuiz = () => {
   const queryClient = useQueryClient();
@@ -115,7 +110,7 @@ const FlashcardQuiz = () => {
                   : "No vocabulary words are due for review right now."}
               </p>
               <div className="flex gap-2 mt-2">
-                <Button variant="outline" size="sm" className="font-mono text-xs gap-2" onClick={() => navigate("/vocab")}>
+                <Button variant="outline" size="sm" className="text-sm font-medium gap-2" onClick={() => navigate("/vocab")}>
                   <BookOpen className="h-3.5 w-3.5" />
                   Vocab Bank
                 </Button>
@@ -123,7 +118,7 @@ const FlashcardQuiz = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="font-mono text-xs gap-2"
+                    className="text-sm font-medium gap-2"
                     onClick={() => {
                       setCurrentIndex(0);
                       setCompleted(0);
@@ -142,7 +137,8 @@ const FlashcardQuiz = () => {
             {/* Flashcard */}
             <Card className="border-border/50 min-h-[280px] flex flex-col">
               <CardContent className="flex-1 flex flex-col items-center justify-center py-12 gap-6">
-                <Badge variant="outline" className={`text-[10px] font-mono ${langColors[card.language] || ""}`}>
+                <Badge variant="outline" className={`text-[10px] font-mono inline-flex items-center gap-1.5 ${getLangBadgeClasses(card.language)}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${getLangDotClass(card.language)}`} />
                   {card.language}
                 </Badge>
                 <p className="text-3xl font-bold tracking-tight text-center">{card.word}</p>
@@ -158,7 +154,7 @@ const FlashcardQuiz = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="font-mono text-xs gap-2"
+                    className="text-sm font-medium gap-2"
                     onClick={() => setRevealed(true)}
                   >
                     <Eye className="h-3.5 w-3.5" />

@@ -63,7 +63,7 @@ const AddWordPanel = ({ defaultLanguage, onClose }: AddWordPanelProps) => {
   return (
     <aside className="w-80 shrink-0 bg-card rounded-xl border border-primary/20 shadow-2xl p-5 h-fit animate-in fade-in slide-in-from-left-4 duration-300">
       <div className="flex items-start justify-between gap-2 mb-4">
-        <h2 className="font-mono flex items-center gap-2 text-sm font-semibold text-foreground">
+        <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
           <BookMarked className="h-4 w-4 text-primary" />
           Add Vocabulary Word
         </h2>
@@ -135,7 +135,7 @@ const AddWordPanel = ({ defaultLanguage, onClose }: AddWordPanelProps) => {
       <Button
         onClick={() => addWord.mutate()}
         disabled={!word || !translation || !wordLang || addWord.isPending}
-        className="font-mono text-xs w-full mt-4 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary transition-all shadow-md">
+        className="w-full mt-4 transition-all shadow-md hover:shadow-lg hover:shadow-primary/25">
         {addWord.isPending ? 'Saving…' : 'Save Word'}
       </Button>
     </aside>

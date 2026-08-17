@@ -79,7 +79,7 @@ export const TursoSettingsDialog = ({ open, onOpenChange }: TursoSettingsDialogP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-mono flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2">
             <Database className="h-4 w-4 text-primary" />
             Database Settings
           </DialogTitle>

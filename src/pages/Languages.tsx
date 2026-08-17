@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { languagesDb } from "@/integrations/turso/db";
+import { getLangBadgeClasses, getLangDotClass } from "@/lib/langColors";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,15 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Trash2, Languages as LanguagesIcon } from "lucide-react";
 import { toast } from "sonner";
-
-const langColors: Record<string, string> = {
-  Danish: "bg-red-500/20 text-red-400 border-red-500/30",
-  Japanese: "bg-pink-500/20 text-pink-400 border-pink-500/30",
-  Spanish: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-};
-
-const getLangColor = (lang: string) =>
-  langColors[lang] || "bg-slate-500/20 text-slate-400 border-slate-500/30";
 
 const Languages = () => {
   const queryClient = useQueryClient();
@@ -62,7 +54,7 @@ const Languages = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Languages</h1>
-          <Button onClick={() => setDialogOpen(true)} className="gap-2 font-mono text-xs">
+          <Button onClick={() => setDialogOpen(true)} className="gap-2 text-sm font-semibold">
             <Plus className="h-4 w-4" />
             Add Language
           </Button>
@@ -85,7 +77,8 @@ const Languages = () => {
               <div
                 key={lang}
                 className="group rounded-xl border border-border/40 bg-card p-4 flex items-center justify-between gap-2 hover:border-primary/30 hover:shadow-md transition-all">
-                <Badge variant="outline" className={`text-[11px] font-mono ${getLangColor(lang)}`}>
+                <Badge variant="outline" className={`text-[11px] font-mono inline-flex items-center gap-1.5 ${getLangBadgeClasses(lang)}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${getLangDotClass(lang)}`} />
                   {lang}
                 </Badge>
                 <Button
@@ -104,7 +97,7 @@ const Languages = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="font-mono">Add Language</DialogTitle>
+            <DialogTitle>Add Language</DialogTitle>
           </DialogHeader>
           <div className="space-y-2">
             <Label>Name</Label>
@@ -122,7 +115,7 @@ const Languages = () => {
             <Button
               onClick={() => addLanguage.mutate()}
               disabled={!name.trim() || addLanguage.isPending}
-              className="font-mono text-xs">
+              className="text-sm font-semibold">
               {addLanguage.isPending ? "Saving…" : "Add Language"}
             </Button>
           </DialogFooter>

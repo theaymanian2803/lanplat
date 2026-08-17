@@ -34,7 +34,7 @@ const AccessGate = ({ children }: { children: ReactNode }) => {
           <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl border border-primary/30 bg-primary/5 mb-1">
             <ShieldCheck className="h-5 w-5 text-primary" />
           </div>
-          <CardTitle className="font-mono text-2xl tracking-tight text-primary">
+          <CardTitle className="text-3xl tracking-tight text-primary">
             LingoVault
           </CardTitle>
           <CardDescription className="text-muted-foreground">
@@ -64,7 +64,7 @@ const AccessGate = ({ children }: { children: ReactNode }) => {
             <Button
               onClick={handleSubmit}
               disabled={!value}
-              className="w-full gap-2 font-mono text-xs"
+              className="w-full gap-2 text-sm font-semibold"
               size="lg">
               Unlock
             </Button>

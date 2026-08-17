@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { languagesDb, vocabularyDb } from "@/integrations/turso/db";
+import { getLangBadgeClasses, getLangDotClass } from "@/lib/langColors";
 import { openDictionary } from "@/lib/dictionary";
 import { computeSrs, type SrsGrade } from "@/lib/srs";
 import Layout from "@/components/Layout";
@@ -14,22 +15,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Trash2, Search, Download, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 
-const langColors: Record<string, string> = {
-  Danish: "bg-red-500/20 text-red-400 border-red-500/30",
-  Japanese: "bg-pink-500/20 text-pink-400 border-pink-500/30",
-  Spanish: "bg-amber-500/20 text-amber-400 border-amber-500/30",
-};
-
-const getLangColor = (lang: string) =>
-  langColors[lang] || "bg-slate-500/20 text-slate-400 border-slate-500/30";
-
 const masteryColors: Record<number, string> = {
-  0: "bg-zinc-500/20 text-zinc-400 border-zinc-500/30",
-  1: "bg-red-500/20 text-red-400 border-red-500/30",
-  2: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  3: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  4: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-  5: "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
+  0: "bg-zinc-500/15 text-zinc-300 border-zinc-500/30",
+  1: "bg-red-500/15 text-red-300 border-red-500/30",
+  2: "bg-orange-500/15 text-orange-300 border-orange-500/30",
+  3: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+  4: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+  5: "bg-teal-500/15 text-teal-300 border-teal-500/30",
 };
 
 const VocabBank = () => {
@@ -117,11 +109,11 @@ const VocabBank = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Vocab Bank</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={exportCsv} className="gap-2 font-mono text-xs" disabled={filtered.length === 0}>
+            <Button variant="outline" onClick={exportCsv} className="gap-2 text-sm font-medium" disabled={filtered.length === 0}>
               <Download className="h-4 w-4" />
               Export CSV
             </Button>
-            <Button onClick={() => setDialogOpen(true)} className="gap-2 font-mono text-xs">
+            <Button onClick={() => setDialogOpen(true)} className="gap-2 text-sm font-semibold">
               <Plus className="h-4 w-4" />
               Add Word
             </Button>
@@ -167,7 +159,8 @@ const VocabBank = () => {
                     <TableCell className="font-medium">{v.word}</TableCell>
                     <TableCell>{v.translation}</TableCell>
                     <TableCell>
-                      <Badge variant="outline" className={`text-[10px] font-mono ${getLangColor(v.language)}`}>
+                      <Badge variant="outline" className={`text-[10px] font-mono inline-flex items-center gap-1.5 ${getLangBadgeClasses(v.language)}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${getLangDotClass(v.language)}`} />
                         {v.language}
                       </Badge>
                     </TableCell>
@@ -223,7 +216,7 @@ const VocabBank = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-mono">Add Vocabulary Word</DialogTitle>
+            <DialogTitle>Add Vocabulary Word</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -249,7 +242,7 @@ const VocabBank = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={() => addWord.mutate()} disabled={!word || !translation || addWord.isPending} className="font-mono text-xs">
+            <Button onClick={() => addWord.mutate()} disabled={!word || !translation || addWord.isPending} className="text-sm font-semibold">
               {addWord.isPending ? "Saving…" : "Add Word"}
             </Button>
           </DialogFooter>

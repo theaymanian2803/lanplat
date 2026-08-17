@@ -35,3 +35,7 @@ bun.lockb
 *.sw?
 .env
 .env*
+
+# Playwright artifacts
+test-results
+playwright-report

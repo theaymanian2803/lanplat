@@ -146,7 +146,7 @@ const Sheet = ({ onClose }: { onClose: () => void }) => {
         onPointerMove={onDragMove}
         onPointerUp={onDragEnd}
         onPointerCancel={onDragEnd}>
-        <span className="font-mono text-xs font-bold text-primary tracking-tight">Sheet</span>
+        <span className="font-display text-sm font-semibold text-primary tracking-tight">Sheet</span>
         <span className="text-[10px] font-mono text-muted-foreground/70">
           {Math.round(size.width)}×{Math.round(size.height)}
         </span>

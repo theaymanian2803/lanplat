@@ -360,7 +360,7 @@ const StudyRoom = () => {
   return (
     <Layout>
       <div className="space-y-6 relative">
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-primary/80 to-blue-500 bg-clip-text text-transparent truncate pb-1">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight truncate pb-1">
           {video.title}
         </h1>
 

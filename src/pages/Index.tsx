@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { languagesDb, videosDb } from '@/integrations/turso/db'
+import { getLangBadgeClasses, getLangDotClass } from '@/lib/langColors'
 import { extractVideoId, getThumbnailUrl } from '@/lib/youtube'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Play, Plus, Trash2 } from 'lucide-react'
@@ -28,16 +29,6 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
 type Language = string
-
-const getLangColor = (lang: Language) => {
-  const colors: Record<string, string> = {
-    Danish: 'bg-red-500/20 text-red-400 border-red-500/30',
-    Japanese: 'bg-pink-500/20 text-pink-400 border-pink-500/30',
-    Spanish: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  }
-  // Fallback color for any new custom languages
-  return colors[lang] || 'bg-slate-500/20 text-slate-400 border-slate-500/30'
-}
 
 const Index = () => {
   const queryClient = useQueryClient()
@@ -93,7 +84,7 @@ const Index = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <Button onClick={() => setDialogOpen(true)} className="gap-2 font-mono text-xs">
+          <Button onClick={() => setDialogOpen(true)} className="gap-2 text-sm font-semibold">
             <Plus className="h-4 w-4" />
             Add Video
           </Button>
@@ -105,11 +96,11 @@ const Index = () => {
           value={filter}
           onValueChange={(v) => v && setFilter(v)}
           className="justify-start flex-wrap">
-          <ToggleGroupItem value="all" className="font-mono text-xs">
+          <ToggleGroupItem value="all" className="text-sm font-medium">
             All
           </ToggleGroupItem>
           {languages.map((l) => (
-            <ToggleGroupItem key={l} value={l} className="font-mono text-xs">
+            <ToggleGroupItem key={l} value={l} className="text-sm font-medium">
               {l}
             </ToggleGroupItem>
           ))}
@@ -152,7 +143,8 @@ const Index = () => {
                       </Link>
                       <Badge
                         variant="outline"
-                        className={`mt-1.5 text-[10px] font-mono ${getLangColor(v.language)}`}>
+                        className={`mt-1.5 text-[10px] font-mono inline-flex items-center gap-1.5 ${getLangBadgeClasses(v.language)}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${getLangDotClass(v.language)}`} />
                         {v.language}
                       </Badge>
                     </div>
@@ -178,7 +170,7 @@ const Index = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="font-mono">Add YouTube Video</DialogTitle>
+            <DialogTitle>Add YouTube Video</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -217,7 +209,7 @@ const Index = () => {
             <Button
               onClick={() => addVideo.mutate()}
               disabled={!newUrl || !newTitle || !newLang || addVideo.isPending}
-              className="font-mono text-xs">
+              className="text-sm font-semibold">
               {addVideo.isPending ? 'Saving…' : 'Add Video'}
             </Button>
           </DialogFooter>

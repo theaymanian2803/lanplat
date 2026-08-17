@@ -17,7 +17,7 @@ const Navbar = ({ onOpenSettings }: NavbarProps) => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
           <div className="flex items-center gap-6">
-            <Link to="/" className="font-mono text-lg font-bold tracking-tight text-primary">
+<Link to="/" className="font-display text-xl font-semibold tracking-tight text-primary">
               LingoVault
             </Link>
             <div className="flex items-center gap-1">
@@ -25,7 +25,7 @@ const Navbar = ({ onOpenSettings }: NavbarProps) => {
                 <Button
                   variant={isActive("/") ? "secondary" : "ghost"}
                   size="sm"
-                  className="gap-2 font-mono text-xs"
+                  className="gap-2 text-sm font-medium"
                 >
                   <Home className="h-3.5 w-3.5" />
                   Dashboard
@@ -35,17 +35,17 @@ const Navbar = ({ onOpenSettings }: NavbarProps) => {
                 <Button
                   variant={isActive("/vocab") ? "secondary" : "ghost"}
                   size="sm"
-                  className="gap-2 font-mono text-xs"
+                  className="gap-2 text-sm font-medium"
                 >
                   <BookOpen className="h-3.5 w-3.5" />
                   Vocab Bank
-               </Button>
+                </Button>
               </Link>
               <Link to="/quiz">
                 <Button
                   variant={isActive("/quiz") ? "secondary" : "ghost"}
                   size="sm"
-                  className="gap-2 font-mono text-xs"
+                  className="gap-2 text-sm font-medium"
                 >
                   <Zap className="h-3.5 w-3.5" />
                   Quiz
@@ -55,7 +55,7 @@ const Navbar = ({ onOpenSettings }: NavbarProps) => {
                 <Button
                   variant={isActive("/languages") ? "secondary" : "ghost"}
                   size="sm"
-                  className="gap-2 font-mono text-xs"
+                  className="gap-2 text-sm font-medium"
                 >
                   <Languages className="h-3.5 w-3.5" />
                   Languages
@@ -68,7 +68,7 @@ const Navbar = ({ onOpenSettings }: NavbarProps) => {
               variant="ghost"
               size="sm"
               onClick={onOpenSettings}
-              className="gap-2 font-mono text-xs text-muted-foreground hover:text-foreground"
+              className="gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
             >
               <Settings2 className="h-3.5 w-3.5" />
               Settings

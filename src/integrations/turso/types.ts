@@ -38,3 +38,40 @@ export interface Screenshot {
   image_url: string
   created_at: string
 }
+
+export type ContentBlockType = 'h1' | 'h2' | 'h3' | 'p'
+
+export interface ContentBlock {
+  id: string
+  type: ContentBlockType
+  text: string
+  color: string
+}
+
+export interface Part {
+  id: string
+  sublesson_id: string
+  user_id: string
+  position: number
+  content: string
+  created_at: string
+}
+
+export interface Sublesson {
+  id: string
+  lesson_id: string
+  user_id: string
+  position: number
+  title: string
+  created_at: string
+}
+
+export interface Lesson {
+  id: string
+  user_id: string
+  media_type: 'video' | 'book' | null
+  media_id: string | null
+  title: string
+  language: string | null
+  created_at: string
+}

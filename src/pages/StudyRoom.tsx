@@ -3,19 +3,16 @@ import Layout from '@/components/Layout'
 import NoteEditor from '@/components/NoteEditor'
 import VideoControls from '@/components/VideoControls'
 import { Button } from '@/components/ui/button'
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NoteList, ScreenshotList } from '@/components/StudyRoomLists'
 import { notesDb, screenshotsDb, videosDb } from '@/integrations/turso/db'
 import { extractVideoId } from '@/lib/youtube'
+import { compressImageToDataUrl } from '@/lib/imageCompression'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookMarked, Eraser, ImagePlus, Loader2, Minus, PenTool, Plus, StickyNote, Trash2, X } from 'lucide-react'
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { BookMarked, Eraser, Forward, ImagePlus, Loader2, Minus, Pause, Play, Plus, Rewind, StickyNote, Trash2, X } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-
-const Whiteboard = lazy(() => import('@/components/Whiteboard'))
-const Sheet = lazy(() => import('@/components/Sheet'))
 
 declare global {
   interface Window {
@@ -39,10 +36,6 @@ const StudyRoom = () => {
 
   const [addWordOpen, setAddWordOpen] = useState(false)
 
-  const [whiteboardOpen, setWhiteboardOpen] = useState(false)
-  const [whiteboardHeight, setWhiteboardHeight] = useState(50) // vh units
-  const [sheetOpen, setSheetOpen] = useState(false)
-
   // 0 means it conforms to the layout. Values > 0 represent raw vw (viewport width)
   const [outerWidth, setOuterWidth] = useState(0)
 
@@ -55,6 +48,7 @@ const StudyRoom = () => {
   const [isDrawingMode, setIsDrawingMode] = useState(false)
   const [strokeColor, setStrokeColor] = useState(DRAW_COLORS[0])
   const [isEraser, setIsEraser] = useState(false)
+  const [isPlaying, setIsPlaying] = useState(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const strokesRef = useRef<Array<{ color: string; eraser: boolean; points: Array<[number, number]> }>>([])
   const drawingRef = useRef({ active: false, lastX: 0, lastY: 0 })
@@ -112,6 +106,7 @@ const StudyRoom = () => {
       onError: (e: any) => setPlayerError(e?.data ?? -1),
       onStateChange: (e: any) => {
         if (e?.data === 1) setPlayerError(null)
+        setIsPlaying(e?.data === 1)
       },
     })
   }, [apiReady, videoId, retryToken])
@@ -201,18 +196,10 @@ const StudyRoom = () => {
     enabled: !!id,
   })
 
-  const fileToDataUrl = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = () => reject(reader.error)
-      reader.readAsDataURL(file)
-    })
-
   const uploadScreenshot = useMutation({
     mutationFn: async (file: File) => {
       const ts = getCurrentPlayerTime()
-      const imageUrl = await fileToDataUrl(file)
+      const imageUrl = await compressImageToDataUrl(file)
       await screenshotsDb.insert({
         video_id: id!,
         timestamp: ts,
@@ -343,6 +330,21 @@ const StudyRoom = () => {
     if (canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height)
   }
 
+  // Pen-mode video playback controls
+  const togglePlay = useCallback(() => {
+    const state = playerRef.current?.getPlayerState?.()
+    if (state === 1) playerRef.current?.pauseVideo?.()
+    else playerRef.current?.playVideo?.()
+  }, [])
+
+  const skipForward = useCallback(() => {
+    seekTo(getCurrentPlayerTime() + 10)
+  }, [getCurrentPlayerTime, seekTo])
+
+  const rewind = useCallback(() => {
+    seekTo(Math.max(0, getCurrentPlayerTime() - 10))
+  }, [getCurrentPlayerTime, seekTo])
+
   // Width Controls
   const increaseOuterWidth = useCallback(
     () => setOuterWidth((w) => (w === 0 ? 80 : Math.min(98, w + 5))),
@@ -409,25 +411,10 @@ const StudyRoom = () => {
               </Button>
               <Button
                 size="icon"
-                variant={whiteboardOpen ? 'default' : 'secondary'}
-                title={whiteboardOpen ? 'Close Board' : 'Whiteboard'}
-                onClick={() => setWhiteboardOpen((v) => !v)}>
-                <PenTool className="h-4 w-4" />
-              </Button>
-              <Button
-                size="icon"
                 variant={isDrawingMode ? 'default' : 'secondary'}
                 title={isDrawingMode ? 'Close drawing overlay' : 'Pen / Draw'}
                 onClick={() => setIsDrawingMode((v) => !v)}>
                 <span className="font-mono font-bold text-sm leading-none">P</span>
-              </Button>
-              <Button
-                size="icon"
-                variant={sheetOpen ? 'default' : 'secondary'}
-                title={sheetOpen ? 'Close Sheet' : 'Open Sheet'}
-                onClick={() => setSheetOpen((v) => !v)}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                <span className="font-mono font-bold text-sm leading-none">S</span>
               </Button>
             </div>
             <div className="flex-1 min-w-0">
@@ -451,60 +438,38 @@ const StudyRoom = () => {
                       maxWidth: '100vw',
                     }
               }>
-          {/* Player + Whiteboard */}
-          <ResizablePanelGroup
-            direction="horizontal"
-            className={`rounded-xl border border-primary/20 shadow-xl shadow-primary/5 overflow-hidden bg-background ${!whiteboardOpen ? 'aspect-video' : ''}`}
-            style={{ height: whiteboardOpen ? `${whiteboardHeight}vh` : 'auto' }}>
-            {whiteboardOpen && (
-              <>
-                <ResizablePanel defaultSize={50} minSize={20} maxSize={80}>
-                  <Suspense fallback={<div className="w-full h-full animate-pulse bg-muted" />}>
-                    <Whiteboard
-                      onClose={() => setWhiteboardOpen(false)}
-                      height={whiteboardHeight}
-                      onHeightChange={setWhiteboardHeight}
-                    />
-                  </Suspense>
-                </ResizablePanel>
-                <ResizableHandle
-                  withHandle
-                  className="bg-primary/20 hover:bg-primary/40 transition-colors"
-                />
-              </>
-            )}
-            <ResizablePanel defaultSize={whiteboardOpen ? 50 : 100} minSize={20} maxSize={100}>
-              <div className="w-full h-full bg-black overflow-hidden relative">
-                <div ref={playerContainerRef} className="w-full h-full" />
+          {/* Player */}
+          <div className="rounded-xl border border-primary/20 shadow-xl shadow-primary/5 overflow-hidden bg-black aspect-video">
+            <div className="w-full h-full relative">
+              <div ref={playerContainerRef} className="w-full h-full" />
 
-                {playerError !== null && (
-                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/90 text-white text-center p-6">
-                    <p className="font-semibold text-sm sm:text-base">
-                      This video can&apos;t play embedded (error {playerError}).
-                    </p>
-                    <p className="text-xs text-white/60 max-w-md">
-                      It may not allow embedding, or your browser is blocking YouTube. Open it
-                      directly instead.
-                    </p>
-                    <div className="flex flex-wrap items-center justify-center gap-2">
-                      <Button
-                        variant="default"
-                        onClick={() => window.open(video.youtube_url, '_blank', 'noopener')}
-                        className="gap-2 text-xs">
-                        Watch on YouTube
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => setRetryToken((t) => t + 1)}
-                        className="gap-2 text-xs text-white border-white/30 hover:bg-white/10">
-                        Retry
-                      </Button>
-                    </div>
+              {playerError !== null && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/90 text-white text-center p-6">
+                  <p className="font-semibold text-sm sm:text-base">
+                    This video can&apos;t play embedded (error {playerError}).
+                  </p>
+                  <p className="text-xs text-white/60 max-w-md">
+                    It may not allow embedding, or your browser is blocking YouTube. Open it
+                    directly instead.
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <Button
+                      variant="default"
+                      onClick={() => window.open(video.youtube_url, '_blank', 'noopener')}
+                      className="gap-2 text-xs">
+                      Watch on YouTube
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setRetryToken((t) => t + 1)}
+                      className="gap-2 text-xs text-white border-white/30 hover:bg-white/10">
+                      Retry
+                    </Button>
                   </div>
-                )}
-              </div>
-            </ResizablePanel>
-          </ResizablePanelGroup>
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Video Controls Bar */}
           <VideoControls
@@ -626,6 +591,35 @@ const StudyRoom = () => {
             onPointerCancel={handlePointerUp}
           />
           <div className="fixed left-0 top-1/2 -translate-y-1/2 z-[110] flex flex-col items-center gap-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/15 p-2 shadow-lg">
+          {/* Video playback controls */}
+          <div className="flex flex-col gap-1.5 items-center">
+            <Button
+              size="icon"
+              title="Rewind 10s"
+              onClick={rewind}
+              className="h-8 w-8 rounded-lg bg-white/10 text-white hover:bg-white/25 transition-colors">
+              <Rewind className="h-4 w-4" />
+            </Button>
+            <Button
+              size="icon"
+              title={isPlaying ? 'Pause' : 'Play'}
+              onClick={togglePlay}
+              className={`h-9 w-9 rounded-lg transition-colors ${
+                isPlaying
+                  ? 'bg-white/10 text-white hover:bg-white/25'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+              }`}>
+              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+            </Button>
+            <Button
+              size="icon"
+              title="Skip Forward 10s"
+              onClick={skipForward}
+              className="h-8 w-8 rounded-lg bg-white/10 text-white hover:bg-white/25 transition-colors">
+              <Forward className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="h-px w-full bg-white/15" />
           <div className="flex flex-col gap-1.5 items-center">
             {DRAW_COLORS.map((c) => (
               <button
@@ -674,11 +668,6 @@ const StudyRoom = () => {
         </div>
         </>
       )}
-    {sheetOpen && (
-      <Suspense fallback={null}>
-        <Sheet onClose={() => setSheetOpen(false)} />
-      </Suspense>
-    )}
 
       </Layout>
   )

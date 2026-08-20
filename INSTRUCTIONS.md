@@ -226,8 +226,6 @@ variables for Git-based deploys.
   Tailwind theme in `tailwind.config.ts`.
 - **Starter languages:** edited from the **Languages** page in the app (stored in the
   database) or seeded in `src/integrations/turso/db.ts`.
-- **Whiteboard pen behavior:** `src/components/Whiteboard.tsx` (pressure sensitivity,
-  stroke smoothing).
 - **YouTube player behavior:** `src/pages/StudyRoom.tsx` (A-B loop, error fallback).
 
 ## 12. Troubleshooting

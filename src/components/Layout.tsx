@@ -1,12 +1,15 @@
 import { useCallback, useState, type ReactNode } from 'react'
 import { Database, X } from 'lucide-react'
 import Navbar from './Navbar'
+import LessonsPanel from './LessonsPanel'
+import { LessonsDrawerContext } from '@/lib/lessonsDrawer'
 import { TursoSettingsDialog } from './TursoSettingsDialog'
 import { Button } from '@/components/ui/button'
 import { dismissSetupBanner, shouldShowSetupBanner } from '@/lib/tursoConfig'
 
 const Layout = ({ children }: { children: ReactNode }) => {
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [lessonsOpen, setLessonsOpen] = useState(false)
   const [showBanner, setShowBanner] = useState(shouldShowSetupBanner())
 
   const handleDismissBanner = useCallback(() => {
@@ -15,10 +18,16 @@ const Layout = ({ children }: { children: ReactNode }) => {
   }, [])
 
   const handleOpenSettings = useCallback(() => setSettingsOpen(true), [])
+  const handleToggleLessons = useCallback(() => setLessonsOpen((v) => !v), [])
+  const handleOpenLessons = useCallback(() => setLessonsOpen(true), [])
 
   return (
     <div className="min-h-screen bg-background flex flex-col w-full">
-      <Navbar onOpenSettings={handleOpenSettings} />
+      <Navbar
+        onOpenSettings={handleOpenSettings}
+        lessonsOpen={lessonsOpen}
+        onToggleLessons={handleToggleLessons}
+      />
       {showBanner && (
         <div className="border-b border-border bg-muted/40 px-4 sm:px-6 lg:px-20 py-2">
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -46,8 +55,13 @@ const Layout = ({ children }: { children: ReactNode }) => {
         </div>
       )}
       {/* w-full with no max-width constraint allows it to take the entire screen */}
-      <main className="flex-1 w-full px-4 sm:px-6 lg:px-20 py-6">{children}</main>
+      <main className="flex-1 w-full px-4 sm:px-6 lg:px-20 py-6">
+        <LessonsDrawerContext.Provider value={handleOpenLessons}>
+          {children}
+        </LessonsDrawerContext.Provider>
+      </main>
       <TursoSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <LessonsPanel open={lessonsOpen} onOpenChange={setLessonsOpen} />
     </div>
   )
 }

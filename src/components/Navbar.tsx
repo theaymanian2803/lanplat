@@ -1,13 +1,15 @@
 import { Link, useLocation } from "react-router-dom";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Home, Languages, Settings2, Zap } from "lucide-react";
+import { BookOpen, GraduationCap, Home, Languages, Settings2, Zap } from "lucide-react";
 
 interface NavbarProps {
   onOpenSettings: () => void;
+  lessonsOpen: boolean;
+  onToggleLessons: () => void;
 }
 
-const Navbar = ({ onOpenSettings }: NavbarProps) => {
+const Navbar = ({ onOpenSettings, lessonsOpen, onToggleLessons }: NavbarProps) => {
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
@@ -61,6 +63,16 @@ const Navbar = ({ onOpenSettings }: NavbarProps) => {
                   Languages
                 </Button>
               </Link>
+              <Button
+                variant={lessonsOpen ? "secondary" : "ghost"}
+                size="sm"
+                onClick={onToggleLessons}
+                className="gap-2 text-sm font-medium"
+                aria-pressed={lessonsOpen}
+              >
+                <GraduationCap className="h-3.5 w-3.5" />
+                Lessons
+              </Button>
             </div>
           </div>
           <div className="flex items-center">

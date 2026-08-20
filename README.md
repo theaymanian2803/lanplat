@@ -1,10 +1,10 @@
 # LingoVault
 
-A premium, self-hosted language learning dashboard. Manage study videos with a built-in video player and A-B loop, a vocabulary bank with spaced-repetition flashcards, study notes, screenshots, and a pressure-sensitive whiteboard — all stored in a free Turso (libSQL) cloud database. No auth backend required (single local user behind an access code).
+A premium, self-hosted language learning dashboard. Manage study videos with a built-in video player and A-B loop, a vocabulary bank with spaced-repetition flashcards, study notes, and screenshots — all stored in a free Turso (libSQL) cloud database. No auth backend required (single local user behind an access code).
 
 ## Features
 
-- **Study Room** — YouTube playback with A-B loop, speed + caption controls, whiteboard overlay, time-stamped notes and screenshots.
+- **Study Room** — YouTube playback with A-B loop, speed + caption controls, drawing overlay, time-stamped notes and screenshots.
 - **Vocab Bank** — add words per language, search/filter, and export.
 - **Flashcard Quiz** — spaced-repetition (SRS) flashcard drills.
 - **Languages page** — manage your target languages (stored in the database).
@@ -13,7 +13,7 @@ A premium, self-hosted language learning dashboard. Manage study videos with a b
 
 ## Tech Stack
 
-React 18 · Vite 5 · TypeScript · Tailwind CSS · shadcn/ui · TanStack Query · Turso (libSQL) · react-router · React Resizable Panels
+React 18 · Vite 5 · TypeScript · Tailwind CSS · shadcn/ui · TanStack Query · Turso (libSQL) · react-router
 
 ## Quick Start
 

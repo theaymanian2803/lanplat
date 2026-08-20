@@ -50,7 +50,6 @@ const AddWordPanel = ({ defaultLanguage, onClose }: AddWordPanelProps) => {
       setWord('')
       setTranslation('')
       setContextNote('')
-      onClose()
       toast.success('Word saved to Vocab Bank!')
     },
     onError: (e) => toast.error(e.message),

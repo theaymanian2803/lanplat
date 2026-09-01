@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { AutoGrowTextarea } from '@/components/ui/auto-grow-textarea'
 import { useAutoTranslate } from '@/hooks/useAutoTranslate'
 import { lessonsDb } from '@/integrations/turso/db'
 import { appendBlockToContent, createBlock } from '@/lib/lessonBlocks'
@@ -182,17 +182,20 @@ const AddLessonContentPanel = ({ defaultLanguage, onClose, position = 'left' }: 
                 Word / Text
               </Label>
               <div className="relative">
-                <Input
+                <AutoGrowTextarea
                   placeholder="e.g. at spise"
                   value={word}
                   onChange={(e) => setWord(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter' && canSave) addContent.mutate()
+                    if (e.key === 'Enter' && !e.shiftKey && canSave) {
+                      e.preventDefault()
+                      addContent.mutate()
+                    }
                   }}
                   className="bg-muted/30 focus-visible:ring-primary/30 pr-8"
                 />
                 {translating && (
-                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                  <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
                 )}
               </div>
               {error && !translating && (
@@ -208,7 +211,7 @@ const AddLessonContentPanel = ({ defaultLanguage, onClose, position = 'left' }: 
               <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
                 Translation
               </Label>
-              <Input
+              <AutoGrowTextarea
                 placeholder="e.g. to eat"
                 value={translation}
                 onChange={(e) => {
@@ -216,7 +219,10 @@ const AddLessonContentPanel = ({ defaultLanguage, onClose, position = 'left' }: 
                   setTranslation(e.target.value)
                 }}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && canSave) addContent.mutate()
+                  if (e.key === 'Enter' && !e.shiftKey && canSave) {
+                    e.preventDefault()
+                    addContent.mutate()
+                  }
                 }}
                 className="bg-muted/30 focus-visible:ring-primary/30"
               />

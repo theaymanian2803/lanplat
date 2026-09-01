@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { AutoGrowTextarea } from '@/components/ui/auto-grow-textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { lessonsDb } from '@/integrations/turso/db'
 import type { ContentBlock, ContentBlockType, Part } from '@/integrations/turso/types'
@@ -144,14 +144,17 @@ const PartEditor = ({ part }: PartEditorProps) => {
 
         <div className="flex items-center gap-2">
           <Type className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <Input
+          <AutoGrowTextarea
             placeholder="Type block content…"
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && text.trim()) addBlock()
+              if (e.key === 'Enter' && !e.shiftKey && text.trim()) {
+                e.preventDefault()
+                addBlock()
+              }
             }}
-            className="h-8 bg-muted/30 text-sm"
+            className="bg-muted/30 text-sm"
           />
         </div>
       </div>

@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Trash2, Search, Download, BookOpen, Loader2 } from "lucide-react";
+import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { toast } from "sonner";
 
 const masteryColors: Record<number, string> = {
@@ -224,13 +225,13 @@ const VocabBank = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Word</Label>
-              <Input placeholder="e.g. hund" value={word} onChange={(e) => setWord(e.target.value)} />
+              <AutoGrowTextarea placeholder="e.g. hund" value={word} onChange={(e) => setWord(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Translation</Label>
               <div className="relative">
-                <Input placeholder="e.g. dog" value={translation} onChange={(e) => { markUserEdit(); setTranslation(e.target.value); }} className="pr-8" />
-                {translating && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+                <AutoGrowTextarea placeholder="e.g. dog" value={translation} onChange={(e) => { markUserEdit(); setTranslation(e.target.value); }} className="pr-8" />
+                {translating && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />}
               </div>
               {error && !translating && (
                 <p className="text-xs text-destructive mt-1">{error} - type the translation manually.</p>
@@ -247,7 +248,7 @@ const VocabBank = () => {
             </div>
             <div className="space-y-2">
               <Label>Context Note (optional)</Label>
-              <Input placeholder="Where you encountered this word" value={contextNote} onChange={(e) => setContextNote(e.target.value)} />
+              <AutoGrowTextarea placeholder="Where you encountered this word" value={contextNote} onChange={(e) => setContextNote(e.target.value)} />
             </div>
           </div>
           <DialogFooter>

@@ -1,5 +1,5 @@
+import { AutoGrowTextarea } from '@/components/ui/auto-grow-textarea'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { notesDb } from '@/integrations/turso/db'
 import { formatTimestamp } from '@/lib/youtube'
@@ -19,7 +19,7 @@ interface NoteEditorProps {
 
 const NoteEditor = ({ videoId, timestamp, onClose, position = 'left' }: NoteEditorProps) => {
   const queryClient = useQueryClient()
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const [content, setContent] = useState('')
 
   const addNote = useMutation({
@@ -61,13 +61,16 @@ const NoteEditor = ({ videoId, timestamp, onClose, position = 'left' }: NoteEdit
         <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
           Note Content
         </Label>
-        <Input
+        <AutoGrowTextarea
           ref={inputRef}
           placeholder="Type your note…"
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && content) addNote.mutate()
+            if (e.key === 'Enter' && !e.shiftKey && content) {
+              e.preventDefault()
+              addNote.mutate()
+            }
           }}
           className="bg-muted/30 focus-visible:ring-primary/30"
         />

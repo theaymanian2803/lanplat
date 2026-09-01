@@ -1,5 +1,5 @@
+import { AutoGrowTextarea } from '@/components/ui/auto-grow-textarea'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -24,7 +24,7 @@ interface AddWordPanelProps {
 
 const AddWordPanel = ({ defaultLanguage, onClose, position = 'left' }: AddWordPanelProps) => {
   const queryClient = useQueryClient()
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const [word, setWord] = useState('')
   const [translation, setTranslation] = useState('')
   const [contextNote, setContextNote] = useState('')
@@ -86,13 +86,16 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left' }: AddWordPa
         <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
           Word
         </Label>
-        <Input
+        <AutoGrowTextarea
           ref={inputRef}
           placeholder="e.g. hund"
           value={word}
           onChange={(e) => setWord(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && word && translation) addWord.mutate()
+            if (e.key === 'Enter' && !e.shiftKey && word && translation) {
+              e.preventDefault()
+              addWord.mutate()
+            }
           }}
           className="bg-muted/30 focus-visible:ring-primary/30"
         />
@@ -102,7 +105,7 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left' }: AddWordPa
           Translation
         </Label>
         <div className="relative">
-          <Input
+          <AutoGrowTextarea
             placeholder="e.g. dog"
             value={translation}
             onChange={(e) => {
@@ -110,12 +113,15 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left' }: AddWordPa
               setTranslation(e.target.value)
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && word && translation) addWord.mutate()
+              if (e.key === 'Enter' && !e.shiftKey && word && translation) {
+                e.preventDefault()
+                addWord.mutate()
+              }
             }}
             className="bg-muted/30 focus-visible:ring-primary/30 pr-8"
           />
           {translating && (
-            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+            <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
           )}
         </div>
         {error && !translating && (
@@ -143,7 +149,7 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left' }: AddWordPa
         <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
           Context Note (optional)
         </Label>
-        <Input
+        <AutoGrowTextarea
           placeholder="Where you encountered this word"
           value={contextNote}
           onChange={(e) => setContextNote(e.target.value)}

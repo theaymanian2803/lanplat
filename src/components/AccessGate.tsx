@@ -4,11 +4,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ShieldCheck } from 'lucide-react'
+import { DEFAULT_ACCESS_CODE, getAccessCode, isCustomAccessCode } from '@/lib/accessCode'
 
-const ACCESS_CODE = '123123123'
-const STORAGE_KEY = 'lingovault_unlocked'
+export const ACCESS_STORAGE_KEY = 'lingovault_unlocked'
 
-const isUnlocked = () => sessionStorage.getItem(STORAGE_KEY) === '1'
+const isUnlocked = () => sessionStorage.getItem(ACCESS_STORAGE_KEY) === '1'
 
 const AccessGate = ({ children }: { children: ReactNode }) => {
   const [value, setValue] = useState('')
@@ -18,8 +18,8 @@ const AccessGate = ({ children }: { children: ReactNode }) => {
   if (unlocked) return <>{children}</>
 
   const handleSubmit = () => {
-    if (value === ACCESS_CODE) {
-      sessionStorage.setItem(STORAGE_KEY, '1')
+    if (value === getAccessCode()) {
+      sessionStorage.setItem(ACCESS_STORAGE_KEY, '1')
       setUnlocked(true)
     } else {
       setError(true)
@@ -58,6 +58,11 @@ const AccessGate = ({ children }: { children: ReactNode }) => {
               }}
               className={error ? 'border-destructive focus-visible:ring-destructive/30' : ''}
             />
+            <p className="text-xs text-muted-foreground font-mono">
+              {isCustomAccessCode()
+                ? 'Access code set by the owner'
+                : `Demo access code: ${DEFAULT_ACCESS_CODE}`}
+            </p>
             {error && (
               <p className="text-xs text-destructive font-mono">Incorrect code, try again.</p>
             )}

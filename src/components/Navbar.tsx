@@ -1,15 +1,16 @@
 import { Link, useLocation } from "react-router-dom";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
-import { BookOpen, GraduationCap, Home, Languages, Settings2, Zap } from "lucide-react";
+import { BookOpen, GraduationCap, Home, Languages, LogOut, Settings2, Zap } from "lucide-react";
 
 interface NavbarProps {
   onOpenSettings: () => void;
+  onSignOut: () => void;
   lessonsOpen: boolean;
   onToggleLessons: () => void;
 }
 
-const Navbar = ({ onOpenSettings, lessonsOpen, onToggleLessons }: NavbarProps) => {
+const Navbar = ({ onOpenSettings, onSignOut, lessonsOpen, onToggleLessons }: NavbarProps) => {
   const location = useLocation();
 
   const isActive = (path: string) => location.pathname === path;
@@ -28,6 +29,7 @@ const Navbar = ({ onOpenSettings, lessonsOpen, onToggleLessons }: NavbarProps) =
                   variant={isActive("/") ? "secondary" : "ghost"}
                   size="sm"
                   className="gap-2 text-sm font-medium"
+                  data-tour="nav-dashboard"
                 >
                   <Home className="h-3.5 w-3.5" />
                   Dashboard
@@ -38,6 +40,7 @@ const Navbar = ({ onOpenSettings, lessonsOpen, onToggleLessons }: NavbarProps) =
                   variant={isActive("/vocab") ? "secondary" : "ghost"}
                   size="sm"
                   className="gap-2 text-sm font-medium"
+                  data-tour="nav-vocab"
                 >
                   <BookOpen className="h-3.5 w-3.5" />
                   Vocab Bank
@@ -48,6 +51,7 @@ const Navbar = ({ onOpenSettings, lessonsOpen, onToggleLessons }: NavbarProps) =
                   variant={isActive("/quiz") ? "secondary" : "ghost"}
                   size="sm"
                   className="gap-2 text-sm font-medium"
+                  data-tour="nav-quiz"
                 >
                   <Zap className="h-3.5 w-3.5" />
                   Quiz
@@ -58,6 +62,7 @@ const Navbar = ({ onOpenSettings, lessonsOpen, onToggleLessons }: NavbarProps) =
                   variant={isActive("/languages") ? "secondary" : "ghost"}
                   size="sm"
                   className="gap-2 text-sm font-medium"
+                  data-tour="nav-languages"
                 >
                   <Languages className="h-3.5 w-3.5" />
                   Languages
@@ -69,13 +74,24 @@ const Navbar = ({ onOpenSettings, lessonsOpen, onToggleLessons }: NavbarProps) =
                 onClick={onToggleLessons}
                 className="gap-2 text-sm font-medium"
                 aria-pressed={lessonsOpen}
+                data-tour="nav-lessons"
               >
                 <GraduationCap className="h-3.5 w-3.5" />
                 Lessons
               </Button>
             </div>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSignOut}
+              className="gap-2 text-sm font-medium text-muted-foreground hover:text-destructive"
+              title="Sign out"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Sign out
+            </Button>
             <Button
               variant="ghost"
               size="sm"

@@ -8,13 +8,16 @@ import { StickyNote, X } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 
+export type PanelPosition = 'left' | 'right'
+
 interface NoteEditorProps {
   videoId: string
   timestamp: number
   onClose: () => void
+  position?: PanelPosition
 }
 
-const NoteEditor = ({ videoId, timestamp, onClose }: NoteEditorProps) => {
+const NoteEditor = ({ videoId, timestamp, onClose, position = 'left' }: NoteEditorProps) => {
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLInputElement>(null)
   const [content, setContent] = useState('')
@@ -37,7 +40,10 @@ const NoteEditor = ({ videoId, timestamp, onClose }: NoteEditorProps) => {
   })
 
   return (
-    <aside className="w-80 shrink-0 bg-card rounded-xl border border-primary/20 shadow-2xl p-5 h-fit animate-in fade-in slide-in-from-left-4 duration-300">
+    <aside
+      className={`w-full lg:w-80 shrink-0 bg-card rounded-xl border border-primary/20 shadow-2xl p-5 h-fit animate-in fade-in ${
+        position === 'right' ? 'slide-in-from-right-4' : 'slide-in-from-left-4'
+      } duration-300`}>
       <div className="flex items-start justify-between gap-2 mb-4">
         <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
           <StickyNote className="h-4 w-4 text-primary" />

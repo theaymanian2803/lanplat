@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createBlock, parseBlocks, serializeBlocks } from '@/lib/lessonBlocks'
+import { appendBlockToContent, createBlock, parseBlocks, serializeBlocks } from '@/lib/lessonBlocks'
 import { buildLessonTree } from '@/lib/lessonTree'
 import type { Lesson, Part, Sublesson } from '@/integrations/turso/types'
 
@@ -60,6 +60,33 @@ describe('lessonBlocks', () => {
 
   it('returns [] for non-array JSON', () => {
     expect(parseBlocks('{"a":1}')).toEqual([])
+  })
+})
+
+describe('appendBlockToContent', () => {
+  it('appends a block to existing content', () => {
+    const blocks = [createBlock('h1', 'Verbs')]
+    const content = serializeBlocks(blocks)
+    const next = appendBlockToContent(content, createBlock('p', 'at spise — to eat'))
+
+    expect(parseBlocks(next)).toEqual([
+      expect.objectContaining({ type: 'h1', text: 'Verbs' }),
+      expect.objectContaining({ type: 'p', text: 'at spise — to eat', color: 'inherit' }),
+    ])
+  })
+
+  it('appends to empty content', () => {
+    const next = appendBlockToContent('[]', createBlock('p', 'hund — dog'))
+    expect(parseBlocks(next)).toEqual([
+      expect.objectContaining({ type: 'p', text: 'hund — dog' }),
+    ])
+  })
+
+  it('appends to invalid content by treating it as empty', () => {
+    const next = appendBlockToContent('not json', createBlock('p', 'hund — dog'))
+    expect(parseBlocks(next)).toEqual([
+      expect.objectContaining({ type: 'p', text: 'hund — dog' }),
+    ])
   })
 })
 

@@ -10,22 +10,27 @@ import {
 } from '@/components/ui/select'
 import { languagesDb, vocabularyDb } from '@/integrations/turso/db'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookMarked, X } from 'lucide-react'
+import { BookMarked, Loader2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useAutoTranslate } from '@/hooks/useAutoTranslate'
+import type { PanelPosition } from '@/components/NoteEditor'
 
 interface AddWordPanelProps {
   defaultLanguage: string
   onClose: () => void
+  position?: PanelPosition
 }
 
-const AddWordPanel = ({ defaultLanguage, onClose }: AddWordPanelProps) => {
+const AddWordPanel = ({ defaultLanguage, onClose, position = 'left' }: AddWordPanelProps) => {
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLInputElement>(null)
   const [word, setWord] = useState('')
   const [translation, setTranslation] = useState('')
   const [contextNote, setContextNote] = useState('')
   const [wordLang, setWordLang] = useState(defaultLanguage)
+
+  const { translating, markUserEdit, error } = useAutoTranslate(word, wordLang, translation, setTranslation)
 
   const { data: languages = [] } = useQuery({
     queryKey: ['languages'],
@@ -60,7 +65,10 @@ const AddWordPanel = ({ defaultLanguage, onClose }: AddWordPanelProps) => {
     : [defaultLanguage, ...languages]
 
   return (
-    <aside className="w-80 shrink-0 bg-card rounded-xl border border-primary/20 shadow-2xl p-5 h-fit animate-in fade-in slide-in-from-left-4 duration-300">
+    <aside
+    className={`w-full lg:w-80 shrink-0 bg-card rounded-xl border border-primary/20 shadow-2xl p-5 h-fit animate-in fade-in ${
+      position === 'right' ? 'slide-in-from-right-4' : 'slide-in-from-left-4'
+    } duration-300`}>
       <div className="flex items-start justify-between gap-2 mb-4">
         <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
           <BookMarked className="h-4 w-4 text-primary" />
@@ -93,15 +101,26 @@ const AddWordPanel = ({ defaultLanguage, onClose }: AddWordPanelProps) => {
         <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
           Translation
         </Label>
-        <Input
-          placeholder="e.g. dog"
-          value={translation}
-          onChange={(e) => setTranslation(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && word && translation) addWord.mutate()
-          }}
-          className="bg-muted/30 focus-visible:ring-primary/30"
-        />
+        <div className="relative">
+          <Input
+            placeholder="e.g. dog"
+            value={translation}
+            onChange={(e) => {
+              markUserEdit()
+              setTranslation(e.target.value)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && word && translation) addWord.mutate()
+            }}
+            className="bg-muted/30 focus-visible:ring-primary/30 pr-8"
+          />
+          {translating && (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+          )}
+        </div>
+        {error && !translating && (
+          <p className="text-xs text-destructive mt-1">{error} - type the translation manually.</p>
+        )}
       </div>
       <div className="space-y-2 mt-3">
         <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">

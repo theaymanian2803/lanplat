@@ -83,8 +83,8 @@ const Index = () => {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <Button onClick={() => setDialogOpen(true)} className="gap-2 text-sm font-semibold">
+          <h1 className="text-2xl font-bold tracking-tight" data-tour="dashboard-heading">Dashboard</h1>
+          <Button onClick={() => setDialogOpen(true)} className="gap-2 text-sm font-semibold" data-tour="add-video">
             <Plus className="h-4 w-4" />
             Add Video
           </Button>

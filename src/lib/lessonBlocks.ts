@@ -71,3 +71,7 @@ export function parseBlocks(raw: string): ContentBlock[] {
     return []
   }
 }
+
+export function appendBlockToContent(content: string, block: ContentBlock): string {
+  return serializeBlocks([...parseBlocks(content), block])
+}

@@ -4,6 +4,7 @@ import { languagesDb, vocabularyDb } from "@/integrations/turso/db";
 import { getLangBadgeClasses, getLangDotClass } from "@/lib/langColors";
 import { openDictionary } from "@/lib/dictionary";
 import { computeSrs, type SrsGrade } from "@/lib/srs";
+import { useAutoTranslate } from "@/hooks/useAutoTranslate";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Search, Download, BookOpen } from "lucide-react";
+import { Plus, Trash2, Search, Download, BookOpen, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 const masteryColors: Record<number, string> = {
@@ -33,6 +34,8 @@ const VocabBank = () => {
   const [translation, setTranslation] = useState("");
   const [contextNote, setContextNote] = useState("");
   const [lang, setLang] = useState<string>("Danish");
+
+  const { translating, markUserEdit, error } = useAutoTranslate(word, lang, translation, setTranslation);
 
   const { data: vocab = [], isLoading } = useQuery({
     queryKey: ["vocabulary", langFilter],
@@ -225,7 +228,13 @@ const VocabBank = () => {
             </div>
             <div className="space-y-2">
               <Label>Translation</Label>
-              <Input placeholder="e.g. dog" value={translation} onChange={(e) => setTranslation(e.target.value)} />
+              <div className="relative">
+                <Input placeholder="e.g. dog" value={translation} onChange={(e) => { markUserEdit(); setTranslation(e.target.value); }} className="pr-8" />
+                {translating && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />}
+              </div>
+              {error && !translating && (
+                <p className="text-xs text-destructive mt-1">{error} - type the translation manually.</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Language</Label>

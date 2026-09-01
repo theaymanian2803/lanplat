@@ -1,4 +1,5 @@
 import AddWordPanel from '@/components/AddWordPanel'
+import AddLessonContentPanel from '@/components/AddLessonContentPanel'
 import Layout from '@/components/Layout'
 import NoteEditor from '@/components/NoteEditor'
 import VideoControls from '@/components/VideoControls'
@@ -9,7 +10,7 @@ import { notesDb, screenshotsDb, videosDb } from '@/integrations/turso/db'
 import { extractVideoId } from '@/lib/youtube'
 import { compressImageToDataUrl } from '@/lib/imageCompression'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookMarked, Eraser, Forward, ImagePlus, Loader2, Minus, Pause, Play, Plus, Rewind, StickyNote, Trash2, X } from 'lucide-react'
+import { BookMarked, Eraser, Forward, ImagePlus, Layers, Loader2, Minus, Pause, Play, Plus, Rewind, StickyNote, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -35,6 +36,15 @@ const StudyRoom = () => {
   const [currentTime, setCurrentTime] = useState(0)
 
   const [addWordOpen, setAddWordOpen] = useState(false)
+  const [addLessonOpen, setAddLessonOpen] = useState(false)
+  const [panelSide, setPanelSide] = useState<'left' | 'right'>(() => {
+    const saved = localStorage.getItem('studyroom-panel-side')
+    return saved === 'left' ? 'left' : 'right'
+  })
+
+  useEffect(() => {
+    localStorage.setItem('studyroom-panel-side', panelSide)
+  }, [panelSide])
 
   // 0 means it conforms to the layout. Values > 0 represent raw vw (viewport width)
   const [outerWidth, setOuterWidth] = useState(0)
@@ -127,6 +137,25 @@ const StudyRoom = () => {
     playerRef.current?.seekTo?.(seconds, true)
   }, [])
 
+  const openNotePanel = useCallback(() => {
+    setCurrentTime(getCurrentPlayerTime())
+    setNoteOpen(true)
+    setAddWordOpen(false)
+    setAddLessonOpen(false)
+  }, [getCurrentPlayerTime])
+
+  const openAddWordPanel = useCallback(() => {
+    setAddWordOpen(true)
+    setNoteOpen(false)
+    setAddLessonOpen(false)
+  }, [])
+
+  const openAddLessonPanel = useCallback(() => {
+    setAddLessonOpen(true)
+    setNoteOpen(false)
+    setAddWordOpen(false)
+  }, [])
+
   useEffect(() => {
     if (loopA !== null && loopB !== null) {
       loopIntervalRef.current = setInterval(() => {
@@ -153,8 +182,7 @@ const StudyRoom = () => {
 
       if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
         e.preventDefault()
-        setCurrentTime(getCurrentPlayerTime())
-        setNoteOpen(true)
+        openNotePanel()
         return
       }
 
@@ -175,7 +203,7 @@ const StudyRoom = () => {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [getCurrentPlayerTime, seekTo])
+  }, [getCurrentPlayerTime, seekTo, openNotePanel])
 
   const { data: notes = [] } = useQuery({
     queryKey: ['notes', id],
@@ -367,35 +395,55 @@ const StudyRoom = () => {
         </h1>
 
         {/* Main Layout: flex row */}
-        <div className="flex flex-row w-full gap-4 items-start">
+        <div className="flex flex-col lg:flex-row w-full gap-4 items-stretch lg:items-start">
           {/* Left Panel: Note Editor */}
-          {noteOpen && (
-            <NoteEditor videoId={id!} timestamp={currentTime} onClose={() => setNoteOpen(false)} />
+          {panelSide === 'left' && noteOpen && (
+            <NoteEditor
+              videoId={id!}
+              timestamp={currentTime}
+              onClose={() => setNoteOpen(false)}
+              position={panelSide}
+            />
           )}
-          {addWordOpen && (
-            <AddWordPanel defaultLanguage={video.language} onClose={() => setAddWordOpen(false)} />
+          {panelSide === 'left' && addWordOpen && (
+            <AddWordPanel
+              defaultLanguage={video.language}
+              onClose={() => setAddWordOpen(false)}
+              position={panelSide}
+            />
+          )}
+          {panelSide === 'left' && addLessonOpen && (
+            <AddLessonContentPanel
+              defaultLanguage={video.language}
+              onClose={() => setAddLessonOpen(false)}
+              position={panelSide}
+            />
           )}
 
           {/* Right Section: Video Player */}
-          <div className="flex-1 min-w-0 flex gap-3 items-start">
+          <div className="flex-1 min-w-0 flex flex-col md:flex-row gap-3 items-stretch md:items-start">
             {/* Action Buttons — beside the video */}
-            <div className="flex flex-col gap-2 shrink-0">
+            <div className="flex flex-row md:flex-col gap-2 shrink-0 flex-wrap">
               <Button
                 size="icon"
                 variant="default"
                 title="Add Note (Ctrl+Enter)"
-                onClick={() => {
-                  setCurrentTime(getCurrentPlayerTime())
-                  setNoteOpen(true)
-                }}>
+                onClick={openNotePanel}>
                 <StickyNote className="h-4 w-4" />
               </Button>
               <Button
                 size="icon"
                 variant="default"
                 title="Add Word"
-                onClick={() => setAddWordOpen(true)}>
+                onClick={openAddWordPanel}>
                 <BookMarked className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="default"
+                title="Add Lesson Content"
+                onClick={openAddLessonPanel}>
+                <Layers className="h-4 w-4" />
               </Button>
               <Button
                 size="icon"
@@ -416,6 +464,23 @@ const StudyRoom = () => {
                 onClick={() => setIsDrawingMode((v) => !v)}>
                 <span className="font-mono font-bold text-sm leading-none">P</span>
               </Button>
+              <div
+                className="flex items-center gap-0.5 p-0.5 bg-muted/70 rounded-lg border border-border/50"
+                title="Panels and pen controls open on this side">
+                {(['left', 'right'] as const).map((side) => (
+                  <button
+                    key={side}
+                    type="button"
+                    onClick={() => setPanelSide(side)}
+                    className={`h-6 w-6 rounded-md text-[11px] font-bold transition-colors ${
+                      panelSide === side
+                        ? 'bg-primary text-primary-foreground shadow'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    }`}>
+                    {side === 'left' ? 'L' : 'R'}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="flex-1 min-w-0">
               {/* VIDEO CONTAINER: 
@@ -426,7 +491,7 @@ const StudyRoom = () => {
               */}
             <div
               className={`transition-all duration-300 ease-in-out space-y-4 z-10 ${
-                noteOpen || addWordOpen ? 'w-full' : 'w-full md:w-[80%] lg:w-[70%] mx-auto'
+                noteOpen || addWordOpen || addLessonOpen ? 'w-full' : 'w-full md:w-[80%] lg:w-[70%] mx-auto'
               }`}
               style={
                 outerWidth === 0
@@ -522,6 +587,30 @@ const StudyRoom = () => {
           </div>
           </div>
         </div>
+
+        {/* Right Panel: Note Editor */}
+        {panelSide === 'right' && noteOpen && (
+          <NoteEditor
+            videoId={id!}
+            timestamp={currentTime}
+            onClose={() => setNoteOpen(false)}
+            position={panelSide}
+          />
+        )}
+        {panelSide === 'right' && addWordOpen && (
+          <AddWordPanel
+            defaultLanguage={video.language}
+            onClose={() => setAddWordOpen(false)}
+            position={panelSide}
+          />
+        )}
+        {panelSide === 'right' && addLessonOpen && (
+          <AddLessonContentPanel
+            defaultLanguage={video.language}
+            onClose={() => setAddLessonOpen(false)}
+            position={panelSide}
+          />
+        )}
         </div>
         </div>
 
@@ -590,7 +679,10 @@ const StudyRoom = () => {
             onPointerUp={handlePointerUp}
             onPointerCancel={handlePointerUp}
           />
-          <div className="fixed left-0 top-1/2 -translate-y-1/2 z-[110] flex flex-col items-center gap-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/15 p-2 shadow-lg">
+          <div
+            className={`fixed top-1/2 -translate-y-1/2 z-[110] flex flex-col items-center gap-2 rounded-xl bg-black/60 backdrop-blur-md border border-white/15 p-2 shadow-lg ${
+              panelSide === 'right' ? 'right-0' : 'left-0'
+            }`}>
           {/* Video playback controls */}
           <div className="flex flex-col gap-1.5 items-center">
             <Button

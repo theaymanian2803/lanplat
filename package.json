@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "package": "node scripts/package.mjs",
+    "package:demo": "node scripts/package-demo.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

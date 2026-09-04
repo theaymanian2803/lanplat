@@ -5,8 +5,9 @@ import { AutoGrowTextarea } from '@/components/ui/auto-grow-textarea'
 import { useAutoTranslate } from '@/hooks/useAutoTranslate'
 import { lessonsDb } from '@/integrations/turso/db'
 import { appendBlockToContent, createBlock } from '@/lib/lessonBlocks'
+import { speakWord } from '@/lib/tts'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Layers, Loader2, X } from 'lucide-react'
+import { Layers, Loader2, Volume2, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import type { PanelPosition } from '@/components/NoteEditor'
@@ -168,8 +169,19 @@ const AddLessonContentPanel = ({ defaultLanguage, onClose, position = 'left' }: 
                   className="bg-muted/30 focus-visible:ring-primary/30 pr-8"
                 />
                 {translating && (
-                  <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />
+                  <Loader2 className="absolute right-10 top-3 h-4 w-4 animate-spin text-muted-foreground" />
                 )}
+                <button
+                  type="button"
+                  title="Listen"
+                  aria-label="Listen to this word"
+                  disabled={!word.trim()}
+                  onClick={() =>
+                    speakWord(word, lessonLanguage).catch(() => toast.error('Could not play audio'))
+                  }
+                  className="absolute right-3 top-3 text-muted-foreground hover:text-primary disabled:opacity-30 disabled:hover:text-muted-foreground transition-colors">
+                  <Volume2 className="h-4 w-4" />
+                </button>
               </div>
               {error && !translating && (
                 <p className="text-xs text-destructive mt-1">

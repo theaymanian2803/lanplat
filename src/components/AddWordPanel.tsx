@@ -10,10 +10,11 @@ import {
 } from '@/components/ui/select'
 import { languagesDb, vocabularyDb } from '@/integrations/turso/db'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookMarked, Loader2, X } from 'lucide-react'
+import { BookMarked, Loader2, Volume2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useAutoTranslate } from '@/hooks/useAutoTranslate'
+import { speakWord } from '@/lib/tts'
 import type { PanelPosition } from '@/components/NoteEditor'
 
 interface AddWordPanelProps {
@@ -86,19 +87,32 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left' }: AddWordPa
         <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
           Word
         </Label>
-        <AutoGrowTextarea
-          ref={inputRef}
-          placeholder="e.g. hund"
-          value={word}
-          onChange={(e) => setWord(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey && word && translation) {
-              e.preventDefault()
-              addWord.mutate()
+        <div className="relative">
+          <AutoGrowTextarea
+            ref={inputRef}
+            placeholder="e.g. hund"
+            value={word}
+            onChange={(e) => setWord(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey && word && translation) {
+                e.preventDefault()
+                addWord.mutate()
+              }
+            }}
+            className="bg-muted/30 focus-visible:ring-primary/30 pr-8"
+          />
+          <button
+            type="button"
+            title="Listen"
+            aria-label="Listen to this word"
+            disabled={!word.trim()}
+            onClick={() =>
+              speakWord(word, wordLang).catch(() => toast.error('Could not play audio'))
             }
-          }}
-          className="bg-muted/30 focus-visible:ring-primary/30"
-        />
+            className="absolute right-3 top-3 text-muted-foreground hover:text-primary disabled:opacity-30 disabled:hover:text-muted-foreground transition-colors">
+            <Volume2 className="h-4 w-4" />
+          </button>
+        </div>
       </div>
       <div className="space-y-2 mt-3">
         <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">

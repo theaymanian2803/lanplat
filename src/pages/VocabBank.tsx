@@ -13,8 +13,16 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Trash2, Search, Download, BookOpen, Loader2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, Trash2, Search, Download, BookOpen, Loader2, FileText } from "lucide-react";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
 
 const masteryColors: Record<number, string> = {
@@ -91,20 +99,48 @@ const VocabBank = () => {
   });
 
   const exportCsv = () => {
-    const header = "Word,Translation,Context Note,Language\n";
-    const rows = filtered.map((v) =>
-      [v.word, v.translation, v.context_note || "", v.language]
-        .map((c) => `"${String(c).replace(/"/g, '""')}"`)
-        .join(",")
-    ).join("\n");
-    const blob = new Blob([header + rows], { type: "text/csv" });
+    const header = "Word,Translation,Context Note,Language,Mastery\n";
+    const rows = filtered
+      .map((v) =>
+        [v.word, v.translation, v.context_note || "", v.language, String(v.mastery_level)]
+          .map((c) => `"${String(c).replace(/"/g, '""')}"`)
+          .join(",")
+      )
+      .join("\r\n");
+    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `lingovault-vocab-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
     toast.success("CSV exported");
+  };
+
+  const exportPdf = () => {
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    doc.setFontSize(14);
+    doc.text("LingoVault — Vocabulary", 40, 40);
+    doc.setFontSize(9);
+    doc.setTextColor(120);
+    doc.text(`Exported ${new Date().toLocaleDateString()} · ${filtered.length} words`, 40, 56);
+    autoTable(doc, {
+      startY: 70,
+      head: [["Word", "Translation", "Context Note", "Language", "Mastery"]],
+      body: filtered.map((v) => [
+        v.word,
+        v.translation,
+        v.context_note || "",
+        v.language,
+        `Lv ${v.mastery_level}`,
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [139, 92, 246] },
+    });
+    doc.save(`lingovault-vocab-${new Date().toISOString().slice(0, 10)}.pdf`);
+    toast.success("PDF exported");
   };
 
   return (
@@ -113,10 +149,24 @@ const VocabBank = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight">Vocab Bank</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={exportCsv} className="gap-2 text-sm font-medium" disabled={filtered.length === 0}>
-              <Download className="h-4 w-4" />
-              Export CSV
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2 text-sm font-medium" disabled={filtered.length === 0}>
+                  <Download className="h-4 w-4" />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={exportCsv} className="gap-2">
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={exportPdf} className="gap-2">
+                  <FileText className="h-4 w-4" />
+                  Export PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button onClick={() => setDialogOpen(true)} className="gap-2 text-sm font-semibold">
               <Plus className="h-4 w-4" />
               Add Word

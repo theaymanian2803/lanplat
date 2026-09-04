@@ -54,6 +54,28 @@ const StudyRoom = () => {
   const [loopB, setLoopB] = useState<number | null>(null)
   const loopIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  // Text-mode font size (12-28px, persisted)
+  const [textSize, setTextSize] = useState<number>(() => {
+    try {
+      const saved = Number(localStorage.getItem('studyroom-text-size'))
+      return saved >= 12 && saved <= 28 ? saved : 15
+    } catch {
+      return 15
+    }
+  })
+
+  const changeTextSize = useCallback((delta: number) => {
+    setTextSize((s) => {
+      const next = Math.min(28, Math.max(12, s + delta))
+      try {
+        localStorage.setItem('studyroom-text-size', String(next))
+      } catch {
+        // storage unavailable — size just won't persist
+      }
+      return next
+    })
+  }, [])
+
   // Drawing overlay state
   const [isDrawingMode, setIsDrawingMode] = useState(false)
   const [strokeColor, setStrokeColor] = useState(DRAW_COLORS[0])
@@ -522,25 +544,54 @@ const StudyRoom = () => {
                 <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">
                   Text
                 </span>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-7 gap-1.5 text-xs"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(video.content ?? '')
-                      toast.success('Text copied')
-                    } catch {
-                      toast.error('Could not copy text')
-                    }
-                  }}>
-                  <Copy className="h-3.5 w-3.5" />
-                  Copy text
-                </Button>
+                <div className="flex items-center gap-2">
+                  <div
+                    className="flex items-center gap-0.5 bg-muted/70 rounded-lg border border-border/50 px-1 h-7"
+                    title="Text size">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 hover:bg-muted text-foreground/80 hover:text-foreground transition-colors"
+                      title="Smaller text"
+                      onClick={() => changeTextSize(-1)}
+                      disabled={textSize <= 12}>
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="text-[10px] font-mono w-6 text-center text-muted-foreground font-medium">
+                      {textSize}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 hover:bg-muted text-foreground/80 hover:text-foreground transition-colors"
+                      title="Larger text"
+                      onClick={() => changeTextSize(1)}
+                      disabled={textSize >= 28}>
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1.5 text-xs"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(video.content ?? '')
+                        toast.success('Text copied')
+                      } catch {
+                        toast.error('Could not copy text')
+                      }
+                    }}>
+                    <Copy className="h-3.5 w-3.5" />
+                    Copy text
+                  </Button>
+                </div>
               </div>
               <div className="flex-1 overflow-y-auto p-6">
                 {video.content ? (
-                  <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/90 select-text">
+                  <p
+                    className="whitespace-pre-wrap leading-relaxed text-foreground/90 select-text"
+                    style={{ fontSize: textSize }}>
                     {video.content}
                   </p>
                 ) : (

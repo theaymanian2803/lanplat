@@ -4,6 +4,7 @@ import LessonEditDialog from '@/components/LessonEditDialog'
 import { useOpenLessonsDrawer } from '@/lib/lessonsDrawer'
 import { lessonsDb, videosDb } from '@/integrations/turso/db'
 import type { NestedLesson } from '@/lib/lessonTree'
+import type { Video as VideoRow } from '@/integrations/turso/types'
 import { parseBlocks } from '@/lib/lessonBlocks'
 import {
   AlertDialog,
@@ -59,7 +60,7 @@ const LessonsPage = () => {
 
   const mediaTypes = useMemo(() => {
     const map = new Map<string, string>()
-    for (const v of videos) map.set(v.id, v.media_type)
+    for (const v of videos as VideoRow[]) map.set(v.id, v.media_type)
     return map
   }, [videos])
 

@@ -539,7 +539,7 @@ const StudyRoom = () => {
               }>
           {/* Player */}
           {isText ? (
-            <div className="rounded-xl border border-primary/20 shadow-xl shadow-primary/5 overflow-hidden bg-card aspect-video flex flex-col">
+            <div className="rounded-xl border border-primary/20 shadow-xl shadow-primary/5 overflow-hidden bg-card flex flex-col max-h-[75vh]">
               <div className="flex items-center justify-between px-4 py-2 border-b border-border/40 shrink-0">
                 <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">
                   Text

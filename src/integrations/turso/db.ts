@@ -86,6 +86,25 @@ export async function ensureSchema(): Promise<void> {
   if (!videoCols.rows.some((c) => c.name === 'content')) {
     await turso.execute('ALTER TABLE videos ADD COLUMN content TEXT')
   }
+  const youtubeUrlCol = videoCols.rows.find((c) => c.name === 'youtube_url')
+  if (youtubeUrlCol?.notnull) {
+    await turso.executeMultiple(`
+CREATE TABLE videos_new (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  youtube_url TEXT,
+  media_type TEXT NOT NULL DEFAULT 'video',
+  content TEXT,
+  title TEXT NOT NULL,
+  language TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
+INSERT INTO videos_new (id, user_id, youtube_url, media_type, content, title, language, created_at)
+  SELECT id, user_id, youtube_url, media_type, content, title, language, created_at FROM videos;
+DROP TABLE videos;
+ALTER TABLE videos_new RENAME TO videos;
+`)
+  }
   const partCols = await turso.execute('PRAGMA table_info(parts)')
   const hasLessonId = partCols.rows.some((c) => c.name === 'lesson_id')
   const hasLegacySublessonId = partCols.rows.some((c) => c.name === 'sublesson_id')

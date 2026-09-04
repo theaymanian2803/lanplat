@@ -76,6 +76,71 @@ const StudyRoom = () => {
     })
   }, [])
 
+  // Text selection -> "Add word" floating action
+  const textContentRef = useRef<HTMLDivElement>(null)
+  const selectionBtnRef = useRef<HTMLDivElement>(null)
+  const [textSelection, setTextSelection] = useState<{ text: string; top: number; left: number } | null>(null)
+  const [pendingWord, setPendingWord] = useState('')
+
+  const readTextSelection = useCallback(() => {
+    const container = textContentRef.current
+    if (!container) {
+      setTextSelection(null)
+      return
+    }
+    const sel = window.getSelection()
+    const text = sel?.toString().trim() ?? ''
+    const anchor = sel?.anchorNode
+    const focus = sel?.focusNode
+    if (
+      !sel ||
+      sel.isCollapsed ||
+      !text ||
+      !anchor ||
+      !focus ||
+      !container.contains(anchor) ||
+      !container.contains(focus)
+    ) {
+      setTextSelection(null)
+      return
+    }
+    const rect = sel.getRangeAt(0).getBoundingClientRect()
+    if (rect.width === 0 && rect.height === 0) {
+      setTextSelection(null)
+      return
+    }
+    const btnW = 128
+    const btnH = 36
+    const left = Math.min(Math.max(rect.left + rect.width / 2 - btnW / 2, 8), window.innerWidth - btnW - 8)
+    const top = rect.top - btnH - 10 < 8 ? rect.bottom + 10 : rect.top - btnH - 10
+    setTextSelection({ text, top, left })
+  }, [])
+
+  useEffect(() => {
+    let raf = 0
+    const onChange = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(readTextSelection)
+    }
+    document.addEventListener('selectionchange', onChange)
+    return () => {
+      cancelAnimationFrame(raf)
+      document.removeEventListener('selectionchange', onChange)
+    }
+  }, [readTextSelection])
+
+  useEffect(() => {
+    const dismiss = (e: MouseEvent) => {
+      const target = e.target as Node
+      if (selectionBtnRef.current?.contains(target)) return
+      if (textContentRef.current && !textContentRef.current.contains(target)) {
+        setTextSelection(null)
+      }
+    }
+    document.addEventListener('mousedown', dismiss)
+    return () => document.removeEventListener('mousedown', dismiss)
+  }, [])
+
   // Drawing overlay state
   const [isDrawingMode, setIsDrawingMode] = useState(false)
   const [strokeColor, setStrokeColor] = useState(DRAW_COLORS[0])
@@ -444,6 +509,7 @@ const StudyRoom = () => {
               defaultLanguage={video.language}
               onClose={() => setAddWordOpen(false)}
               position={panelSide}
+              initialWord={pendingWord}
             />
           )}
           {panelSide === 'left' && addLessonOpen && (
@@ -587,7 +653,7 @@ const StudyRoom = () => {
                   </Button>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto p-6">
+              <div ref={textContentRef} className="flex-1 overflow-y-auto p-6">
                 {video.content ? (
                   <p
                     className="whitespace-pre-wrap leading-relaxed text-foreground/90 select-text"
@@ -702,6 +768,7 @@ const StudyRoom = () => {
             defaultLanguage={video.language}
             onClose={() => setAddWordOpen(false)}
             position={panelSide}
+            initialWord={pendingWord}
           />
         )}
         {panelSide === 'right' && addLessonOpen && (
@@ -772,6 +839,23 @@ const StudyRoom = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {isText && textSelection && (
+        <div
+          ref={selectionBtnRef}
+          className="fixed z-[90] flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground shadow-lg px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-primary/90 transition-colors"
+          style={{ top: textSelection.top, left: textSelection.left }}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            setPendingWord(textSelection.text)
+            setTextSelection(null)
+            window.getSelection()?.removeAllRanges()
+            openAddWordPanel()
+          }}>
+          <BookMarked className="h-3.5 w-3.5" />
+          Add word
+        </div>
+      )}
 
       {isDrawingMode && (
         <>

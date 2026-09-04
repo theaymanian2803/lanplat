@@ -21,12 +21,13 @@ interface AddWordPanelProps {
   defaultLanguage: string
   onClose: () => void
   position?: PanelPosition
+  initialWord?: string
 }
 
-const AddWordPanel = ({ defaultLanguage, onClose, position = 'left' }: AddWordPanelProps) => {
+const AddWordPanel = ({ defaultLanguage, onClose, position = 'left', initialWord }: AddWordPanelProps) => {
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLTextAreaElement>(null)
-  const [word, setWord] = useState('')
+  const [word, setWord] = useState(initialWord ?? '')
   const [translation, setTranslation] = useState('')
   const [contextNote, setContextNote] = useState('')
   const [wordLang, setWordLang] = useState(defaultLanguage)

@@ -98,6 +98,11 @@ const StudyRoom = () => {
   const isText = video?.media_type === 'text'
 
   useEffect(() => {
+    if (!videoId) {
+      playerRef.current?.destroy()
+      playerRef.current = null
+      return
+    }
     if (!apiReady || !videoId || !playerContainerRef.current) return
     if (playerRef.current) {
       playerRef.current.destroy()
@@ -138,6 +143,8 @@ const StudyRoom = () => {
   const seekTo = useCallback((seconds: number) => {
     playerRef.current?.seekTo?.(seconds, true)
   }, [])
+
+  const noopSeek = useCallback(() => {}, [])
 
   const openNotePanel = useCallback(() => {
     setCurrentTime(isText ? 0 : getCurrentPlayerTime())
@@ -519,9 +526,13 @@ const StudyRoom = () => {
                   size="sm"
                   variant="outline"
                   className="h-7 gap-1.5 text-xs"
-                  onClick={() => {
-                    navigator.clipboard.writeText(video.content ?? '')
-                    toast.success('Text copied')
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(video.content ?? '')
+                      toast.success('Text copied')
+                    } catch {
+                      toast.error('Could not copy text')
+                    }
                   }}>
                   <Copy className="h-3.5 w-3.5" />
                   Copy text
@@ -652,6 +663,7 @@ const StudyRoom = () => {
         </div>
         </div>
 
+        {!isText && (
         <div className="flex items-center gap-4 text-[11px] text-muted-foreground/80 font-mono mt-2 bg-muted/20 px-3 py-1.5 rounded-lg w-fit border border-border/30">
           <span className="flex items-center gap-1">
             <kbd className="bg-muted px-1.5 py-0.5 rounded border border-border/50 shadow-sm text-[9px] font-sans">
@@ -672,6 +684,7 @@ const StudyRoom = () => {
             quick note
           </span>
         </div>
+        )}
 
         {/* Notes & Screenshots Tabs */}
         <Tabs defaultValue="notes" className="w-full">
@@ -692,7 +705,7 @@ const StudyRoom = () => {
             <NoteList
               notes={notes}
               language={video.language}
-              onSeek={isText ? () => {} : seekTo}
+              onSeek={isText ? noopSeek : seekTo}
               onDelete={deleteNote.mutate}
               showTimestamp={!isText}
             />
@@ -701,7 +714,7 @@ const StudyRoom = () => {
           <TabsContent value="screenshots" className="mt-6">
             <ScreenshotList
               screenshots={screenshots}
-              onSeek={isText ? () => {} : seekTo}
+              onSeek={isText ? noopSeek : seekTo}
               onDelete={deleteScreenshot.mutate}
               showTimestamp={!isText}
             />

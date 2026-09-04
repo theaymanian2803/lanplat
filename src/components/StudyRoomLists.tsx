@@ -28,7 +28,7 @@ const NoteList = memo(function NoteList({
         <StickyNote className="h-8 w-8 text-muted-foreground/30 mb-3" />
         <p className="text-muted-foreground text-sm font-medium">No notes yet.</p>
         <p className="text-muted-foreground/70 text-xs mt-1">
-          Press Ctrl+Enter to take a quick note while watching.
+          Press Ctrl+Enter to take a quick note.
         </p>
       </div>
     )

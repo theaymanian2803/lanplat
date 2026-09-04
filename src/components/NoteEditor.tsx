@@ -15,9 +15,16 @@ interface NoteEditorProps {
   timestamp: number
   onClose: () => void
   position?: PanelPosition
+  showTimestamp?: boolean
 }
 
-const NoteEditor = ({ videoId, timestamp, onClose, position = 'left' }: NoteEditorProps) => {
+const NoteEditor = ({
+  videoId,
+  timestamp,
+  onClose,
+  position = 'left',
+  showTimestamp = true,
+}: NoteEditorProps) => {
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const [content, setContent] = useState('')
@@ -47,7 +54,10 @@ const NoteEditor = ({ videoId, timestamp, onClose, position = 'left' }: NoteEdit
       <div className="flex items-start justify-between gap-2 mb-4">
         <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
           <StickyNote className="h-4 w-4 text-primary" />
-          Add Note at <span className="text-primary">{formatTimestamp(timestamp)}</span>
+          Add Note{' '}
+          {showTimestamp && (
+            <span className="text-primary">at {formatTimestamp(timestamp)}</span>
+          )}
         </h2>
         <Button
           variant="ghost"

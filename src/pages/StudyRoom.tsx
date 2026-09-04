@@ -10,7 +10,7 @@ import { notesDb, screenshotsDb, videosDb } from '@/integrations/turso/db'
 import { extractVideoId } from '@/lib/youtube'
 import { compressImageToDataUrl } from '@/lib/imageCompression'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookMarked, Eraser, Forward, ImagePlus, Layers, Loader2, Minus, Pause, Play, Plus, Rewind, StickyNote, Trash2, X } from 'lucide-react'
+import { BookMarked, Copy, Eraser, Forward, ImagePlus, Layers, Loader2, Minus, Pause, Play, Plus, Rewind, StickyNote, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -95,6 +95,8 @@ const StudyRoom = () => {
 
   const videoId = video && video.youtube_url ? extractVideoId(video.youtube_url) : null
 
+  const isText = video?.media_type === 'text'
+
   useEffect(() => {
     if (!apiReady || !videoId || !playerContainerRef.current) return
     if (playerRef.current) {
@@ -138,11 +140,11 @@ const StudyRoom = () => {
   }, [])
 
   const openNotePanel = useCallback(() => {
-    setCurrentTime(getCurrentPlayerTime())
+    setCurrentTime(isText ? 0 : getCurrentPlayerTime())
     setNoteOpen(true)
     setAddWordOpen(false)
     setAddLessonOpen(false)
-  }, [getCurrentPlayerTime])
+  }, [getCurrentPlayerTime, isText])
 
   const openAddWordPanel = useCallback(() => {
     setAddWordOpen(true)
@@ -186,6 +188,8 @@ const StudyRoom = () => {
         return
       }
 
+      if (isText) return
+
       if (isInteractive) return
 
       if (e.code === 'Space') {
@@ -203,7 +207,7 @@ const StudyRoom = () => {
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [getCurrentPlayerTime, seekTo, openNotePanel])
+  }, [getCurrentPlayerTime, seekTo, openNotePanel, isText])
 
   const { data: notes = [] } = useQuery({
     queryKey: ['notes', id],
@@ -226,7 +230,7 @@ const StudyRoom = () => {
 
   const uploadScreenshot = useMutation({
     mutationFn: async (file: File) => {
-      const ts = getCurrentPlayerTime()
+      const ts = isText ? 0 : getCurrentPlayerTime()
       const imageUrl = await compressImageToDataUrl(file)
       await screenshotsDb.insert({
         video_id: id!,
@@ -403,6 +407,7 @@ const StudyRoom = () => {
               timestamp={currentTime}
               onClose={() => setNoteOpen(false)}
               position={panelSide}
+              showTimestamp={!isText}
             />
           )}
           {panelSide === 'left' && addWordOpen && (
@@ -504,50 +509,82 @@ const StudyRoom = () => {
                     }
               }>
           {/* Player */}
-          <div className="rounded-xl border border-primary/20 shadow-xl shadow-primary/5 overflow-hidden bg-black aspect-video">
-            <div className="w-full h-full relative">
-              <div ref={playerContainerRef} className="w-full h-full" />
-
-              {playerError !== null && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/90 text-white text-center p-6">
-                  <p className="font-semibold text-sm sm:text-base">
-                    This video can&apos;t play embedded (error {playerError}).
+          {isText ? (
+            <div className="rounded-xl border border-primary/20 shadow-xl shadow-primary/5 overflow-hidden bg-card aspect-video flex flex-col">
+              <div className="flex items-center justify-between px-4 py-2 border-b border-border/40 shrink-0">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">
+                  Text
+                </span>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1.5 text-xs"
+                  onClick={() => {
+                    navigator.clipboard.writeText(video.content ?? '')
+                    toast.success('Text copied')
+                  }}>
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy text
+                </Button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                {video.content ? (
+                  <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/90 select-text">
+                    {video.content}
                   </p>
-                  <p className="text-xs text-white/60 max-w-md">
-                    It may not allow embedding, or your browser is blocking YouTube. Open it
-                    directly instead.
-                  </p>
-                  <div className="flex flex-wrap items-center justify-center gap-2">
-                    <Button
-                      variant="default"
-                      onClick={() => video.youtube_url && window.open(video.youtube_url, '_blank', 'noopener')}
-                      className="gap-2 text-xs">
-                      Watch on YouTube
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setRetryToken((t) => t + 1)}
-                      className="gap-2 text-xs text-white border-white/30 hover:bg-white/10">
-                      Retry
-                    </Button>
-                  </div>
-                </div>
-              )}
+                ) : (
+                  <p className="text-sm text-muted-foreground">This text item is empty.</p>
+                )}
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="rounded-xl border border-primary/20 shadow-xl shadow-primary/5 overflow-hidden bg-black aspect-video">
+              <div className="w-full h-full relative">
+                <div ref={playerContainerRef} className="w-full h-full" />
+
+                {playerError !== null && (
+                  <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/90 text-white text-center p-6">
+                    <p className="font-semibold text-sm sm:text-base">
+                      This video can&apos;t play embedded (error {playerError}).
+                    </p>
+                    <p className="text-xs text-white/60 max-w-md">
+                      It may not allow embedding, or your browser is blocking YouTube. Open it
+                      directly instead.
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <Button
+                        variant="default"
+                        onClick={() => video.youtube_url && window.open(video.youtube_url, '_blank', 'noopener')}
+                        className="gap-2 text-xs">
+                        Watch on YouTube
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => setRetryToken((t) => t + 1)}
+                        className="gap-2 text-xs text-white border-white/30 hover:bg-white/10">
+                        Retry
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Video Controls Bar */}
-          <VideoControls
-            playerRef={playerRef}
-            loopA={loopA}
-            loopB={loopB}
-            onSetA={() => setLoopA(getCurrentPlayerTime())}
-            onSetB={() => setLoopB(getCurrentPlayerTime())}
-            onClearLoop={() => {
-              setLoopA(null)
-              setLoopB(null)
-            }}
-          />
+          {!isText && (
+            <VideoControls
+              playerRef={playerRef}
+              loopA={loopA}
+              loopB={loopB}
+              onSetA={() => setLoopA(getCurrentPlayerTime())}
+              onSetB={() => setLoopB(getCurrentPlayerTime())}
+              onClearLoop={() => {
+                setLoopA(null)
+                setLoopB(null)
+              }}
+            />
+          )}
 
           {/* Width Controls */}
           <div className="flex flex-wrap items-center gap-3 p-2 bg-card rounded-xl border border-border/50 shadow-sm">
@@ -595,6 +632,7 @@ const StudyRoom = () => {
             timestamp={currentTime}
             onClose={() => setNoteOpen(false)}
             position={panelSide}
+            showTimestamp={!isText}
           />
         )}
         {panelSide === 'right' && addWordOpen && (
@@ -654,16 +692,18 @@ const StudyRoom = () => {
             <NoteList
               notes={notes}
               language={video.language}
-              onSeek={seekTo}
+              onSeek={isText ? () => {} : seekTo}
               onDelete={deleteNote.mutate}
+              showTimestamp={!isText}
             />
           </TabsContent>
 
           <TabsContent value="screenshots" className="mt-6">
             <ScreenshotList
               screenshots={screenshots}
-              onSeek={seekTo}
+              onSeek={isText ? () => {} : seekTo}
               onDelete={deleteScreenshot.mutate}
+              showTimestamp={!isText}
             />
           </TabsContent>
         </Tabs>

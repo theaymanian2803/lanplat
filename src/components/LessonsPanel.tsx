@@ -27,7 +27,7 @@ import {
 import { lessonsDb, videosDb, languagesDb } from '@/integrations/turso/db'
 import type { Lesson, Part } from '@/integrations/turso/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookOpen, GraduationCap, Languages, Library, Pencil, Plus, Trash2, Video } from 'lucide-react'
+import { BookOpen, FileText, GraduationCap, Languages, Library, Pencil, Plus, Trash2, Video } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -314,8 +314,12 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
                   {videos.map((video) => (
                     <SelectItem key={video.id} value={video.id}>
                       <span className="inline-flex items-center gap-1.5">
-                        <Video className="h-3 w-3" />
-                        {video.title}
+                        {video.media_type === 'text' ? (
+                          <FileText className="h-3 w-3" />
+                        ) : (
+                          <Video className="h-3 w-3" />
+                        )}
+                        {video.media_type === 'text' ? `Text: ${video.title}` : video.title}
                       </span>
                     </SelectItem>
                   ))}

@@ -61,7 +61,7 @@ const Languages = () => {
         </div>
 
         <p className="text-xs text-muted-foreground/80 font-mono">
-          Languages added here are available when adding new videos.
+          Languages added here are available when adding new media.
         </p>
 
         {isLoading ? (

@@ -22,6 +22,7 @@ import {
   BookOpen,
   ChevronDown,
   ChevronLeft,
+  FileText,
   GraduationCap,
   Languages,
   Layers,
@@ -53,6 +54,12 @@ const LessonsPage = () => {
   const videoTitles = useMemo(() => {
     const map = new Map<string, string>()
     for (const v of videos) map.set(v.id, v.title)
+    return map
+  }, [videos])
+
+  const mediaTypes = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const v of videos) map.set(v.id, v.media_type)
     return map
   }, [videos])
 
@@ -125,6 +132,7 @@ const LessonsPage = () => {
                 key={lesson.id}
                 lesson={lesson}
                 videoTitle={lesson.media_id ? videoTitles.get(lesson.media_id) : undefined}
+                mediaTypes={mediaTypes}
                 onClick={() => setSelectedLessonId(lesson.id)}
                 onEdit={() => setEditingLesson(lesson)}
                 onDelete={() => setDeletingLesson(lesson)}
@@ -167,12 +175,13 @@ const LessonsPage = () => {
 interface LessonCardProps {
   lesson: NestedLesson
   videoTitle?: string
+  mediaTypes: Map<string, string>
   onClick: () => void
   onEdit: () => void
   onDelete: () => void
 }
 
-const LessonCard = ({ lesson, videoTitle, onClick, onEdit, onDelete }: LessonCardProps) => {
+const LessonCard = ({ lesson, videoTitle, mediaTypes, onClick, onEdit, onDelete }: LessonCardProps) => {
   const parts = lesson.parts.length
   return (
     <div
@@ -210,8 +219,17 @@ const LessonCard = ({ lesson, videoTitle, onClick, onEdit, onDelete }: LessonCar
       <div className="flex items-center gap-2 mt-3 flex-wrap">
         {lesson.media_id ? (
           <Badge variant="outline" className="gap-1 text-[11px] font-mono text-primary/80">
-            <Video className="h-3 w-3" />
-            {videoTitle ?? 'Video'}
+            {mediaTypes.get(lesson.media_id) === 'text' ? (
+              <>
+                <FileText className="h-3 w-3" />
+                {videoTitle ?? 'Text'}
+              </>
+            ) : (
+              <>
+                <Video className="h-3 w-3" />
+                {videoTitle ?? 'Video'}
+              </>
+            )}
           </Badge>
         ) : (
           <Badge variant="outline" className="gap-1 text-[11px] font-mono text-muted-foreground/70">

@@ -9,12 +9,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -36,13 +30,14 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
 type Language = string
+type AddMode = 'choose' | 'video' | 'text'
 
 const Index = () => {
   const queryClient = useQueryClient()
   const [filter, setFilter] = useState<string>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [addMode, setAddMode] = useState<AddMode>('choose')
   const [newUrl, setNewUrl] = useState('')
-  const [textDialogOpen, setTextDialogOpen] = useState(false)
   const [newText, setNewText] = useState('')
   const [newTitle, setNewTitle] = useState('')
   const [newLang, setNewLang] = useState<Language>('Danish')
@@ -72,6 +67,7 @@ const Index = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['videos'] })
       setDialogOpen(false)
+      setAddMode('choose')
       setNewUrl('')
       setNewTitle('')
       toast.success('Video added')
@@ -93,7 +89,8 @@ const Index = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['videos'] })
-      setTextDialogOpen(false)
+      setDialogOpen(false)
+      setAddMode('choose')
       setNewText('')
       setNewTitle('')
       toast.success('Text added')
@@ -117,24 +114,16 @@ const Index = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold tracking-tight" data-tour="dashboard-heading">Dashboard</h1>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button className="gap-2 text-sm font-semibold" data-tour="add-video">
-                <Plus className="h-4 w-4" />
-                Add
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setDialogOpen(true)} className="gap-2">
-                <Play className="h-4 w-4" />
-                Add Video
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTextDialogOpen(true)} className="gap-2">
-                <FileText className="h-4 w-4" />
-                Add Text
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button
+            onClick={() => {
+              setAddMode('choose')
+              setDialogOpen(true)
+            }}
+            className="gap-2 text-sm font-semibold"
+            data-tour="add-video">
+            <Plus className="h-4 w-4" />
+            Add
+          </Button>
         </div>
 
         {/* Language filter */}
@@ -256,102 +245,144 @@ const Index = () => {
         )}
       </div>
 
-      {/* Add Video Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {/* Add Media Dialog */}
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(o) => {
+          setDialogOpen(o)
+          if (!o) setAddMode('choose')
+        }}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add YouTube Video</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>YouTube URL</Label>
-              <Input
-                placeholder="https://youtube.com/watch?v=..."
-                value={newUrl}
-                onChange={(e) => setNewUrl(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Title</Label>
-              <Input
-                placeholder="Video title"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Language</Label>
-              <Select value={newLang} onValueChange={(v) => setNewLang(v)}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {languages.map((l) => (
-                    <SelectItem key={l} value={l}>
-                      {l}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              onClick={() => addVideo.mutate()}
-              disabled={!newUrl || !newTitle || !newLang || addVideo.isPending}
-              className="text-sm font-semibold">
-              {addVideo.isPending ? 'Saving…' : 'Add Video'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={textDialogOpen} onOpenChange={setTextDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add Text</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title</Label>
-              <Input
-                placeholder="e.g. Chapter 1 — The Journey"
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Language</Label>
-              <Select value={newLang} onValueChange={(v) => setNewLang(v)}>
-                <SelectTrigger className="flex-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {languages.map((l) => (
-                    <SelectItem key={l} value={l}>
-                      {l}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Text content</Label>
-              <Textarea
-                placeholder="Paste the full text here…"
-                value={newText}
-                onChange={(e) => setNewText(e.target.value)}
-                className="min-h-[200px]"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              onClick={() => addText.mutate()}
-              disabled={!newTitle.trim() || !newText.trim() || addText.isPending}
-              className="text-sm font-semibold">
-              {addText.isPending ? 'Saving…' : 'Add Text'}
-            </Button>
-          </DialogFooter>
+          {addMode === 'choose' ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Add Media</DialogTitle>
+              </DialogHeader>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2">
+                <Button
+                  variant="outline"
+                  className="h-28 flex-col gap-2 text-sm font-semibold"
+                  onClick={() => setAddMode('video')}>
+                  <Play className="h-6 w-6 text-primary" />
+                  Add Video
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-28 flex-col gap-2 text-sm font-semibold"
+                  onClick={() => setAddMode('text')}>
+                  <FileText className="h-6 w-6 text-primary" />
+                  Add Text
+                </Button>
+              </div>
+            </>
+          ) : addMode === 'video' ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>Add YouTube Video</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>YouTube URL</Label>
+                  <Input
+                    placeholder="https://youtube.com/watch?v=..."
+                    value={newUrl}
+                    onChange={(e) => setNewUrl(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Title</Label>
+                  <Input
+                    placeholder="Video title"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Language</Label>
+                  <Select value={newLang} onValueChange={(v) => setNewLang(v)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {languages.map((l) => (
+                        <SelectItem key={l} value={l}>
+                          {l}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="ghost"
+                  onClick={() => setAddMode('choose')}
+                  className="text-sm">
+                  Back
+                </Button>
+                <Button
+                  onClick={() => addVideo.mutate()}
+                  disabled={!newUrl || !newTitle || !newLang || addVideo.isPending}
+                  className="text-sm font-semibold">
+                  {addVideo.isPending ? 'Saving…' : 'Add Video'}
+                </Button>
+              </DialogFooter>
+            </>
+          ) : (
+            <>
+              <DialogHeader>
+                <DialogTitle>Add Text</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Title</Label>
+                  <Input
+                    placeholder="e.g. Chapter 1 — The Journey"
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Language</Label>
+                  <Select value={newLang} onValueChange={(v) => setNewLang(v)}>
+                    <SelectTrigger className="flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {languages.map((l) => (
+                        <SelectItem key={l} value={l}>
+                          {l}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Text content</Label>
+                  <Textarea
+                    placeholder="Paste the full text here…"
+                    value={newText}
+                    onChange={(e) => setNewText(e.target.value)}
+                    className="min-h-[200px]"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="ghost"
+                  onClick={() => setAddMode('choose')}
+                  className="text-sm">
+                  Back
+                </Button>
+                <Button
+                  onClick={() => addText.mutate()}
+                  disabled={!newTitle.trim() || !newText.trim() || addText.isPending}
+                  className="text-sm font-semibold">
+                  {addText.isPending ? 'Saving…' : 'Add Text'}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </Layout>

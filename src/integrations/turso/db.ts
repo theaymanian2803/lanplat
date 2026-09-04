@@ -112,9 +112,14 @@ ALTER TABLE videos_new RENAME TO videos;
     await turso.execute('ALTER TABLE parts ADD COLUMN lesson_id TEXT')
   }
   if (hasLegacySublessonId) {
-    await turso.execute(
-      "UPDATE parts SET lesson_id = (SELECT sublessons.lesson_id FROM sublessons WHERE sublessons.id = parts.sublesson_id) WHERE lesson_id IS NULL AND sublesson_id IS NOT NULL"
+    const sublessonsTable = await turso.execute(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'sublessons'"
     )
+    if (sublessonsTable.rows.length > 0) {
+      await turso.execute(
+        "UPDATE parts SET lesson_id = (SELECT sublessons.lesson_id FROM sublessons WHERE sublessons.id = parts.sublesson_id) WHERE lesson_id IS NULL AND sublesson_id IS NOT NULL"
+      )
+    }
     try {
       await turso.execute('DROP TABLE IF EXISTS sublessons')
     } catch {

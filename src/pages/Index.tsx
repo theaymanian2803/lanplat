@@ -53,9 +53,11 @@ const Index = () => {
       const videoId = extractVideoId(newUrl)
       if (!videoId) throw new Error('Invalid YouTube URL')
       await videosDb.insert({
+        media_type: 'video',
         youtube_url: newUrl,
         title: newTitle,
         language: newLang,
+        content: null,
       })
     },
     onSuccess: () => {
@@ -114,7 +116,7 @@ const Index = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {videos.map((v) => {
-              const videoId = extractVideoId(v.youtube_url)
+              const videoId = extractVideoId(v.youtube_url ?? '')
               return (
                 <Card
                   key={v.id}

@@ -93,7 +93,7 @@ const StudyRoom = () => {
     enabled: !!id,
   })
 
-  const videoId = video ? extractVideoId(video.youtube_url) : null
+  const videoId = video && video.youtube_url ? extractVideoId(video.youtube_url) : null
 
   useEffect(() => {
     if (!apiReady || !videoId || !playerContainerRef.current) return
@@ -520,7 +520,7 @@ const StudyRoom = () => {
                   <div className="flex flex-wrap items-center justify-center gap-2">
                     <Button
                       variant="default"
-                      onClick={() => window.open(video.youtube_url, '_blank', 'noopener')}
+                      onClick={() => video.youtube_url && window.open(video.youtube_url, '_blank', 'noopener')}
                       className="gap-2 text-xs">
                       Watch on YouTube
                     </Button>

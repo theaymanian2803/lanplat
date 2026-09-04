@@ -10,7 +10,9 @@ export const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS videos (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
-  youtube_url TEXT NOT NULL,
+  youtube_url TEXT,
+  media_type TEXT NOT NULL DEFAULT 'video',
+  content TEXT,
   title TEXT NOT NULL,
   language TEXT NOT NULL,
   created_at TEXT NOT NULL
@@ -77,6 +79,13 @@ export async function ensureSchema(): Promise<void> {
   if (!lessonCols.rows.some((c) => c.name === 'language')) {
     await turso.execute('ALTER TABLE lessons ADD COLUMN language TEXT')
   }
+  const videoCols = await turso.execute('PRAGMA table_info(videos)')
+  if (!videoCols.rows.some((c) => c.name === 'media_type')) {
+    await turso.execute("ALTER TABLE videos ADD COLUMN media_type TEXT NOT NULL DEFAULT 'video'")
+  }
+  if (!videoCols.rows.some((c) => c.name === 'content')) {
+    await turso.execute('ALTER TABLE videos ADD COLUMN content TEXT')
+  }
   const partCols = await turso.execute('PRAGMA table_info(parts)')
   const hasLessonId = partCols.rows.some((c) => c.name === 'lesson_id')
   const hasLegacySublessonId = partCols.rows.some((c) => c.name === 'sublesson_id')
@@ -122,10 +131,25 @@ export const videosDb = {
     return (rs.rows[0] as unknown as Video) ?? null
   },
 
-  async insert(input: { youtube_url: string; title: string; language: string }): Promise<void> {
+  async insert(input: {
+    media_type: 'video' | 'text'
+    youtube_url: string | null
+    title: string
+    language: string
+    content: string | null
+  }): Promise<void> {
     await turso.execute({
-      sql: 'INSERT INTO videos (id, user_id, youtube_url, title, language, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-      args: [newId(), LOCAL_USER_ID, input.youtube_url, input.title, input.language, now()],
+      sql: 'INSERT INTO videos (id, user_id, youtube_url, media_type, content, title, language, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      args: [
+        newId(),
+        LOCAL_USER_ID,
+        input.youtube_url,
+        input.media_type,
+        input.content,
+        input.title,
+        input.language,
+        now(),
+      ],
     })
   },
 

@@ -3,7 +3,9 @@ export type Language = 'Danish' | 'Japanese' | 'Spanish'
 export interface Video {
   id: string
   user_id: string
-  youtube_url: string
+  media_type: 'video' | 'text'
+  youtube_url: string | null
+  content: string | null
   title: string
   language: string
   created_at: string

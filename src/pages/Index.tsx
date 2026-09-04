@@ -19,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { languagesDb, videosDb } from '@/integrations/turso/db'
 import { getLangBadgeClasses, getLangDotClass } from '@/lib/langColors'
 import { extractVideoId, getThumbnailUrl } from '@/lib/youtube'
@@ -46,6 +45,11 @@ const Index = () => {
   const { data: videos = [], isLoading } = useQuery({
     queryKey: ['videos', filter],
     queryFn: async () => videosDb.list(filter === 'all' ? undefined : filter),
+  })
+
+  const { data: allVideos = [] } = useQuery({
+    queryKey: ['videos', 'all'],
+    queryFn: () => videosDb.list(),
   })
 
   const { data: languages = [] } = useQuery({
@@ -132,47 +136,50 @@ const Index = () => {
           </Button>
         </div>
 
-        {/* Media type filter */}
-        <ToggleGroup
-          type="single"
-          value={typeFilter}
-          onValueChange={(v) => v && setTypeFilter(v as 'all' | 'video' | 'text')}
-          className="justify-start flex-wrap">
-          <ToggleGroupItem value="all" className="text-sm font-medium">
-            All
-          </ToggleGroupItem>
-          <ToggleGroupItem value="video" className="gap-1.5 text-sm font-medium">
-            <Play className="h-3.5 w-3.5" />
-            Videos
-          </ToggleGroupItem>
-          <ToggleGroupItem value="text" className="gap-1.5 text-sm font-medium">
-            <FileText className="h-3.5 w-3.5" />
-            Texts
-          </ToggleGroupItem>
-        </ToggleGroup>
+        {/* Filters */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as 'all' | 'video' | 'text')}>
+            <SelectTrigger className="w-40 h-9 text-sm font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All media</SelectItem>
+              <SelectItem value="video" className="gap-1.5">
+                <span className="inline-flex items-center gap-1.5">
+                  <Play className="h-3.5 w-3.5" />
+                  Videos
+                </span>
+              </SelectItem>
+              <SelectItem value="text" className="gap-1.5">
+                <span className="inline-flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5" />
+                  Texts
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
 
-        {/* Language filter */}
-        <ToggleGroup
-          type="single"
-          value={filter}
-          onValueChange={(v) => v && setFilter(v)}
-          className="justify-start flex-wrap">
-          <ToggleGroupItem value="all" className="text-sm font-medium">
-            All
-          </ToggleGroupItem>
-          {languages.map((l) => (
-            <ToggleGroupItem key={l} value={l} className="text-sm font-medium">
-              {l}
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-44 h-9 text-sm font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All languages</SelectItem>
+              {languages.map((l) => (
+                <SelectItem key={l} value={l}>
+                  {l}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Grid */}
         {isLoading ? (
           <p className="text-muted-foreground text-sm">Loading…</p>
         ) : visibleVideos.length === 0 ? (
           <p className="text-muted-foreground text-sm">
-            {videos.length === 0
+            {allVideos.length === 0
               ? 'No media yet. Add one above.'
               : typeFilter === 'video'
                 ? 'No videos in this language.'

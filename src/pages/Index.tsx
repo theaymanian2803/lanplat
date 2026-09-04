@@ -25,7 +25,7 @@ import { getLangBadgeClasses, getLangDotClass } from '@/lib/langColors'
 import { extractVideoId, getThumbnailUrl } from '@/lib/youtube'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FileText, Play, Plus, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -35,6 +35,7 @@ type AddMode = 'choose' | 'video' | 'text'
 const Index = () => {
   const queryClient = useQueryClient()
   const [filter, setFilter] = useState<string>('all')
+  const [typeFilter, setTypeFilter] = useState<'all' | 'video' | 'text'>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [addMode, setAddMode] = useState<AddMode>('choose')
   const [newUrl, setNewUrl] = useState('')
@@ -51,6 +52,11 @@ const Index = () => {
     queryKey: ['languages'],
     queryFn: languagesDb.list,
   })
+
+  const visibleVideos = useMemo(
+    () => videos.filter((v) => typeFilter === 'all' || v.media_type === typeFilter),
+    [videos, typeFilter],
+  )
 
   const addVideo = useMutation({
     mutationFn: async () => {
@@ -126,6 +132,25 @@ const Index = () => {
           </Button>
         </div>
 
+        {/* Media type filter */}
+        <ToggleGroup
+          type="single"
+          value={typeFilter}
+          onValueChange={(v) => v && setTypeFilter(v as 'all' | 'video' | 'text')}
+          className="justify-start flex-wrap">
+          <ToggleGroupItem value="all" className="text-sm font-medium">
+            All
+          </ToggleGroupItem>
+          <ToggleGroupItem value="video" className="gap-1.5 text-sm font-medium">
+            <Play className="h-3.5 w-3.5" />
+            Videos
+          </ToggleGroupItem>
+          <ToggleGroupItem value="text" className="gap-1.5 text-sm font-medium">
+            <FileText className="h-3.5 w-3.5" />
+            Texts
+          </ToggleGroupItem>
+        </ToggleGroup>
+
         {/* Language filter */}
         <ToggleGroup
           type="single"
@@ -145,11 +170,19 @@ const Index = () => {
         {/* Grid */}
         {isLoading ? (
           <p className="text-muted-foreground text-sm">Loading…</p>
-        ) : videos.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No media yet. Add one above.</p>
+        ) : visibleVideos.length === 0 ? (
+          <p className="text-muted-foreground text-sm">
+            {videos.length === 0
+              ? 'No media yet. Add one above.'
+              : typeFilter === 'video'
+                ? 'No videos in this language.'
+                : typeFilter === 'text'
+                  ? 'No texts in this language.'
+                  : 'No media in this language.'}
+          </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {videos.map((v) => {
+            {visibleVideos.map((v) => {
               const videoId = extractVideoId(v.youtube_url ?? '')
               return v.media_type === 'text' ? (
                 <Card

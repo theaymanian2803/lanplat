@@ -9,9 +9,10 @@ import { NoteList, ScreenshotList } from '@/components/StudyRoomLists'
 import { notesDb, screenshotsDb, videosDb } from '@/integrations/turso/db'
 import { extractVideoId } from '@/lib/youtube'
 import { compressImageToDataUrl } from '@/lib/imageCompression'
+import { TextSpeaker, splitSentences } from '@/lib/tts'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BookMarked, Copy, Eraser, Forward, ImagePlus, Layers, Loader2, Minus, Pause, Play, Plus, Rewind, StickyNote, Trash2, X } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -23,6 +24,8 @@ declare global {
 }
 
 const DRAW_COLORS = ['#FFD60A', '#FF3B30', '#00E5FF', '#FFFFFF', '#9BFF00', '#FF2D92']
+
+const SPEAK_SPEEDS = [1, 1.25, 1.5, 0.75, 0.5]
 
 const StudyRoom = () => {
   const { id } = useParams<{ id: string }>()
@@ -183,6 +186,44 @@ const StudyRoom = () => {
   const videoId = video && video.youtube_url ? extractVideoId(video.youtube_url) : null
 
   const isText = video?.media_type === 'text'
+
+  // Listen-to-text mode (sentence by sentence)
+  const [playingIndex, setPlayingIndex] = useState<number | null>(null)
+  const [speakSpeed, setSpeakSpeed] = useState(1)
+  const speakerRef = useRef<TextSpeaker | null>(null)
+  if (!speakerRef.current) speakerRef.current = new TextSpeaker()
+
+  const sentences = useMemo(() => (video?.content ? splitSentences(video.content) : []), [video])
+
+  const toggleSpeak = useCallback(() => {
+    if (playingIndex !== null) {
+      speakerRef.current?.stop()
+      setPlayingIndex(null)
+      return
+    }
+    if (!video?.content) return
+    speakerRef.current?.start(video.content, video.language, speakSpeed, {
+      onSentenceChange: (i) => setPlayingIndex(i),
+      onDone: () => setPlayingIndex(null),
+      onError: () => {
+        setPlayingIndex(null)
+        toast.error('Could not play audio')
+      },
+    })
+  }, [playingIndex, video, speakSpeed])
+
+  const cycleSpeakSpeed = useCallback(() => {
+    setSpeakSpeed((s) => {
+      const i = SPEAK_SPEEDS.indexOf(s)
+      return SPEAK_SPEEDS[(i + 1) % SPEAK_SPEEDS.length]
+    })
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      speakerRef.current?.stop()
+    }
+  }, [])
 
   useEffect(() => {
     if (!videoId) {
@@ -611,6 +652,27 @@ const StudyRoom = () => {
                   Text
                 </span>
                 <div className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant={playingIndex !== null ? 'default' : 'secondary'}
+                    className="h-7 w-7"
+                    title={playingIndex !== null ? 'Stop listening' : 'Listen to the whole text'}
+                    onClick={toggleSpeak}
+                    disabled={sentences.length === 0}>
+                    {playingIndex !== null ? (
+                      <Pause className="h-3.5 w-3.5" />
+                    ) : (
+                      <Play className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2 text-[11px] font-mono"
+                    title="Playback speed"
+                    onClick={cycleSpeakSpeed}>
+                    {speakSpeed}x
+                  </Button>
                   <div
                     className="flex items-center gap-0.5 bg-muted/70 rounded-lg border border-border/50 px-1 h-7"
                     title="Text size">
@@ -658,7 +720,17 @@ const StudyRoom = () => {
                   <p
                     className="whitespace-pre-wrap leading-relaxed text-foreground/90 select-text"
                     style={{ fontSize: textSize }}>
-                    {video.content}
+                    {sentences.map((sentence, idx) => (
+                      <span
+                        key={idx}
+                        className={
+                          idx === playingIndex
+                            ? 'bg-primary/15 rounded px-0.5 -mx-0.5 transition-colors'
+                            : ''
+                        }>
+                        {sentence}
+                      </span>
+                    ))}
                   </p>
                 ) : (
                   <p className="text-sm text-muted-foreground">This text item is empty.</p>

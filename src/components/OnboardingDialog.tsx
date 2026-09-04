@@ -53,7 +53,7 @@ const STEPS: Step[] = [
     icon: <ListChecks className="h-5 w-5" />,
     title: 'Lessons',
     description:
-      'Create structured lessons and sublessons with rich-text parts — perfect for planning a study path.',
+      'Create structured lessons with rich-text parts — perfect for planning a study path.',
   },
   {
     selector: '[data-tour="connect-button"]',

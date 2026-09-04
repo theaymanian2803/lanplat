@@ -50,19 +50,10 @@ export interface ContentBlock {
 
 export interface Part {
   id: string
-  sublesson_id: string
-  user_id: string
-  position: number
-  content: string
-  created_at: string
-}
-
-export interface Sublesson {
-  id: string
   lesson_id: string
   user_id: string
   position: number
-  title: string
+  content: string
   created_at: string
 }
 

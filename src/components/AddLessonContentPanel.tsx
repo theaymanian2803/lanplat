@@ -22,7 +22,6 @@ const NEW_PART = '__new__'
 const AddLessonContentPanel = ({ defaultLanguage, onClose, position = 'left' }: AddLessonContentPanelProps) => {
   const queryClient = useQueryClient()
   const [lessonId, setLessonId] = useState('')
-  const [sublessonId, setSublessonId] = useState('')
   const [partId, setPartId] = useState('')
   const [word, setWord] = useState('')
   const [translation, setTranslation] = useState('')
@@ -39,8 +38,7 @@ const AddLessonContentPanel = ({ defaultLanguage, onClose, position = 'left' }: 
   const lessonOptions = languageLessons.length > 0 ? languageLessons : lessons
 
   const lesson = lessonOptions.find((l) => l.id === lessonId)
-  const sublesson = lesson?.sublessons.find((s) => s.id === sublessonId)
-  const parts = sublesson?.parts ?? []
+  const parts = lesson?.parts ?? []
   const selectedPart = parts.find((p) => p.id === partId)
   const lessonLanguage = lesson?.language ?? defaultLanguage
 
@@ -52,13 +50,8 @@ const AddLessonContentPanel = ({ defaultLanguage, onClose, position = 'left' }: 
   )
 
   useEffect(() => {
-    setSublessonId('')
     setPartId('')
   }, [lessonId])
-
-  useEffect(() => {
-    setPartId('')
-  }, [sublessonId])
 
   const addContent = useMutation({
     mutationFn: async () => {
@@ -66,7 +59,7 @@ const AddLessonContentPanel = ({ defaultLanguage, onClose, position = 'left' }: 
         ? `${word.trim()} — ${translation.trim()}`
         : word.trim()
       const targetPartId =
-        partId === NEW_PART ? await lessonsDb.createPart({ sublesson_id: sublessonId }) : partId
+        partId === NEW_PART ? await lessonsDb.createPart({ lesson_id: lessonId }) : partId
       const targetContent =
         partId === NEW_PART ? '[]' : (selectedPart?.content ?? '[]')
       await lessonsDb.updatePart(
@@ -83,7 +76,7 @@ const AddLessonContentPanel = ({ defaultLanguage, onClose, position = 'left' }: 
     onError: (e) => toast.error(e.message),
   })
 
-  const canSave = lessonId && sublessonId && partId && word.trim() && !addContent.isPending
+  const canSave = lessonId && partId && word.trim() && !addContent.isPending
 
   return (
     <aside
@@ -132,51 +125,31 @@ const AddLessonContentPanel = ({ defaultLanguage, onClose, position = 'left' }: 
           {lesson && (
             <div className="space-y-2">
               <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                Sub-lesson
+                Part
               </Label>
-              {lesson.sublessons.length === 0 ? (
+              {parts.length === 0 ? (
                 <p className="text-xs text-muted-foreground/80 text-center py-3 border border-dashed border-border/50 rounded-xl">
-                  No sub-lessons in this lesson yet — add them in the Lessons library.
+                  No parts in this lesson yet — add them in the Lessons library.
                 </p>
               ) : (
-                <Select value={sublessonId} onValueChange={setSublessonId}>
+                <Select value={partId} onValueChange={setPartId}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Choose a sub-lesson" />
+                    <SelectValue placeholder="Choose a part" />
                   </SelectTrigger>
                   <SelectContent>
-                    {lesson.sublessons.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.title}
+                    {parts.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        Part {p.position}
                       </SelectItem>
                     ))}
+                    <SelectItem value={NEW_PART}>+ New Part</SelectItem>
                   </SelectContent>
                 </Select>
               )}
             </div>
           )}
 
-          {sublesson && (
-            <div className="space-y-2">
-              <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                Part
-              </Label>
-              <Select value={partId} onValueChange={setPartId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a part" />
-                </SelectTrigger>
-                <SelectContent>
-                  {parts.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      Part {p.position}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value={NEW_PART}>+ New Part</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
-          {sublesson && (
+          {lesson && (
             <div className="space-y-2">
               <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
                 Word / Text
@@ -206,7 +179,7 @@ const AddLessonContentPanel = ({ defaultLanguage, onClose, position = 'left' }: 
             </div>
           )}
 
-          {sublesson && (
+          {lesson && (
             <div className="space-y-2">
               <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
                 Translation
@@ -229,7 +202,7 @@ const AddLessonContentPanel = ({ defaultLanguage, onClose, position = 'left' }: 
             </div>
           )}
 
-          {sublesson && (
+          {lesson && (
             <Button
               onClick={() => addContent.mutate()}
               disabled={!canSave}

@@ -1,42 +1,21 @@
-import type { Lesson, Part, Sublesson } from '@/integrations/turso/types'
+import type { Lesson, Part } from '@/integrations/turso/types'
 import { parseBlocks } from '@/lib/lessonBlocks'
 
 export interface NestedLesson extends Lesson {
-  sublessons: NestedSublesson[]
-}
-
-export interface NestedSublesson extends Sublesson {
   parts: Part[]
 }
 
-export function buildLessonTree(
-  lessons: Lesson[],
-  sublessons: Sublesson[],
-  parts: Part[],
-): NestedLesson[] {
-  const partsBySublesson = new Map<string, Part[]>()
+export function buildLessonTree(lessons: Lesson[], parts: Part[]): NestedLesson[] {
+  const partsByLesson = new Map<string, Part[]>()
   for (const part of parts) {
-    const list = partsBySublesson.get(part.sublesson_id) ?? []
+    const list = partsByLesson.get(part.lesson_id) ?? []
     list.push(part)
-    partsBySublesson.set(part.sublesson_id, list)
-  }
-
-  const sublessonsByLesson = new Map<string, NestedSublesson[]>()
-  for (const sublesson of sublessons) {
-    const nested: NestedSublesson = {
-      ...sublesson,
-      parts: (partsBySublesson.get(sublesson.id) ?? []).sort((a, b) => a.position - b.position),
-    }
-    const list = sublessonsByLesson.get(sublesson.lesson_id) ?? []
-    list.push(nested)
-    sublessonsByLesson.set(sublesson.lesson_id, list)
+    partsByLesson.set(part.lesson_id, list)
   }
 
   return lessons.map((lesson) => ({
     ...lesson,
-    sublessons: (sublessonsByLesson.get(lesson.id) ?? []).sort(
-      (a, b) => a.position - b.position,
-    ),
+    parts: (partsByLesson.get(lesson.id) ?? []).sort((a, b) => a.position - b.position),
   }))
 }
 

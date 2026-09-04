@@ -1,6 +1,6 @@
 import { getTursoClient } from './client'
 import { buildLessonTree, type NestedLesson } from '@/lib/lessonTree'
-import type { Lesson, Note, Part, Screenshot, Sublesson, Video, VocabWord } from './types'
+import type { Lesson, Note, Part, Screenshot, Video, VocabWord } from './types'
 
 const turso = getTursoClient()
 
@@ -61,18 +61,9 @@ CREATE TABLE IF NOT EXISTS lessons (
   created_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS sublessons (
-  id TEXT PRIMARY KEY,
-  lesson_id TEXT NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
-  user_id TEXT NOT NULL,
-  position INTEGER NOT NULL,
-  title TEXT NOT NULL,
-  created_at TEXT NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS parts (
   id TEXT PRIMARY KEY,
-  sublesson_id TEXT NOT NULL REFERENCES sublessons(id) ON DELETE CASCADE,
+  lesson_id TEXT NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
   user_id TEXT NOT NULL,
   position INTEGER NOT NULL,
   content TEXT NOT NULL DEFAULT '[]',
@@ -85,6 +76,22 @@ export async function ensureSchema(): Promise<void> {
   const lessonCols = await turso.execute('PRAGMA table_info(lessons)')
   if (!lessonCols.rows.some((c) => c.name === 'language')) {
     await turso.execute('ALTER TABLE lessons ADD COLUMN language TEXT')
+  }
+  const partCols = await turso.execute('PRAGMA table_info(parts)')
+  const hasLessonId = partCols.rows.some((c) => c.name === 'lesson_id')
+  const hasLegacySublessonId = partCols.rows.some((c) => c.name === 'sublesson_id')
+  if (!hasLessonId) {
+    await turso.execute('ALTER TABLE parts ADD COLUMN lesson_id TEXT')
+  }
+  if (hasLegacySublessonId) {
+    await turso.execute(
+      "UPDATE parts SET lesson_id = (SELECT sublessons.lesson_id FROM sublessons WHERE sublessons.id = parts.sublesson_id) WHERE lesson_id IS NULL AND sublesson_id IS NOT NULL"
+    )
+    try {
+      await turso.execute('DROP TABLE IF EXISTS sublessons')
+    } catch {
+      // Legacy DBs may still reference sublessons; leaving the table unused is harmless.
+    }
   }
   await turso.batch(
     [
@@ -258,14 +265,12 @@ async function nextPosition(table: string, column: string, parentId: string): Pr
 
 export const lessonsDb = {
   async list(): Promise<NestedLesson[]> {
-    const [lessonRs, sublessonRs, partRs] = await Promise.all([
+    const [lessonRs, partRs] = await Promise.all([
       turso.execute('SELECT * FROM lessons ORDER BY created_at ASC'),
-      turso.execute('SELECT * FROM sublessons ORDER BY lesson_id ASC, position ASC'),
-      turso.execute('SELECT * FROM parts ORDER BY sublesson_id ASC, position ASC'),
+      turso.execute('SELECT * FROM parts ORDER BY lesson_id ASC, position ASC'),
     ])
     return buildLessonTree(
       lessonRs.rows as unknown as Lesson[],
-      sublessonRs.rows as unknown as Sublesson[],
       partRs.rows as unknown as Part[],
     )
   },
@@ -317,29 +322,30 @@ export const lessonsDb = {
   },
 
   async removeLesson(id: string): Promise<void> {
-    await turso.execute({ sql: 'DELETE FROM lessons WHERE id = ?', args: [id] })
+    try {
+      await turso.execute(
+        'DELETE FROM parts WHERE sublesson_id IN (SELECT id FROM sublessons WHERE lesson_id = ?)',
+        [id]
+      )
+      await turso.execute('DELETE FROM sublessons WHERE lesson_id = ?', [id])
+    } catch {
+      // Legacy schema only — ignored on fresh databases.
+    }
+    await turso.batch(
+      [
+        { sql: 'DELETE FROM parts WHERE lesson_id = ?', args: [id] },
+        { sql: 'DELETE FROM lessons WHERE id = ?', args: [id] },
+      ],
+      'write'
+    )
   },
 
-  async createSublesson(input: { lesson_id: string; title: string }): Promise<string> {
+  async createPart(input: { lesson_id: string }): Promise<string> {
     const id = newId()
-    const position = await nextPosition('sublessons', 'position', 'lesson')
+    const position = await nextPosition('parts', 'position', 'lesson')
     await turso.execute({
-      sql: 'INSERT INTO sublessons (id, lesson_id, user_id, position, title, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-      args: [id, input.lesson_id, LOCAL_USER_ID, position, input.title, now()],
-    })
-    return id
-  },
-
-  async removeSublesson(id: string): Promise<void> {
-    await turso.execute({ sql: 'DELETE FROM sublessons WHERE id = ?', args: [id] })
-  },
-
-  async createPart(input: { sublesson_id: string }): Promise<string> {
-    const id = newId()
-    const position = await nextPosition('parts', 'position', 'sublesson')
-    await turso.execute({
-      sql: "INSERT INTO parts (id, sublesson_id, user_id, position, content, created_at) VALUES (?, ?, ?, ?, '[]', ?)",
-      args: [id, input.sublesson_id, LOCAL_USER_ID, position, now()],
+      sql: "INSERT INTO parts (id, lesson_id, user_id, position, content, created_at) VALUES (?, ?, ?, ?, '[]', ?)",
+      args: [id, input.lesson_id, LOCAL_USER_ID, position, now()],
     })
     return id
   },

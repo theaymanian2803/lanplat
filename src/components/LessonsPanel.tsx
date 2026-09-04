@@ -25,7 +25,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { lessonsDb, videosDb, languagesDb } from '@/integrations/turso/db'
-import type { Lesson, Part, Sublesson } from '@/integrations/turso/types'
+import type { Lesson, Part } from '@/integrations/turso/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BookOpen, GraduationCap, Languages, Library, Pencil, Plus, Trash2, Video } from 'lucide-react'
 import { useMemo, useState } from 'react'
@@ -38,7 +38,7 @@ interface LessonsPanelProps {
 }
 
 interface LessonRowProps {
-  lesson: Lesson & { sublessons: Sublesson[] }
+  lesson: Lesson & { parts: Part[] }
   active: boolean
   onSelect: () => void
   onEdit: () => void
@@ -49,14 +49,11 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null)
-  const [selectedSublessonId, setSelectedSublessonId] = useState<string | null>(null)
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null)
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false)
-  const [sublessonDialogOpen, setSublessonDialogOpen] = useState(false)
   const [editLesson, setEditLesson] = useState<Lesson | null>(null)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [lessonTitle, setLessonTitle] = useState('')
-  const [sublessonTitle, setSublessonTitle] = useState('')
   const [lessonLanguage, setLessonLanguage] = useState<string>('none')
 
   const { data: lessons = [], isLoading } = useQuery({
@@ -78,18 +75,13 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
     () => lessons.find((l) => l.id === selectedLessonId) ?? null,
     [lessons, selectedLessonId],
   )
-  const selectedSublesson = useMemo(
-    () => selectedLesson?.sublessons.find((s) => s.id === selectedSublessonId) ?? null,
-    [selectedLesson, selectedSublessonId],
-  )
   const selectedPart = useMemo(
-    () => selectedSublesson?.parts.find((p) => p.id === selectedPartId) ?? null,
-    [selectedSublesson, selectedPartId],
+    () => selectedLesson?.parts.find((p) => p.id === selectedPartId) ?? null,
+    [selectedLesson, selectedPartId],
   )
 
   const resetSelection = () => {
     setSelectedLessonId(null)
-    setSelectedSublessonId(null)
     setSelectedPartId(null)
   }
 
@@ -147,36 +139,8 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
     onError: (e) => toast.error(e.message),
   })
 
-  const addSublesson = useMutation({
-    mutationFn: async () => {
-      if (!selectedLesson) throw new Error('No lesson selected')
-      const title = sublessonTitle.trim()
-      if (!title) throw new Error('Sublesson title is required')
-      return lessonsDb.createSublesson({ lesson_id: selectedLesson.id, title })
-    },
-    onSuccess: (id) => {
-      invalidate()
-      setSublessonDialogOpen(false)
-      setSublessonTitle('')
-      setSelectedSublessonId(id)
-      toast.success('Sublesson added')
-    },
-    onError: (e) => toast.error(e.message),
-  })
-
-  const deleteSublesson = useMutation({
-    mutationFn: async (id: string) => lessonsDb.removeSublesson(id),
-    onSuccess: () => {
-      invalidate()
-      setSelectedSublessonId(null)
-      setSelectedPartId(null)
-      toast.success('Sublesson deleted')
-    },
-    onError: (e) => toast.error(e.message),
-  })
-
   const addPart = useMutation({
-    mutationFn: async (sublessonId: string) => lessonsDb.createPart({ sublesson_id: sublessonId }),
+    mutationFn: async (lessonId: string) => lessonsDb.createPart({ lesson_id: lessonId }),
     onSuccess: (id) => {
       invalidate()
       setSelectedPartId(id)
@@ -197,8 +161,8 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
 
   const selectLesson = (lessonId: string) => {
     setSelectedLessonId(lessonId)
-    setSelectedSublessonId(null)
-    setSelectedPartId(null)
+    const lesson = lessons.find((l) => l.id === lessonId)
+    setSelectedPartId(lesson?.parts[0]?.id ?? null)
   }
 
   return (
@@ -210,7 +174,7 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
             Lessons
           </SheetTitle>
           <SheetDescription>
-            Organize media into lessons, sublessons, and rich-text parts.
+            Organize media into lessons with rich-text parts.
           </SheetDescription>
           <Button
             variant="outline"
@@ -266,78 +230,42 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
           <div className="flex flex-col min-h-0">
             <div className="p-3 border-b border-border/40 flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Sublessons
+                Parts
               </span>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 text-muted-foreground hover:text-foreground disabled:opacity-30"
-                title="Add sublesson"
+                title="Add part"
                 disabled={!selectedLesson}
-                onClick={() => setSublessonDialogOpen(true)}>
+                onClick={() => selectedLesson && addPart.mutate(selectedLesson.id)}>
                 <Plus className="h-3.5 w-3.5" />
               </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
               {!selectedLesson ? (
                 <p className="text-xs text-muted-foreground/70 p-2">Select a lesson.</p>
-              ) : selectedLesson.sublessons.length === 0 ? (
-                <p className="text-xs text-muted-foreground/70 p-2">No sublessons yet.</p>
+              ) : selectedLesson.parts.length === 0 ? (
+                <p className="text-xs text-muted-foreground/70 p-2">No parts yet.</p>
               ) : (
-                selectedLesson.sublessons.map((sublesson) => (
-                  <div key={sublesson.id} className="space-y-1">
+                selectedLesson.parts.map((part, idx) => (
+                  <div key={part.id} className="space-y-1">
                     <Button
-                      variant={selectedSublessonId === sublesson.id ? 'secondary' : 'ghost'}
+                      variant={selectedPartId === part.id ? 'secondary' : 'ghost'}
                       size="sm"
                       className="w-full justify-between gap-1 text-xs font-medium h-auto py-1.5"
-                      onClick={() => {
-                        setSelectedSublessonId(sublesson.id)
-                        setSelectedPartId(sublesson.parts[0]?.id ?? null)
-                      }}>
-                      <span className="truncate">{sublesson.title}</span>
-                      <button
+                      onClick={() => setSelectedPartId(part.id)}>
+                      <span className="truncate">Part {idx + 1}</span>
+                      <span
                         onClick={(e) => {
                           e.stopPropagation()
-                          deleteSublesson.mutate(sublesson.id)
+                          deletePart.mutate(part.id)
                         }}
                         className="text-muted-foreground hover:text-destructive shrink-0"
-                        title="Delete sublesson">
+                        title="Delete part">
                         <Trash2 className="h-3 w-3" />
-                      </button>
+                      </span>
                     </Button>
-                    {selectedSublessonId === sublesson.id && (
-                      <div className="pl-3 space-y-0.5">
-                        {sublesson.parts.map((part, idx) => (
-                          <button
-                            key={part.id}
-                            onClick={() => setSelectedPartId(part.id)}
-                            className={`w-full text-left px-2 py-1 rounded text-[11px] font-mono flex items-center justify-between gap-1 ${
-                              selectedPartId === part.id
-                                ? 'bg-primary/10 text-primary'
-                                : 'text-muted-foreground hover:bg-muted/40'
-                            }`}>
-                            <span className="truncate">Part {idx + 1}</span>
-                            <span
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                deletePart.mutate(part.id)
-                              }}
-                              className="hover:text-destructive shrink-0"
-                              title="Delete part">
-                              <Trash2 className="h-2.5 w-2.5" />
-                            </span>
-                          </button>
-                        ))}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-start gap-1 text-[11px] h-6 text-muted-foreground hover:text-foreground"
-                          onClick={() => addPart.mutate(sublesson.id)}>
-                          <Plus className="h-3 w-3" />
-                          Add Part
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 ))
               )}
@@ -351,14 +279,12 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
               </span>
             </div>
             <div className="flex-1 overflow-y-auto p-4">
-              {!selectedSublesson ? (
+              {!selectedLesson ? (
                 <p className="text-xs text-muted-foreground/70">
-                  {selectedLesson
-                    ? 'Select a sublesson to edit its parts.'
-                    : 'Select a lesson to begin.'}
+                  Select a lesson to begin.
                 </p>
               ) : !selectedPart ? (
-                <p className="text-xs text-muted-foreground/70">Add a part to this sublesson.</p>
+                <p className="text-xs text-muted-foreground/70">Add a part to this lesson.</p>
               ) : (
                 <PartEditor part={selectedPart} />
               )}
@@ -444,34 +370,6 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={sublessonDialogOpen} onOpenChange={setSublessonDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Sublesson</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label>Sublesson title</Label>
-            <Input
-              placeholder="e.g. Lesson 1 — Greetings"
-              value={sublessonTitle}
-              onChange={(e) => setSublessonTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && sublessonTitle.trim()) addSublesson.mutate()
-              }}
-              autoFocus
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              onClick={() => addSublesson.mutate()}
-              disabled={!sublessonTitle.trim() || addSublesson.isPending}
-              className="text-sm font-semibold">
-              {addSublesson.isPending ? 'Saving…' : 'Add Sublesson'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       <LessonEditDialog
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
@@ -513,28 +411,28 @@ const LessonRow = ({ lesson, active, onSelect, onEdit, onDelete }: LessonRowProp
         </span>
       </span>
     </div>
-<div className="flex items-center gap-1 mt-0.5">
-        {lesson.media_id ? (
-          <span className="inline-flex items-center gap-1 text-[10px] font-mono text-primary/80">
-            <Video className="h-2.5 w-2.5" />
-            Video
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1 text-[10px] font-mono text-muted-foreground/60">
-            <BookOpen className="h-2.5 w-2.5" />
-            No media
-          </span>
-        )}
-        {lesson.language && (
-          <span className="inline-flex items-center gap-1 text-[10px] font-mono text-muted-foreground/80">
-            <Languages className="h-2.5 w-2.5" />
-            {lesson.language}
-          </span>
-        )}
-        <span className="text-[10px] text-muted-foreground/60 font-mono">
-          {lesson.sublessons.length} sub
+    <div className="flex items-center gap-1 mt-0.5">
+      {lesson.media_id ? (
+        <span className="inline-flex items-center gap-1 text-[10px] font-mono text-primary/80">
+          <Video className="h-2.5 w-2.5" />
+          Video
         </span>
-      </div>
+      ) : (
+        <span className="inline-flex items-center gap-1 text-[10px] font-mono text-muted-foreground/60">
+          <BookOpen className="h-2.5 w-2.5" />
+          No media
+        </span>
+      )}
+      {lesson.language && (
+        <span className="inline-flex items-center gap-1 text-[10px] font-mono text-muted-foreground/80">
+          <Languages className="h-2.5 w-2.5" />
+          {lesson.language}
+        </span>
+      )}
+      <span className="text-[10px] text-muted-foreground/60 font-mono">
+        {lesson.parts.length} parts
+      </span>
+    </div>
   </div>
 )
 

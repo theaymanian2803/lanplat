@@ -299,6 +299,27 @@ export const languagesDb = {
   async remove(name: string): Promise<void> {
     await turso.execute({ sql: 'DELETE FROM languages WHERE name = ?', args: [name] })
   },
+
+  async rename(oldName: string, newName: string): Promise<void> {
+    const trimmed = newName.trim()
+    if (!trimmed) throw new Error('Language name is required')
+    const rs = await turso.execute('SELECT name FROM languages')
+    const names = rs.rows.map((r) => String(r.name))
+    if (!names.includes(oldName)) return
+    const clash = names.some(
+      (n) => n.toLowerCase() === trimmed.toLowerCase() && n !== oldName
+    )
+    if (clash) throw new Error('That language already exists')
+    await turso.batch(
+      [
+        { sql: 'UPDATE languages SET name = ? WHERE name = ?', args: [trimmed, oldName] },
+        { sql: 'UPDATE videos SET language = ? WHERE language = ?', args: [trimmed, oldName] },
+        { sql: 'UPDATE vocabulary SET language = ? WHERE language = ?', args: [trimmed, oldName] },
+        { sql: 'UPDATE lessons SET language = ? WHERE language = ?', args: [trimmed, oldName] },
+      ],
+      'write'
+    )
+  },
 }
 
 const MAX_QUERY = 'SELECT COALESCE(MAX(position), 0) + 1 AS next_pos'

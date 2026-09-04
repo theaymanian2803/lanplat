@@ -8,18 +8,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, Trash2, Languages as LanguagesIcon } from "lucide-react";
+import { Pencil, Plus, Trash2, Languages as LanguagesIcon } from "lucide-react";
 import { toast } from "sonner";
 
 const Languages = () => {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
+  const [editLang, setEditLang] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
 
   const { data: languages = [], isLoading } = useQuery({
     queryKey: ["languages"],
     queryFn: languagesDb.list,
   });
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["languages"] });
+    queryClient.invalidateQueries({ queryKey: ["videos"] });
+    queryClient.invalidateQueries({ queryKey: ["vocabulary"] });
+    queryClient.invalidateQueries({ queryKey: ["lessons"] });
+  };
 
   const addLanguage = useMutation({
     mutationFn: async () => {
@@ -30,7 +39,7 @@ const Languages = () => {
       await languagesDb.add(trimmed);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["languages"] });
+      invalidateAll();
       setDialogOpen(false);
       setName("");
       toast.success("Language added");
@@ -43,8 +52,21 @@ const Languages = () => {
       await languagesDb.remove(lang);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["languages"] });
+      invalidateAll();
       toast.success("Language removed");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const renameLanguage = useMutation({
+    mutationFn: async ({ oldName, newName }: { oldName: string; newName: string }) => {
+      await languagesDb.rename(oldName, newName);
+    },
+    onSuccess: () => {
+      invalidateAll();
+      setEditLang(null);
+      setEditName("");
+      toast.success("Language renamed");
     },
     onError: (e) => toast.error(e.message),
   });
@@ -81,13 +103,26 @@ const Languages = () => {
                   <span className={`h-1.5 w-1.5 rounded-full ${getLangDotClass(lang)}`} />
                   {lang}
                 </Badge>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
-                  onClick={() => deleteLanguage.mutate(lang)}>
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-full transition-colors"
+                    title="Rename language"
+                    onClick={() => {
+                      setEditLang(lang)
+                      setEditName(lang)
+                    }}>
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full transition-colors"
+                    onClick={() => deleteLanguage.mutate(lang)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
@@ -117,6 +152,48 @@ const Languages = () => {
               disabled={!name.trim() || addLanguage.isPending}
               className="text-sm font-semibold">
               {addLanguage.isPending ? "Saving…" : "Add Language"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editLang !== null} onOpenChange={(o) => !o && setEditLang(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rename Language</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>New name</Label>
+            <Input
+              placeholder="e.g. Swedish"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && editLang && editName.trim()) {
+                  renameLanguage.mutate({ oldName: editLang, newName: editName })
+                }
+              }}
+              autoFocus
+            />
+            {editLang && (
+              <p className="text-xs text-muted-foreground/70">
+                Renaming &quot;{editLang}&quot; also updates all videos, words, and lessons
+                tagged with it.
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setEditLang(null)}
+              className="text-sm">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => editLang && renameLanguage.mutate({ oldName: editLang, newName: editName })}
+              disabled={!editName.trim() || renameLanguage.isPending}
+              className="text-sm font-semibold">
+              {renameLanguage.isPending ? "Saving…" : "Rename"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest'
-import { appendBlockToContent, createBlock, parseBlocks, serializeBlocks } from '@/lib/lessonBlocks'
+import {
+  appendBlockToContent,
+  createBlock,
+  createTableBlock,
+  isValidTable,
+  parseBlocks,
+  serializeBlocks,
+} from '@/lib/lessonBlocks'
 import { buildLessonTree } from '@/lib/lessonTree'
 import type { Lesson, Part } from '@/integrations/turso/types'
 
@@ -101,5 +108,54 @@ describe('buildLessonTree', () => {
     expect(tree).toHaveLength(2)
     expect(tree[0].parts).toEqual([])
     expect(tree[1].parts).toEqual([])
+  })
+})
+
+describe('table blocks', () => {
+  it('createTableBlock builds a table block with empty text', () => {
+    const block = createTableBlock(['Infinitive', 'Present', 'Past'], [['at spise', 'spiser', 'spiste']])
+    expect(block.type).toBe('table')
+    expect(block.text).toBe('')
+    expect(block.color).toBe('inherit')
+    expect(block.table).toEqual({
+      headers: ['Infinitive', 'Present', 'Past'],
+      rows: [['at spise', 'spiser', 'spiste']],
+    })
+  })
+
+  it('round-trips table blocks through serialize/parse', () => {
+    const table = createTableBlock(['Infinitif', 'Présent', 'Passé'], [['être', 'suis', 'fus'], ['avoir', 'ai', 'eus']])
+    expect(parseBlocks(serializeBlocks([table]))).toEqual([table])
+  })
+
+  it('filters table blocks with missing or malformed table data', () => {
+    const bad = (o: object) => JSON.stringify([{ id: '1', type: 'table', text: '', color: 'inherit', ...o }])
+    expect(parseBlocks(bad({}))).toEqual([])
+    expect(parseBlocks(bad({ table: { headers: 'nope', rows: [] } }))).toEqual([])
+    expect(parseBlocks(bad({ table: { headers: ['H'], rows: [[1]] } }))).toEqual([])
+    expect(parseBlocks(bad({ table: { headers: ['H'], rows: ['x'] } }))).toEqual([])
+  })
+
+  it('keeps well-formed table blocks next to regular blocks', () => {
+    const blocks = [
+      createBlock('h1', 'Verbs'),
+      createTableBlock(['Present', 'Future'], [['spiser', 'vil spise']]),
+      createBlock('p', 'End of list'),
+    ]
+    expect(parseBlocks(serializeBlocks(blocks))).toEqual(blocks)
+  })
+
+  it('drops a stray table prop from non-table blocks', () => {
+    const raw = JSON.stringify([
+      { id: '1', type: 'p', text: 'hello', color: 'inherit', table: { headers: ['x'], rows: [] } },
+    ])
+    expect(parseBlocks(raw)).toEqual([{ id: '1', type: 'p', text: 'hello', color: 'inherit' }])
+  })
+
+  it('isValidTable requires a non-empty header and a row with a non-empty cell', () => {
+    expect(isValidTable(['Present'], [['spiser']])).toBe(true)
+    expect(isValidTable([' '], [['spiser']])).toBe(false)
+    expect(isValidTable(['Present'], [['', '']])).toBe(false)
+    expect(isValidTable(['Present'], [])).toBe(false)
   })
 })

@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import type { ContentBlock, ContentBlockType } from '@/integrations/turso/types'
+import type { ContentBlock, ContentBlockType, TableData } from '@/integrations/turso/types'
 
 export const TEXT_COLORS = [
   { label: 'Default', value: 'inherit' },
@@ -23,6 +23,7 @@ export const BLOCK_TYPES: { type: ContentBlockType; label: string }[] = [
   { type: 'h2', label: 'Heading 2' },
   { type: 'h3', label: 'Heading 3' },
   { type: 'p', label: 'Paragraph' },
+  { type: 'table', label: 'Table' },
 ]
 
 export function blockClass(type: ContentBlockType): string {
@@ -54,19 +55,50 @@ export function serializeBlocks(blocks: ContentBlock[]): string {
   return JSON.stringify(blocks)
 }
 
+export function createTableBlock(headers: string[], rows: string[][]): ContentBlock {
+  return {
+    id: crypto.randomUUID(),
+    type: 'table',
+    text: '',
+    color: 'inherit',
+    table: { headers, rows },
+  }
+}
+
+export function isValidTable(headers: string[], rows: string[][]): boolean {
+  if (!headers.some((h) => h.trim())) return false
+  return rows.some((r) => r.some((c) => c.trim()))
+}
+
+function isTableData(t: unknown): t is TableData {
+  if (!t || typeof t !== 'object') return false
+  const td = t as TableData
+  return (
+    Array.isArray(td.headers) &&
+    td.headers.every((h) => typeof h === 'string') &&
+    Array.isArray(td.rows) &&
+    td.rows.every((r) => Array.isArray(r) && r.every((c) => typeof c === 'string'))
+  )
+}
+
 export function parseBlocks(raw: string): ContentBlock[] {
   try {
     const parsed = JSON.parse(raw)
     if (!Array.isArray(parsed)) return []
-    return parsed.filter(
-      (b): b is ContentBlock =>
-        b &&
-        typeof b === 'object' &&
-        typeof b.id === 'string' &&
-        (b.type === 'h1' || b.type === 'h2' || b.type === 'h3' || b.type === 'p') &&
-        typeof b.text === 'string' &&
-        typeof b.color === 'string',
-    )
+    return parsed.flatMap((b): ContentBlock[] => {
+      if (!b || typeof b !== 'object') return []
+      if (typeof b.id !== 'string' || typeof b.color !== 'string') return []
+      const { id, type, text, color } = b
+      if (type === 'h1' || type === 'h2' || type === 'h3' || type === 'p') {
+        if (typeof text !== 'string') return []
+        return [{ id, type, text, color }]
+      }
+      if (type === 'table') {
+        if (typeof text !== 'string' || !isTableData(b.table)) return []
+        return [{ id, type, text, color, table: b.table }]
+      }
+      return []
+    })
   } catch {
     return []
   }

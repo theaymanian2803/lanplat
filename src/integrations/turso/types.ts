@@ -41,13 +41,19 @@ export interface Screenshot {
   created_at: string
 }
 
-export type ContentBlockType = 'h1' | 'h2' | 'h3' | 'p'
+export type ContentBlockType = 'h1' | 'h2' | 'h3' | 'p' | 'table'
+
+export interface TableData {
+  headers: string[]
+  rows: string[][]
+}
 
 export interface ContentBlock {
   id: string
   type: ContentBlockType
   text: string
   color: string
+  table?: TableData
 }
 
 export interface Part {

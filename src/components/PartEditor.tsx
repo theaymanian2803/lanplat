@@ -254,7 +254,11 @@ const PartEditor = ({ part }: PartEditorProps) => {
                       onClick={() => setEditTableBlockId(null)}>
                       Cancel
                     </Button>
-                    <Button size="sm" className="h-7 text-xs" onClick={saveTableEdit}>
+                    <Button
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={saveTableEdit}
+                      disabled={!isValidTable(editHeaders, editRows)}>
                       Save
                     </Button>
                   </div>

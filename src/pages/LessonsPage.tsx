@@ -1,5 +1,6 @@
 import Layout from '@/components/Layout'
 import LessonBlocks from '@/components/LessonBlocks'
+import TableBlock from '@/components/TableBlock'
 import LessonEditDialog from '@/components/LessonEditDialog'
 import { useOpenLessonsDrawer } from '@/lib/lessonsDrawer'
 import { lessonsDb, videosDb } from '@/integrations/turso/db'
@@ -325,6 +326,8 @@ const LessonDetail = ({ lesson, onBack, onEdit, onDelete }: LessonDetailProps) =
           {lesson.parts.map((part, idx) => {
             const isOpen = expandedParts.has(part.id)
             const blocks = parseBlocks(part.content)
+            const tableBlocks = blocks.filter((b) => b.type === 'table' && b.table)
+            const textBlocks = blocks.filter((b) => b.type !== 'table')
             return (
               <div
                 key={part.id}
@@ -350,8 +353,15 @@ const LessonDetail = ({ lesson, onBack, onEdit, onDelete }: LessonDetailProps) =
                   <LessonBlocks blocks={blocks} />
                 ) : (
                   <div>
+                    {tableBlocks.length > 0 && (
+                      <div className="space-y-3 mb-3">
+                        {tableBlocks.map((b) => (
+                          <TableBlock key={b.id} table={b.table!} />
+                        ))}
+                      </div>
+                    )}
                     <div className="line-clamp-4">
-                      <LessonBlocks blocks={blocks} />
+                      <LessonBlocks blocks={textBlocks} />
                     </div>
                     <span className="text-[10px] font-mono text-primary/70 mt-1.5 inline-block">
                       Read more

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { languagesDb, vocabularyDb } from "@/integrations/turso/db";
 import { getLangBadgeClasses, getLangDotClass } from "@/lib/langColors";
@@ -19,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Trash2, Search, Download, BookOpen, Loader2, FileText } from "lucide-react";
+import { Plus, Trash2, Search, Download, BookOpen, Loader2, FileText, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -34,15 +34,24 @@ const masteryColors: Record<number, string> = {
   5: "bg-teal-500/15 text-teal-300 border-teal-500/30",
 };
 
+const PAGE_SIZE = 12;
+
 const VocabBank = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [langFilter, setLangFilter] = useState<string>("all");
+  const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [word, setWord] = useState("");
   const [translation, setTranslation] = useState("");
   const [contextNote, setContextNote] = useState("");
   const [lang, setLang] = useState<string>("Danish");
+  const wordInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const clearForm = () => {
+    setWord(""); setTranslation(""); setContextNote("");
+    wordInputRef.current?.focus();
+  };
 
   const { translating, markUserEdit, error } = useAutoTranslate(word, lang, translation, setTranslation);
 
@@ -67,6 +76,36 @@ const VocabBank = () => {
       ),
     [vocab, searchLower]
   );
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const handleLangFilter = (value: string) => {
+    setLangFilter(value);
+    setPage(1);
+  };
+
+  const goToPage = (target: number) => {
+    setPage(Math.min(Math.max(1, target), totalPages));
+  };
+
+  const pageNumbers = useMemo(() => {
+    const pages: (number | "ellipsis")[] = [];
+    for (let i = 1; i <= totalPages; i++) {
+      if (i === 1 || i === totalPages || Math.abs(i - safePage) <= 1) {
+        pages.push(i);
+      } else if (pages[pages.length - 1] !== "ellipsis") {
+        pages.push("ellipsis");
+      }
+    }
+    return pages;
+  }, [totalPages, safePage]);
 
   const addWord = useMutation({
     mutationFn: async () => {
@@ -178,9 +217,9 @@ const VocabBank = () => {
         <div className="flex gap-3">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search words…" className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input placeholder="Search words…" className="pl-9" value={search} onChange={(e) => handleSearch(e.target.value)} />
           </div>
-          <Select value={langFilter} onValueChange={setLangFilter}>
+          <Select value={langFilter} onValueChange={handleLangFilter}>
             <SelectTrigger className="w-36"><SelectValue placeholder="Language" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
@@ -208,7 +247,7 @@ const VocabBank = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((v) => (
+                {paginated.map((v) => (
                   <TableRow key={v.id}>
                     <TableCell className="font-medium">{v.word}</TableCell>
                     <TableCell>{v.translation}</TableCell>
@@ -264,6 +303,68 @@ const VocabBank = () => {
             </Table>
           </div>
         )}
+
+        {/* Pagination */}
+        {!isLoading && filtered.length > PAGE_SIZE && (
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-xs text-muted-foreground font-mono">
+              {filtered.length} word{filtered.length !== 1 ? "s" : ""} · page {safePage} of {totalPages}
+            </p>
+            <nav role="navigation" aria-label="pagination" className="flex w-full justify-center">
+              <ul className="flex flex-row items-center gap-1">
+                <li>
+                  <button
+                    type="button"
+                    aria-label="Go to previous page"
+                    disabled={safePage === 1}
+                    onClick={() => goToPage(safePage - 1)}
+                    className="inline-flex items-center gap-1 pl-2.5 h-9 rounded-md px-3 text-sm font-medium disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span>Previous</span>
+                  </button>
+                </li>
+                {pageNumbers.map((p, i) =>
+                  p === "ellipsis" ? (
+                    <li key={`e-${i}`}>
+                      <span aria-hidden className="flex h-9 w-9 items-center justify-center">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">More pages</span>
+                      </span>
+                    </li>
+                  ) : (
+                    <li key={p}>
+                      <button
+                        type="button"
+                        aria-current={p === safePage ? "page" : undefined}
+                        onClick={() => goToPage(p)}
+                        className={`inline-flex h-9 w-9 items-center justify-center rounded-md text-sm font-medium ${
+                          p === safePage
+                            ? "border bg-background shadow-sm"
+                            : "hover:bg-accent hover:text-accent-foreground"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    </li>
+                  )
+                )}
+                <li>
+                  <button
+                    type="button"
+                    aria-label="Go to next page"
+                    disabled={safePage === totalPages}
+                    onClick={() => goToPage(safePage + 1)}
+                    className="inline-flex items-center gap-1 pr-2.5 h-9 rounded-md px-3 text-sm font-medium disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <span>Next</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        )}
       </div>
 
       {/* Add Word Dialog */}
@@ -275,7 +376,7 @@ const VocabBank = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Word</Label>
-              <AutoGrowTextarea placeholder="e.g. hund" value={word} onChange={(e) => setWord(e.target.value)} />
+              <AutoGrowTextarea ref={wordInputRef} placeholder="e.g. hund" value={word} onChange={(e) => setWord(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Translation</Label>
@@ -301,7 +402,10 @@ const VocabBank = () => {
               <AutoGrowTextarea placeholder="Where you encountered this word" value={contextNote} onChange={(e) => setContextNote(e.target.value)} />
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="sm:justify-between">
+            <Button variant="ghost" onClick={clearForm} disabled={!word.trim() && !translation.trim() && !contextNote.trim()} className="text-muted-foreground hover:text-foreground">
+              Clear
+            </Button>
             <Button onClick={() => addWord.mutate()} disabled={!word || !translation || addWord.isPending} className="text-sm font-semibold">
               {addWord.isPending ? "Saving…" : "Add Word"}
             </Button>

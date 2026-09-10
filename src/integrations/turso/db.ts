@@ -1,5 +1,14 @@
 import { getTursoClient } from './client'
 import { buildLessonTree, type NestedLesson } from '@/lib/lessonTree'
+import {
+  cacheGet,
+  cacheSet,
+  clearSrsQueue,
+  getSrsQueue,
+  isOfflineError,
+  queueSrsUpdate,
+  withCache,
+} from '@/lib/offlineCache'
 import type { Lesson, Note, Part, Screenshot, Video, VocabWord } from './types'
 
 const turso = getTursoClient()
@@ -120,6 +129,20 @@ ALTER TABLE videos_new RENAME TO videos;
         "UPDATE parts SET lesson_id = (SELECT sublessons.lesson_id FROM sublessons WHERE sublessons.id = parts.sublesson_id) WHERE lesson_id IS NULL AND sublesson_id IS NOT NULL"
       )
     }
+    await turso.executeMultiple(`
+CREATE TABLE parts_new (
+  id TEXT PRIMARY KEY,
+  lesson_id TEXT NOT NULL REFERENCES lessons(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  position INTEGER NOT NULL,
+  content TEXT NOT NULL DEFAULT '[]',
+  created_at TEXT NOT NULL
+);
+INSERT INTO parts_new (id, lesson_id, user_id, position, content, created_at)
+  SELECT id, lesson_id, user_id, position, content, created_at FROM parts WHERE lesson_id IS NOT NULL;
+DROP TABLE parts;
+ALTER TABLE parts_new RENAME TO parts;
+`)
     try {
       await turso.execute('DROP TABLE IF EXISTS sublessons')
     } catch {
@@ -141,18 +164,23 @@ const now = () => new Date().toISOString()
 
 export const videosDb = {
   async list(language?: string): Promise<Video[]> {
-    const rs = language
-      ? await turso.execute({
-          sql: 'SELECT * FROM videos WHERE language = ? ORDER BY created_at DESC',
-          args: [language],
-        })
-      : await turso.execute('SELECT * FROM videos ORDER BY created_at DESC')
-    return rs.rows as unknown as Video[]
+    const key = `videos:${language ?? 'all'}`
+    return withCache(key, async () => {
+      const rs = language
+        ? await turso.execute({
+            sql: 'SELECT * FROM videos WHERE language = ? ORDER BY created_at DESC',
+            args: [language],
+          })
+        : await turso.execute('SELECT * FROM videos ORDER BY created_at DESC')
+      return rs.rows as unknown as Video[]
+    })
   },
 
   async get(id: string): Promise<Video | null> {
-    const rs = await turso.execute({ sql: 'SELECT * FROM videos WHERE id = ?', args: [id] })
-    return (rs.rows[0] as unknown as Video) ?? null
+    return withCache(`video:${id}`, async () => {
+      const rs = await turso.execute({ sql: 'SELECT * FROM videos WHERE id = ?', args: [id] })
+      return (rs.rows[0] as unknown as Video) ?? null
+    })
   },
 
   async insert(input: {
@@ -191,13 +219,16 @@ export const videosDb = {
 
 export const vocabularyDb = {
   async list(language?: string): Promise<VocabWord[]> {
-    const rs = language
-      ? await turso.execute({
-          sql: 'SELECT * FROM vocabulary WHERE language = ? ORDER BY created_at DESC',
-          args: [language],
-        })
-      : await turso.execute('SELECT * FROM vocabulary ORDER BY created_at DESC')
-    return rs.rows as unknown as VocabWord[]
+    const key = `vocab:${language ?? 'all'}`
+    return withCache(key, async () => {
+      const rs = language
+        ? await turso.execute({
+            sql: 'SELECT * FROM vocabulary WHERE language = ? ORDER BY created_at DESC',
+            args: [language],
+          })
+        : await turso.execute('SELECT * FROM vocabulary ORDER BY created_at DESC')
+      return rs.rows as unknown as VocabWord[]
+    })
   },
 
   async insert(input: {
@@ -222,10 +253,18 @@ export const vocabularyDb = {
   },
 
   async updateSrs(id: string, srs: { mastery_level: number; next_review_date: string }): Promise<void> {
-    await turso.execute({
-      sql: 'UPDATE vocabulary SET mastery_level = ?, next_review_date = ? WHERE id = ?',
-      args: [srs.mastery_level, srs.next_review_date, id],
-    })
+    try {
+      await turso.execute({
+        sql: 'UPDATE vocabulary SET mastery_level = ?, next_review_date = ? WHERE id = ?',
+        args: [srs.mastery_level, srs.next_review_date, id],
+      })
+    } catch (e) {
+      if (isOfflineError(e)) {
+        queueSrsUpdate({ id, ...srs })
+        return
+      }
+      throw e
+    }
   },
 
   async remove(id: string): Promise<void> {
@@ -233,21 +272,36 @@ export const vocabularyDb = {
   },
 
   async listDue(before: string): Promise<VocabWord[]> {
-    const rs = await turso.execute({
-      sql: 'SELECT * FROM vocabulary WHERE next_review_date <= ? ORDER BY next_review_date ASC',
-      args: [before],
-    })
-    return rs.rows as unknown as VocabWord[]
+    const key = `vocabDue:${before}`
+    try {
+      const rs = await turso.execute({
+        sql: 'SELECT * FROM vocabulary WHERE next_review_date <= ? ORDER BY next_review_date ASC',
+        args: [before],
+      })
+      const rows = rs.rows as unknown as VocabWord[]
+      cacheSet(key, rows)
+      return rows
+    } catch (e) {
+      if (isOfflineError(e)) {
+        const all = cacheGet<VocabWord[]>('vocab:all')
+        if (all) return all.filter((w) => w.next_review_date <= before)
+        const due = cacheGet<VocabWord[]>(key)
+        if (due) return due
+      }
+      throw e
+    }
   },
 }
 
 export const notesDb = {
   async listByVideo(videoId: string): Promise<Note[]> {
-    const rs = await turso.execute({
-      sql: 'SELECT * FROM notes WHERE video_id = ? ORDER BY timestamp ASC',
-      args: [videoId],
+    return withCache(`notes:${videoId}`, async () => {
+      const rs = await turso.execute({
+        sql: 'SELECT * FROM notes WHERE video_id = ? ORDER BY timestamp ASC',
+        args: [videoId],
+      })
+      return rs.rows as unknown as Note[]
     })
-    return rs.rows as unknown as Note[]
   },
 
   async insert(input: { video_id: string; timestamp: number; content: string }): Promise<void> {
@@ -285,8 +339,10 @@ export const screenshotsDb = {
 
 export const languagesDb = {
   async list(): Promise<string[]> {
-    const rs = await turso.execute('SELECT name FROM languages ORDER BY name ASC')
-    return rs.rows.map((r) => String(r.name))
+    return withCache('languages', async () => {
+      const rs = await turso.execute('SELECT name FROM languages ORDER BY name ASC')
+      return rs.rows.map((r) => String(r.name))
+    })
   },
 
   async add(name: string): Promise<void> {
@@ -322,26 +378,31 @@ export const languagesDb = {
   },
 }
 
-const MAX_QUERY = 'SELECT COALESCE(MAX(position), 0) + 1 AS next_pos'
-
-async function nextPosition(table: string, column: string, parentId: string): Promise<number> {
+async function nextPosition(
+  table: string,
+  column: string,
+  parentColumn: string,
+  parentValue: string,
+): Promise<number> {
   const rs = await turso.execute({
-    sql: `SELECT COALESCE(MAX(${column}), 0) + 1 AS next_pos FROM ${table} WHERE ${parentId}_id = ?`,
-    args: [parentId],
+    sql: `SELECT COALESCE(MAX(${column}), 0) + 1 AS next_pos FROM ${table} WHERE ${parentColumn} = ?`,
+    args: [parentValue],
   })
   return Number(rs.rows[0]?.next_pos ?? 1)
 }
 
 export const lessonsDb = {
   async list(): Promise<NestedLesson[]> {
-    const [lessonRs, partRs] = await Promise.all([
-      turso.execute('SELECT * FROM lessons ORDER BY created_at ASC'),
-      turso.execute('SELECT * FROM parts ORDER BY lesson_id ASC, position ASC'),
-    ])
-    return buildLessonTree(
-      lessonRs.rows as unknown as Lesson[],
-      partRs.rows as unknown as Part[],
-    )
+    return withCache('lessons', async () => {
+      const [lessonRs, partRs] = await Promise.all([
+        turso.execute('SELECT * FROM lessons ORDER BY created_at ASC'),
+        turso.execute('SELECT * FROM parts ORDER BY lesson_id ASC, position ASC'),
+      ])
+      return buildLessonTree(
+        lessonRs.rows as unknown as Lesson[],
+        partRs.rows as unknown as Part[],
+      )
+    })
   },
 
   async createLesson(input: {
@@ -411,7 +472,7 @@ export const lessonsDb = {
 
   async createPart(input: { lesson_id: string }): Promise<string> {
     const id = newId()
-    const position = await nextPosition('parts', 'position', 'lesson')
+    const position = await nextPosition('parts', 'position', 'lesson_id', input.lesson_id)
     await turso.execute({
       sql: "INSERT INTO parts (id, lesson_id, user_id, position, content, created_at) VALUES (?, ?, ?, ?, '[]', ?)",
       args: [id, input.lesson_id, LOCAL_USER_ID, position, now()],
@@ -429,4 +490,21 @@ export const lessonsDb = {
   async removePart(id: string): Promise<void> {
     await turso.execute({ sql: 'DELETE FROM parts WHERE id = ?', args: [id] })
   },
+}
+
+export async function flushSrsQueue(): Promise<void> {
+  const queue = getSrsQueue()
+  if (queue.length === 0) return
+  try {
+    await turso.batch(
+      queue.map((q) => ({
+        sql: 'UPDATE vocabulary SET mastery_level = ?, next_review_date = ? WHERE id = ?',
+        args: [q.mastery_level, q.next_review_date, q.id],
+      })),
+      'write'
+    )
+    clearSrsQueue()
+  } catch {
+    // Still offline — the queue persists for the next flush attempt.
+  }
 }

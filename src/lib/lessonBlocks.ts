@@ -70,6 +70,60 @@ export function isValidTable(headers: string[], rows: string[][]): boolean {
   return rows.some((r) => r.some((c) => c.trim()))
 }
 
+function cellToString(v: unknown): string {
+  if (v === null || v === undefined) return ''
+  if (typeof v === 'string') return v
+  if (typeof v === 'number' || typeof v === 'boolean') return String(v)
+  return JSON.stringify(v)
+}
+
+export function parseTableFromJson(
+  raw: string
+): { headers: string[]; rows: string[][] } | { error: string } {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return { error: 'Invalid JSON — check the syntax and try again.' }
+  }
+  if (!Array.isArray(parsed)) return { error: 'Expected a JSON array of objects.' }
+  if (parsed.length === 0) return { error: 'The array is empty — nothing to import.' }
+  for (const item of parsed) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      return { error: 'Every item must be a JSON object (row of the table).' }
+    }
+  }
+  const headers: string[] = []
+  const seen = new Set<string>()
+  for (const item of parsed as Record<string, unknown>[]) {
+    for (const key of Object.keys(item)) {
+      if (!seen.has(key)) {
+        seen.add(key)
+        headers.push(key)
+      }
+    }
+  }
+  const rows = (parsed as Record<string, unknown>[])
+    .map((item) => headers.map((h) => cellToString(item[h])))
+    .filter((r) => r.some((c) => c.trim()))
+  return { headers, rows }
+}
+
+export function tableToJson(headers: string[], rows: string[][]): string {
+  return JSON.stringify(
+    rows.map((r) => {
+      const obj: Record<string, string> = {}
+      headers.forEach((h, i) => {
+        const cell = r[i] ?? ''
+        if (cell.trim()) obj[h] = cell
+      })
+      return obj
+    }),
+    null,
+    2
+  )
+}
+
 function isTableData(t: unknown): t is TableData {
   if (!t || typeof t !== 'object') return false
   const td = t as TableData

@@ -1,17 +1,33 @@
-import { useCallback, useState, type ReactNode } from 'react'
-import { Database, X } from 'lucide-react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { Database, WifiOff, X } from 'lucide-react'
 import Navbar from './Navbar'
 import LessonsPanel from './LessonsPanel'
 import { LessonsDrawerContext } from '@/lib/lessonsDrawer'
 import { useOpenSettingsDialog } from '@/lib/settingsDialog'
 import { ACCESS_STORAGE_KEY } from './AccessGate'
 import { Button } from '@/components/ui/button'
+import { flushSrsQueue } from '@/integrations/turso/db'
 import { dismissSetupBanner, shouldShowSetupBanner } from '@/lib/tursoConfig'
 
 const Layout = ({ children }: { children: ReactNode }) => {
   const openSettings = useOpenSettingsDialog()
   const [lessonsOpen, setLessonsOpen] = useState(false)
   const [showBanner, setShowBanner] = useState(shouldShowSetupBanner())
+  const [offline, setOffline] = useState(() => typeof navigator !== 'undefined' && !navigator.onLine)
+
+  useEffect(() => {
+    const goOffline = () => setOffline(true)
+    const goOnline = () => {
+      setOffline(false)
+      flushSrsQueue()
+    }
+    window.addEventListener('offline', goOffline)
+    window.addEventListener('online', goOnline)
+    return () => {
+      window.removeEventListener('offline', goOffline)
+      window.removeEventListener('online', goOnline)
+    }
+  }, [])
 
   const handleDismissBanner = useCallback(() => {
     dismissSetupBanner()
@@ -68,6 +84,12 @@ const Layout = ({ children }: { children: ReactNode }) => {
         </LessonsDrawerContext.Provider>
       </main>
       <LessonsPanel open={lessonsOpen} onOpenChange={setLessonsOpen} />
+      {offline && (
+        <div className="fixed bottom-4 left-4 z-50 flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-mono text-muted-foreground shadow-lg">
+          <WifiOff className="h-3.5 w-3.5 text-amber-400" />
+          Offline — showing saved data
+        </div>
+      )}
     </div>
   )
 }

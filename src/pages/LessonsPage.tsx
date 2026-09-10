@@ -328,6 +328,10 @@ const LessonDetail = ({ lesson, onBack, onEdit, onDelete }: LessonDetailProps) =
             const blocks = parseBlocks(part.content)
             const tableBlocks = blocks.filter((b) => b.type === 'table' && b.table)
             const textBlocks = blocks.filter((b) => b.type !== 'table')
+            const hiddenRows = tableBlocks.reduce(
+              (acc, b) => acc + Math.max(0, (b.table?.rows.length ?? 0) - 3),
+              0
+            )
             return (
               <div
                 key={part.id}
@@ -356,16 +360,31 @@ const LessonDetail = ({ lesson, onBack, onEdit, onDelete }: LessonDetailProps) =
                     {tableBlocks.length > 0 && (
                       <div className="space-y-3 mb-3">
                         {tableBlocks.map((b) => (
-                          <TableBlock key={b.id} table={b.table!} />
+                          <TableBlock key={b.id} table={b.table!} previewRows={3} />
                         ))}
                       </div>
                     )}
                     <div className="line-clamp-4">
                       <LessonBlocks blocks={textBlocks} />
                     </div>
-                    <span className="text-[10px] font-mono text-primary/70 mt-1.5 inline-block">
-                      Read more
-                    </span>
+                    <div className="flex items-center justify-between mt-1.5">
+                      {hiddenRows > 0 && (
+                        <span className="text-[10px] font-mono text-muted-foreground/70">
+                          +{hiddenRows} more row{hiddenRows === 1 ? '' : 's'}
+                        </span>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 px-1.5 text-[10px] font-mono text-primary/80 hover:text-primary"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          togglePart(part.id)
+                        }}>
+                        Read more
+                        <ChevronDown className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>

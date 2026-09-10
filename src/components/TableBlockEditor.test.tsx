@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import TableBlockEditor from '@/components/TableBlockEditor'
 
 type EditorState = { headers: string[]; rows: string[][] }
@@ -56,5 +56,50 @@ describe('TableBlockEditor', () => {
     const removeButtons = view.container.querySelectorAll('button[title="Remove row"]')
     fireEvent.click(removeButtons[0])
     expect(getState().rows).toEqual([['b']])
+  })
+
+  it('imports JSON as an array of objects, replacing the whole table', () => {
+    const { getState } = renderEditor({ headers: ['Old'], rows: [['old']] })
+    fireEvent.click(screen.getByRole('button', { name: /import json/i }))
+    const textarea = screen.getByPlaceholderText(/\[.*\]/s)
+    fireEvent.change(textarea, {
+      target: {
+        value: JSON.stringify([
+          { Verb: 'at spise', Present: 'spiser' },
+          { Verb: 'at drikke', Present: 'drikker', Past: 'drakk' },
+        ]),
+      },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Import' }))
+    expect(getState()).toEqual({
+      headers: ['Verb', 'Present', 'Past'],
+      rows: [
+        ['at spise', 'spiser', ''],
+        ['at drikke', 'drikker', 'drakk'],
+      ],
+    })
+  })
+
+  it('shows an error for invalid JSON and leaves the table untouched', () => {
+    const { getState } = renderEditor({ headers: ['A'], rows: [['a']] })
+    fireEvent.click(screen.getByRole('button', { name: /import json/i }))
+    fireEvent.change(screen.getByPlaceholderText(/\[.*\]/s), { target: { value: 'not json' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Import' }))
+    expect(screen.getByText(/invalid json/i)).toBeTruthy()
+    expect(getState()).toEqual({ headers: ['A'], rows: [['a']] })
+  })
+
+  it('copies the table to the clipboard as JSON', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.assign(navigator, { clipboard: { writeText } })
+    const { getState } = renderEditor({
+      headers: ['Verb', 'Past'],
+      rows: [['at spise', '']],
+    })
+    fireEvent.click(screen.getByRole('button', { name: /copy as json/i }))
+    await act(async () => {})
+    expect(writeText).toHaveBeenCalled()
+    expect(JSON.parse(writeText.mock.calls[0][0])).toEqual([{ Verb: 'at spise' }])
+    expect(getState()).toEqual({ headers: ['Verb', 'Past'], rows: [['at spise', '']] })
   })
 })

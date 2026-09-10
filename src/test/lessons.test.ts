@@ -5,7 +5,9 @@ import {
   createTableBlock,
   isValidTable,
   parseBlocks,
+  parseTableFromJson,
   serializeBlocks,
+  tableToJson,
 } from '@/lib/lessonBlocks'
 import { buildLessonTree } from '@/lib/lessonTree'
 import type { Lesson, Part } from '@/integrations/turso/types'
@@ -157,5 +159,68 @@ describe('table blocks', () => {
     expect(isValidTable([' '], [['spiser']])).toBe(false)
     expect(isValidTable(['Present'], [['', '']])).toBe(false)
     expect(isValidTable(['Present'], [])).toBe(false)
+  })
+
+  it('parseTableFromJson builds headers and rows from an array of objects', () => {
+    const raw = JSON.stringify([
+      { Verb: 'at spise', Present: 'spiser', Past: 'spiste' },
+      { Verb: 'at drikke', Present: 'drikker', Past: 'drakk' },
+    ])
+    expect(parseTableFromJson(raw)).toEqual({
+      headers: ['Verb', 'Present', 'Past'],
+      rows: [
+        ['at spise', 'spiser', 'spiste'],
+        ['at drikke', 'drikker', 'drakk'],
+      ],
+    })
+  })
+
+  it('parseTableFromJson unions keys in first-appearance order and pads missing cells', () => {
+    const raw = JSON.stringify([{ A: '1', B: '2' }, { B: '3', C: '4' }])
+    expect(parseTableFromJson(raw)).toEqual({
+      headers: ['A', 'B', 'C'],
+      rows: [
+        ['1', '2', ''],
+        ['', '3', '4'],
+      ],
+    })
+  })
+
+  it('parseTableFromJson coerces numbers and booleans to strings', () => {
+    const raw = JSON.stringify([{ Verb: 'at være', Present: 1, Perfect: true }])
+    expect(parseTableFromJson(raw)).toEqual({
+      headers: ['Verb', 'Present', 'Perfect'],
+      rows: [['at være', '1', 'true']],
+    })
+  })
+
+  it('parseTableFromJson drops fully-empty rows', () => {
+    const raw = JSON.stringify([{ A: 'x' }, { A: '' }])
+    expect(parseTableFromJson(raw)).toEqual({ headers: ['A'], rows: [['x']] })
+  })
+
+  it('parseTableFromJson returns an error for invalid JSON', () => {
+    expect(parseTableFromJson('not json')).toEqual({ error: expect.any(String) })
+  })
+
+  it('parseTableFromJson returns an error for non-array JSON', () => {
+    expect(parseTableFromJson('{"A": "x"}')).toEqual({ error: expect.any(String) })
+  })
+
+  it('parseTableFromJson returns an error for an empty or non-object array', () => {
+    expect(parseTableFromJson('[]')).toEqual({ error: expect.any(String) })
+    expect(parseTableFromJson('[1, 2]')).toEqual({ error: expect.any(String) })
+    expect(parseTableFromJson('[{"A":"x"}, null]')).toEqual({ error: expect.any(String) })
+  })
+
+  it('tableToJson serializes the grid as an array of objects, omitting empty cells', () => {
+    const json = tableToJson(['Verb', 'Present', 'Past'], [
+      ['at spise', 'spiser', ''],
+      ['at drikke', 'drikker', 'drakk'],
+    ])
+    expect(JSON.parse(json)).toEqual([
+      { Verb: 'at spise', Present: 'spiser' },
+      { Verb: 'at drikke', Present: 'drikker', Past: 'drakk' },
+    ])
   })
 })

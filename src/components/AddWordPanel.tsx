@@ -27,6 +27,7 @@ interface AddWordPanelProps {
 const AddWordPanel = ({ defaultLanguage, onClose, position = 'left', initialWord }: AddWordPanelProps) => {
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const savingRef = useRef(false)
   const [word, setWord] = useState(initialWord ?? '')
   const [translation, setTranslation] = useState('')
   const [contextNote, setContextNote] = useState('')
@@ -42,6 +43,12 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left', initialWord
   useEffect(() => {
     setWordLang(defaultLanguage)
   }, [defaultLanguage])
+
+  useEffect(() => {
+    setWord(initialWord ?? '')
+    setTranslation('')
+    setContextNote('')
+  }, [initialWord])
 
   const addWord = useMutation({
     mutationFn: async () => {
@@ -59,12 +66,30 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left', initialWord
       setContextNote('')
       toast.success('Word saved to Vocab Bank!')
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e) => toast.error(e instanceof Error ? e.message : 'Could not save word'),
+    onSettled: () => {
+      savingRef.current = false
+    },
   })
+
+  const canSave = !!word.trim() && !!translation.trim() && !!wordLang
+
+  const handleSave = () => {
+    if (!canSave || addWord.isPending || savingRef.current) return
+    savingRef.current = true
+    addWord.mutate()
+  }
 
   const options = languages.includes(defaultLanguage)
     ? languages
     : [defaultLanguage, ...languages]
+
+  const handleClear = () => {
+    setWord('')
+    setTranslation('')
+    setContextNote('')
+    inputRef.current?.focus()
+  }
 
   return (
     <aside
@@ -95,9 +120,9 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left', initialWord
             value={word}
             onChange={(e) => setWord(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey && word && translation) {
+              if (e.key === 'Enter' && !e.shiftKey && canSave) {
                 e.preventDefault()
-                addWord.mutate()
+                handleSave()
               }
             }}
             className="bg-muted/30 focus-visible:ring-primary/30 pr-8"
@@ -128,9 +153,9 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left', initialWord
               setTranslation(e.target.value)
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey && word && translation) {
+              if (e.key === 'Enter' && !e.shiftKey && canSave) {
                 e.preventDefault()
-                addWord.mutate()
+                handleSave()
               }
             }}
             className="bg-muted/30 focus-visible:ring-primary/30 pr-8"
@@ -171,12 +196,21 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left', initialWord
           className="bg-muted/30 focus-visible:ring-primary/30"
         />
       </div>
-      <Button
-        onClick={() => addWord.mutate()}
-        disabled={!word || !translation || !wordLang || addWord.isPending}
-        className="w-full mt-4 transition-all shadow-md hover:shadow-lg hover:shadow-primary/25">
-        {addWord.isPending ? 'Saving…' : 'Save Word'}
-      </Button>
+      <div className="flex gap-2 mt-4">
+        <Button
+          variant="ghost"
+          onClick={handleClear}
+          disabled={!word.trim() && !translation.trim() && !contextNote.trim()}
+          className="text-muted-foreground hover:text-foreground shrink-0">
+          Clear
+        </Button>
+        <Button
+          onClick={handleSave}
+          disabled={!canSave || addWord.isPending}
+          className="flex-1 transition-all shadow-md hover:shadow-lg hover:shadow-primary/25">
+          {addWord.isPending ? 'Saving…' : 'Save Word'}
+        </Button>
+      </div>
     </aside>
   )
 }

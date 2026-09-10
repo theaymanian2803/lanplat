@@ -10,6 +10,7 @@ import { notesDb, screenshotsDb, videosDb } from '@/integrations/turso/db'
 import { extractVideoId } from '@/lib/youtube'
 import { compressImageToDataUrl } from '@/lib/imageCompression'
 import { TextSpeaker, splitSentences } from '@/lib/tts'
+import { getFloatingButtonPosition, getWordRangeAtPoint, isDoubleTap, type TextTap } from '@/lib/textSelection'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BookMarked, Copy, Eraser, Forward, ImagePlus, Layers, Loader2, Minus, Pause, Play, Plus, Rewind, StickyNote, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -39,6 +40,7 @@ const StudyRoom = () => {
   const [currentTime, setCurrentTime] = useState(0)
 
   const [addWordOpen, setAddWordOpen] = useState(false)
+  const [addWordSession, setAddWordSession] = useState(0)
   const [addLessonOpen, setAddLessonOpen] = useState(false)
   const [panelSide, setPanelSide] = useState<'left' | 'right'>(() => {
     const saved = localStorage.getItem('studyroom-panel-side')
@@ -82,8 +84,34 @@ const StudyRoom = () => {
   // Text selection -> "Add word" floating action
   const textContentRef = useRef<HTMLDivElement>(null)
   const selectionBtnRef = useRef<HTMLDivElement>(null)
-  const [textSelection, setTextSelection] = useState<{ text: string; top: number; left: number } | null>(null)
+  const [textSelection, setTextSelection] = useState<{
+    text: string
+    top: number
+    left: number
+    rect?: { top: number; left: number; width: number; height: number }
+  } | null>(null)
   const [pendingWord, setPendingWord] = useState('')
+  const lastTapRef = useRef<TextTap | null>(null)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+
+  const showAddWordButton = useCallback(
+    (
+      text: string,
+      rect: { top: number; bottom: number; left: number; width: number },
+      withHighlight = false,
+    ) => {
+      const { top, left } = getFloatingButtonPosition(rect, window.innerWidth)
+      setTextSelection({
+        text,
+        top,
+        left,
+        rect: withHighlight
+          ? { top: rect.top, left: rect.left, width: rect.width, height: rect.bottom - rect.top }
+          : undefined,
+      })
+    },
+    [],
+  )
 
   const readTextSelection = useCallback(() => {
     const container = textContentRef.current
@@ -112,12 +140,8 @@ const StudyRoom = () => {
       setTextSelection(null)
       return
     }
-    const btnW = 128
-    const btnH = 36
-    const left = Math.min(Math.max(rect.left + rect.width / 2 - btnW / 2, 8), window.innerWidth - btnW - 8)
-    const top = rect.top - btnH - 10 < 8 ? rect.bottom + 10 : rect.top - btnH - 10
-    setTextSelection({ text, top, left })
-  }, [])
+    showAddWordButton(text, rect)
+  }, [showAddWordButton])
 
   useEffect(() => {
     let raf = 0
@@ -133,16 +157,46 @@ const StudyRoom = () => {
   }, [readTextSelection])
 
   useEffect(() => {
-    const dismiss = (e: MouseEvent) => {
+    const dismiss = (e: PointerEvent) => {
       const target = e.target as Node
       if (selectionBtnRef.current?.contains(target)) return
       if (textContentRef.current && !textContentRef.current.contains(target)) {
         setTextSelection(null)
       }
     }
-    document.addEventListener('mousedown', dismiss)
-    return () => document.removeEventListener('mousedown', dismiss)
+    document.addEventListener('pointerdown', dismiss)
+    return () => document.removeEventListener('pointerdown', dismiss)
   }, [])
+
+  // Touch double-tap selects the word under the finger without creating a native
+  // selection, so Android's copy/select/search toolbar cannot cover "Add word".
+  const handleTextTouchStart = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    const touch = e.touches[0]
+    touchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null
+  }, [])
+
+  const handleTextTouchEnd = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      const container = textContentRef.current
+      const start = touchStartRef.current
+      touchStartRef.current = null
+      const touch = e.changedTouches[0]
+      if (!container || !start || !touch) return
+      if (Math.hypot(touch.clientX - start.x, touch.clientY - start.y) > 10) {
+        lastTapRef.current = null
+        return
+      }
+      const tap: TextTap = { time: Date.now(), x: touch.clientX, y: touch.clientY }
+      const doubleTap = isDoubleTap(lastTapRef.current, tap)
+      lastTapRef.current = doubleTap ? null : tap
+      if (!doubleTap) return
+      e.preventDefault()
+      const word = getWordRangeAtPoint(container, touch.clientX, touch.clientY)
+      if (!word) return
+      showAddWordButton(word.text, word.range.getBoundingClientRect(), true)
+    },
+    [showAddWordButton],
+  )
 
   // Drawing overlay state
   const [isDrawingMode, setIsDrawingMode] = useState(false)
@@ -281,11 +335,21 @@ const StudyRoom = () => {
     setAddLessonOpen(false)
   }, [getCurrentPlayerTime, isText])
 
-  const openAddWordPanel = useCallback(() => {
+  const openAddWordPanel = useCallback((word?: string) => {
+    setPendingWord(word ?? '')
+    setAddWordSession((s) => s + 1)
     setAddWordOpen(true)
     setNoteOpen(false)
     setAddLessonOpen(false)
   }, [])
+
+  const addWordFromSelection = useCallback(() => {
+    if (!textSelection) return
+    const word = textSelection.text
+    setTextSelection(null)
+    window.getSelection()?.removeAllRanges()
+    openAddWordPanel(word)
+  }, [textSelection, openAddWordPanel])
 
   const openAddLessonPanel = useCallback(() => {
     setAddLessonOpen(true)
@@ -547,6 +611,7 @@ const StudyRoom = () => {
           )}
           {panelSide === 'left' && addWordOpen && (
             <AddWordPanel
+              key={addWordSession}
               defaultLanguage={video.language}
               onClose={() => setAddWordOpen(false)}
               position={panelSide}
@@ -576,7 +641,7 @@ const StudyRoom = () => {
                 size="icon"
                 variant="default"
                 title="Add Word"
-                onClick={openAddWordPanel}>
+                onClick={() => openAddWordPanel()}>
                 <BookMarked className="h-4 w-4" />
               </Button>
               <Button
@@ -715,7 +780,15 @@ const StudyRoom = () => {
                   </Button>
                 </div>
               </div>
-              <div ref={textContentRef} className="flex-1 overflow-y-auto p-6">
+              <div
+                ref={textContentRef}
+                className="flex-1 overflow-y-auto p-6 touch-manipulation [-webkit-touch-callout:none]"
+                onContextMenu={(e) => {
+                  if (window.matchMedia?.('(pointer: coarse)').matches) e.preventDefault()
+                }}
+                onScroll={() => setTextSelection(null)}
+                onTouchStart={handleTextTouchStart}
+                onTouchEnd={handleTextTouchEnd}>
                 {video.content ? (
                   <p
                     className="whitespace-pre-wrap leading-relaxed text-foreground/90 select-text"
@@ -837,6 +910,7 @@ const StudyRoom = () => {
         )}
         {panelSide === 'right' && addWordOpen && (
           <AddWordPanel
+            key={addWordSession}
             defaultLanguage={video.language}
             onClose={() => setAddWordOpen(false)}
             position={panelSide}
@@ -913,20 +987,32 @@ const StudyRoom = () => {
       </div>
 
       {isText && textSelection && (
-        <div
-          ref={selectionBtnRef}
-          className="fixed z-[90] flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground shadow-lg px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-primary/90 transition-colors"
-          style={{ top: textSelection.top, left: textSelection.left }}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => {
-            setPendingWord(textSelection.text)
-            setTextSelection(null)
-            window.getSelection()?.removeAllRanges()
-            openAddWordPanel()
-          }}>
-          <BookMarked className="h-3.5 w-3.5" />
-          Add word
-        </div>
+        <>
+          {textSelection.rect && (
+            <div
+              className="fixed z-[89] rounded bg-primary/20 pointer-events-none"
+              style={{
+                top: textSelection.rect.top,
+                left: textSelection.rect.left,
+                width: textSelection.rect.width,
+                height: textSelection.rect.height,
+              }}
+            />
+          )}
+          <div
+            ref={selectionBtnRef}
+            className="fixed z-[90] flex items-center gap-1.5 rounded-lg bg-primary text-primary-foreground shadow-lg px-3 py-2 text-xs font-semibold cursor-pointer hover:bg-primary/90 transition-colors touch-manipulation"
+            style={{ top: textSelection.top, left: textSelection.left }}
+            onMouseDown={(e) => e.preventDefault()}
+            onTouchEnd={(e) => {
+              e.preventDefault()
+              addWordFromSelection()
+            }}
+            onClick={addWordFromSelection}>
+            <BookMarked className="h-3.5 w-3.5" />
+            Add word
+          </div>
+        </>
       )}
 
       {isDrawingMode && (

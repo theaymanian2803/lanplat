@@ -167,7 +167,7 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-3xl p-0 gap-0 flex flex-col">
+      <SheetContent side="right" className="w-[95%] sm:max-w-none p-0 gap-0 flex flex-col">
         <SheetHeader className="px-6 pt-5 pb-3 border-b border-border/40">
           <SheetTitle className="flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-primary" />

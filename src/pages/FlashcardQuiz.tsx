@@ -83,7 +83,7 @@ const FlashcardQuiz = () => {
   return (
     <Layout>
       <div className="max-w-2xl mx-auto space-y-6" tabIndex={0} onKeyDown={handleKeyDown}>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <h1 className="text-2xl font-bold tracking-tight">Flashcard Quiz</h1>
           <div className="flex items-center gap-3">
             {dueWords.length > 0 && (

@@ -119,7 +119,7 @@ const ScreenshotList = memo(function ScreenshotList({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 bg-black/40 backdrop-blur-md text-white/80 hover:text-red-400 hover:bg-red-500/20 rounded-full opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0"
+                className="h-7 w-7 bg-black/40 backdrop-blur-md text-white/80 hover:text-red-400 hover:bg-red-500/20 rounded-full opacity-100 translate-y-0 md:opacity-0 md:group-hover:opacity-100 transition-all md:transform md:translate-y-2 md:group-hover:translate-y-0"
                 onClick={() => onDelete(s.id)}>
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>

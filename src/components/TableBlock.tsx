@@ -59,7 +59,9 @@ const TableBlock = ({ table, previewRows }: TableBlockProps) => {
         }}>
         <Maximize2 className="h-3 w-3" />
       </Button>
-      {renderTable(table, 'text-sm', previewRows)}
+      <div className="w-full overflow-x-auto">
+        {renderTable(table, 'text-sm', previewRows)}
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-4xl">

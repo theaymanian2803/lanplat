@@ -60,6 +60,14 @@ function renderPage(words: VocabWord[]) {
   )
 }
 
+function desktopTable() {
+  return within(screen.getByRole('table'))
+}
+
+function mobileCards() {
+  return within(screen.getByTestId('vocab-mobile-cards'))
+}
+
 describe('VocabBank', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -68,10 +76,9 @@ describe('VocabBank', () => {
   it('opens a dialog with the context note when the sticky note icon is clicked', async () => {
     renderPage([word()])
 
-    await waitFor(() => expect(screen.getByText('hund')).toBeInTheDocument())
+    await waitFor(() => expect(desktopTable().getByText('hund')).toBeInTheDocument())
 
-    const noteButton = screen.getByTitle('View context note')
-    fireEvent.click(noteButton)
+    fireEvent.click(desktopTable().getByTitle('View context note'))
 
     const dialog = screen.getByRole('dialog')
     expect(dialog).toBeVisible()
@@ -81,9 +88,9 @@ describe('VocabBank', () => {
   it('shows an empty state when the word has no context note', async () => {
     renderPage([word({ context_note: null })])
 
-    await waitFor(() => expect(screen.getByText('hund')).toBeInTheDocument())
+    await waitFor(() => expect(desktopTable().getByText('hund')).toBeInTheDocument())
 
-    fireEvent.click(screen.getByTitle('View context note'))
+    fireEvent.click(desktopTable().getByTitle('View context note'))
 
     expect(screen.getByRole('dialog')).toBeVisible()
     expect(screen.getByText('No context note for this word.')).toBeVisible()
@@ -92,9 +99,9 @@ describe('VocabBank', () => {
   it('closes the dialog', async () => {
     renderPage([word()])
 
-    await waitFor(() => expect(screen.getByText('hund')).toBeInTheDocument())
+    await waitFor(() => expect(desktopTable().getByText('hund')).toBeInTheDocument())
 
-    fireEvent.click(screen.getByTitle('View context note'))
+    fireEvent.click(desktopTable().getByTitle('View context note'))
     expect(screen.getByRole('dialog')).toBeVisible()
 
     fireEvent.click(screen.getByRole('button', { name: 'Done' }))
@@ -105,9 +112,9 @@ describe('VocabBank', () => {
   it('opens the edit dialog prefilled with the word details', async () => {
     renderPage([word()])
 
-    await waitFor(() => expect(screen.getByText('hund')).toBeInTheDocument())
+    await waitFor(() => expect(desktopTable().getByText('hund')).toBeInTheDocument())
 
-    fireEvent.click(screen.getByTitle('Edit word'))
+    fireEvent.click(desktopTable().getByTitle('Edit word'))
 
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByDisplayValue('hund')).toBeInTheDocument()
@@ -118,9 +125,9 @@ describe('VocabBank', () => {
   it('saves edits to the word, translation and context note', async () => {
     renderPage([word()])
 
-    await waitFor(() => expect(screen.getByText('hund')).toBeInTheDocument())
+    await waitFor(() => expect(desktopTable().getByText('hund')).toBeInTheDocument())
 
-    fireEvent.click(screen.getByTitle('Edit word'))
+    fireEvent.click(desktopTable().getByTitle('Edit word'))
     const dialog = screen.getByRole('dialog')
 
     fireEvent.change(within(dialog).getByDisplayValue('hund'), { target: { value: 'kat' } })
@@ -143,9 +150,9 @@ describe('VocabBank', () => {
   it('prevents saving an empty word in the edit dialog', async () => {
     renderPage([word()])
 
-    await waitFor(() => expect(screen.getByText('hund')).toBeInTheDocument())
+    await waitFor(() => expect(desktopTable().getByText('hund')).toBeInTheDocument())
 
-    fireEvent.click(screen.getByTitle('Edit word'))
+    fireEvent.click(desktopTable().getByTitle('Edit word'))
     const dialog = screen.getByRole('dialog')
 
     fireEvent.change(within(dialog).getByDisplayValue('hund'), { target: { value: '   ' } })
@@ -156,7 +163,7 @@ describe('VocabBank', () => {
   it('lowercases the word and translation in the add dialog', async () => {
     renderPage([word()])
 
-    await waitFor(() => expect(screen.getByText('hund')).toBeInTheDocument())
+    await waitFor(() => expect(desktopTable().getByText('hund')).toBeInTheDocument())
 
     fireEvent.click(screen.getByRole('button', { name: 'Add Word' }))
     const dialog = screen.getByRole('dialog')
@@ -171,9 +178,9 @@ describe('VocabBank', () => {
   it('lowercases edits in the edit dialog', async () => {
     renderPage([word()])
 
-    await waitFor(() => expect(screen.getByText('hund')).toBeInTheDocument())
+    await waitFor(() => expect(desktopTable().getByText('hund')).toBeInTheDocument())
 
-    fireEvent.click(screen.getByTitle('Edit word'))
+    fireEvent.click(desktopTable().getByTitle('Edit word'))
     const dialog = screen.getByRole('dialog')
 
     fireEvent.change(within(dialog).getByDisplayValue('hund'), { target: { value: 'KAT' } })
@@ -181,5 +188,63 @@ describe('VocabBank', () => {
 
     expect(within(dialog).getByDisplayValue('kat')).toBeInTheDocument()
     expect(within(dialog).getByDisplayValue('cat')).toBeInTheDocument()
+  })
+
+  it('renders mobile cards with word, translation, badges and review buttons', async () => {
+    renderPage([word({ mastery_level: 4 })])
+
+    await waitFor(() => expect(mobileCards().getByText('hund')).toBeInTheDocument())
+
+    expect(mobileCards().getByText('dog')).toBeInTheDocument()
+    expect(mobileCards().getByText('Lv 4')).toBeInTheDocument()
+    expect(mobileCards().getByText('Danish')).toBeInTheDocument()
+    for (const g of ['fail', 'hard', 'good', 'easy']) {
+      expect(mobileCards().getByRole('button', { name: g })).toBeInTheDocument()
+    }
+  })
+
+  it('opens the context note dialog from a mobile card', async () => {
+    renderPage([word()])
+
+    await waitFor(() => expect(mobileCards().getByText('hund')).toBeInTheDocument())
+
+    fireEvent.click(mobileCards().getByTitle('View context note'))
+
+    expect(screen.getByRole('dialog')).toBeVisible()
+    expect(screen.getByText('seen in chapter 3')).toBeVisible()
+  })
+
+  it('opens the edit dialog from a mobile card', async () => {
+    renderPage([word()])
+
+    await waitFor(() => expect(mobileCards().getByText('hund')).toBeInTheDocument())
+
+    fireEvent.click(mobileCards().getByTitle('Edit word'))
+
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByDisplayValue('hund')).toBeInTheDocument()
+    expect(within(dialog).getByDisplayValue('dog')).toBeInTheDocument()
+  })
+
+  it('deletes a word from a mobile card', async () => {
+    renderPage([word()])
+
+    await waitFor(() => expect(mobileCards().getByText('hund')).toBeInTheDocument())
+
+    fireEvent.click(mobileCards().getByTitle('Delete word'))
+
+    await waitFor(() => expect(vocabularyDb.remove).toHaveBeenCalledWith('w1'))
+  })
+
+  it('grades a word from a mobile card', async () => {
+    renderPage([word({ mastery_level: 2 })])
+
+    await waitFor(() => expect(mobileCards().getByText('hund')).toBeInTheDocument())
+
+    fireEvent.click(mobileCards().getByRole('button', { name: 'good' }))
+
+    await waitFor(() =>
+      expect(vocabularyDb.updateSrs).toHaveBeenCalledWith('w1', expect.objectContaining({ mastery_level: expect.any(Number) }))
+    )
   })
 })

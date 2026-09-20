@@ -189,7 +189,7 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
           </Button>
         </SheetHeader>
 
-        <div className="flex-1 min-h-0 grid grid-cols-[200px_200px_1fr] divide-x divide-border/40">
+        <div className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-[200px_200px_1fr] max-h-[70vh] md:max-h-none overflow-y-auto md:overflow-hidden divide-y md:divide-y-0 divide-x-0 md:divide-x divide-border/40">
           <div className="flex flex-col min-h-0">
             <div className="p-3 border-b border-border/40 flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

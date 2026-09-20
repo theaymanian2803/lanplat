@@ -128,8 +128,9 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
   }
 
   const placeBelow = rect !== null && rect.top + rect.height + TOOLTIP_HEIGHT + 24 <= window.innerHeight
+  const tooltipWidth = Math.min(TOOLTIP_WIDTH, window.innerWidth - 32)
   const tooltipLeft = rect
-    ? Math.min(Math.max(rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2, 16), window.innerWidth - TOOLTIP_WIDTH - 16)
+    ? Math.min(Math.max(rect.left + rect.width / 2 - tooltipWidth / 2, 16), window.innerWidth - tooltipWidth - 16)
     : 16
   const tooltipTop = rect
     ? placeBelow
@@ -157,13 +158,13 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
 
       <div
         className="absolute z-10 bg-card text-card-foreground border border-border/50 rounded-xl shadow-2xl pointer-events-auto"
-        style={{ width: TOOLTIP_WIDTH, left: tooltipLeft, top: tooltipTop }}>
+        style={{ width: tooltipWidth, left: tooltipLeft, top: tooltipTop }}>
         <div
           className={`absolute h-3 w-3 rotate-45 border-border/50 bg-card ${
             placeBelow ? '-top-1.5 border-t border-l' : '-bottom-1.5 border-b border-r'
           }`}
           style={{
-            left: Math.min(Math.max(rect ? rect.left + rect.width / 2 - 6 : 16, 20), TOOLTIP_WIDTH - 26),
+            left: Math.min(Math.max(rect ? rect.left + rect.width / 2 - 6 : 16, 20), tooltipWidth - 26),
           }}
         />
 

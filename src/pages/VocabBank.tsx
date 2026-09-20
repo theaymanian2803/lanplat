@@ -217,9 +217,9 @@ const VocabBank = () => {
   return (
     <Layout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Vocab Bank</h1>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2 text-sm font-medium" disabled={filtered.length === 0}>
@@ -246,8 +246,8 @@ const VocabBank = () => {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-3">
-          <div className="relative flex-1 max-w-sm">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-sm w-full">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder="Search words…" className="pl-9" value={search} onChange={(e) => handleSearch(e.target.value)} />
           </div>
@@ -266,7 +266,8 @@ const VocabBank = () => {
         ) : filtered.length === 0 ? (
           <p className="text-muted-foreground text-sm">No vocabulary words found.</p>
         ) : (
-          <div className="rounded-lg border border-border/50 overflow-hidden">
+          <>
+            <div className="hidden md:block rounded-lg border border-border/50 overflow-hidden">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -331,6 +332,7 @@ const VocabBank = () => {
                         <Button
                           variant="ghost" size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                          title="Delete word"
                           onClick={() => deleteWord.mutate(v.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -341,7 +343,70 @@ const VocabBank = () => {
                 ))}
               </TableBody>
             </Table>
-          </div>
+            </div>
+
+            <div data-testid="vocab-mobile-cards" className="md:hidden space-y-3">
+              {paginated.map((v) => (
+                <div key={v.id} className="rounded-lg border border-border/50 bg-card p-3 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{v.word}</p>
+                      <p className="text-sm text-muted-foreground truncate">{v.translation}</p>
+                    </div>
+                    <Badge variant="outline" className={`shrink-0 text-[10px] font-mono inline-flex items-center gap-1.5 ${getLangBadgeClasses(v.language)}`}>
+                      <span className={`h-1.5 w-1.5 rounded-full ${getLangDotClass(v.language)}`} />
+                      {v.language}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant="outline" className={`text-[10px] font-mono ${masteryColors[v.mastery_level] || masteryColors[5]}`}>
+                      Lv {v.mastery_level}
+                    </Badge>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost" size="icon"
+                        className="h-9 w-9 text-muted-foreground hover:text-primary"
+                        title="Edit word"
+                        onClick={() => openEdit(v)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost" size="icon"
+                        className="h-9 w-9 text-muted-foreground hover:text-primary"
+                        title="View context note"
+                        onClick={() => setContextDialog(v)}
+                      >
+                        <StickyNote className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost" size="icon"
+                        className="h-9 w-9 text-muted-foreground hover:text-destructive"
+                        title="Delete word"
+                        onClick={() => deleteWord.mutate(v.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {(["fail", "hard", "good", "easy"] as SrsGrade[]).map((g) => (
+                      <Button
+                        key={g}
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 px-1 text-[11px] font-mono capitalize"
+                        onClick={() => gradeWord.mutate({ id: v.id, level: v.mastery_level, grade: g })}
+                        disabled={gradeWord.isPending}
+                      >
+                        {g}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {/* Pagination */}
@@ -351,7 +416,7 @@ const VocabBank = () => {
               {filtered.length} word{filtered.length !== 1 ? "s" : ""} · page {safePage} of {totalPages}
             </p>
             <nav role="navigation" aria-label="pagination" className="flex w-full justify-center">
-              <ul className="flex flex-row items-center gap-1">
+              <ul className="flex flex-row flex-wrap items-center justify-center gap-1">
                 <li>
                   <button
                     type="button"

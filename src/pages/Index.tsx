@@ -225,7 +225,7 @@ const Index = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0"
+                      className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0"
                       onClick={(e) => {
                         e.preventDefault()
                         deleteVideo.mutate(v.id)
@@ -270,7 +270,7 @@ const Index = () => {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0"
+                      className="h-7 w-7 opacity-100 md:opacity-0 md:group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all shrink-0"
                       onClick={(e) => {
                         e.preventDefault()
                         deleteVideo.mutate(v.id)

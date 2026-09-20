@@ -94,4 +94,21 @@ describe('AddWordPanel', () => {
 
     await waitFor(() => expect(insert).toHaveBeenCalledTimes(1))
   })
+
+  it('lowercases the word and translation as the user types', () => {
+    renderPanel()
+    const wordInput = screen.getByPlaceholderText('e.g. hund')
+    const translationInput = screen.getByPlaceholderText('e.g. dog')
+
+    fireEvent.change(wordInput, { target: { value: 'HUND' } })
+    fireEvent.change(translationInput, { target: { value: 'DOG' } })
+
+    expect(wordInput).toHaveValue('hund')
+    expect(translationInput).toHaveValue('dog')
+  })
+
+  it('lowercases the initial word passed from selection', () => {
+    renderPanel('Hund')
+    expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('hund')
+  })
 })

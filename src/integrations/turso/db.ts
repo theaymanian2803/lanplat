@@ -252,6 +252,16 @@ export const vocabularyDb = {
     })
   },
 
+  async update(
+    id: string,
+    input: { language: string; word: string; translation: string; context_note: string | null }
+  ): Promise<void> {
+    await turso.execute({
+      sql: 'UPDATE vocabulary SET language = ?, word = ?, translation = ?, context_note = ? WHERE id = ?',
+      args: [input.language, input.word, input.translation, input.context_note, id],
+    })
+  },
+
   async updateSrs(id: string, srs: { mastery_level: number; next_review_date: string }): Promise<void> {
     try {
       await turso.execute({

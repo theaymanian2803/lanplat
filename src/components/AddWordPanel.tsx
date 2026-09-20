@@ -28,7 +28,7 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left', initialWord
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const savingRef = useRef(false)
-  const [word, setWord] = useState(initialWord ?? '')
+  const [word, setWord] = useState((initialWord ?? '').toLowerCase())
   const [translation, setTranslation] = useState('')
   const [contextNote, setContextNote] = useState('')
   const [wordLang, setWordLang] = useState(defaultLanguage)
@@ -45,7 +45,7 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left', initialWord
   }, [defaultLanguage])
 
   useEffect(() => {
-    setWord(initialWord ?? '')
+    setWord((initialWord ?? '').toLowerCase())
     setTranslation('')
     setContextNote('')
   }, [initialWord])
@@ -118,7 +118,7 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left', initialWord
             ref={inputRef}
             placeholder="e.g. hund"
             value={word}
-            onChange={(e) => setWord(e.target.value)}
+            onChange={(e) => setWord(e.target.value.toLowerCase())}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && canSave) {
                 e.preventDefault()
@@ -150,7 +150,7 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left', initialWord
             value={translation}
             onChange={(e) => {
               markUserEdit()
-              setTranslation(e.target.value)
+              setTranslation(e.target.value.toLowerCase())
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && canSave) {

@@ -2,7 +2,6 @@ import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { languagesDb, vocabularyDb } from "@/integrations/turso/db";
 import { getLangBadgeClasses, getLangDotClass } from "@/lib/langColors";
-import { openDictionary } from "@/lib/dictionary";
 import { computeSrs, type SrsGrade } from "@/lib/srs";
 import { useAutoTranslate } from "@/hooks/useAutoTranslate";
 import Layout from "@/components/Layout";
@@ -19,8 +18,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Trash2, Search, Download, BookOpen, Loader2, FileText, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { Plus, Trash2, Search, Download, Pencil, Loader2, FileText, StickyNote, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
+import type { VocabWord } from "@/integrations/turso/types";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "sonner";
@@ -42,6 +42,12 @@ const VocabBank = () => {
   const [langFilter, setLangFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [contextDialog, setContextDialog] = useState<VocabWord | null>(null);
+  const [editDialog, setEditDialog] = useState<VocabWord | null>(null);
+  const [editWord, setEditWord] = useState("");
+  const [editTranslation, setEditTranslation] = useState("");
+  const [editContextNote, setEditContextNote] = useState("");
+  const [editLang, setEditLang] = useState<string>("Danish");
   const [word, setWord] = useState("");
   const [translation, setTranslation] = useState("");
   const [contextNote, setContextNote] = useState("");
@@ -127,6 +133,32 @@ const VocabBank = () => {
       await vocabularyDb.remove(id);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["vocabulary"] }),
+  });
+
+  const openEdit = (v: VocabWord) => {
+    setEditWord(v.word);
+    setEditTranslation(v.translation);
+    setEditContextNote(v.context_note ?? "");
+    setEditLang(v.language);
+    setEditDialog(v);
+  };
+
+  const updateWord = useMutation({
+    mutationFn: async () => {
+      if (!editDialog) return;
+      await vocabularyDb.update(editDialog.id, {
+        language: editLang,
+        word: editWord,
+        translation: editTranslation,
+        context_note: editContextNote || null,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vocabulary"] });
+      setEditDialog(null);
+      toast.success("Word updated");
+    },
+    onError: (e) => toast.error(e.message),
   });
 
   const gradeWord = useMutation({
@@ -283,10 +315,18 @@ const VocabBank = () => {
                         <Button
                           variant="ghost" size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-primary"
-                          title="Look up in dictionary"
-                          onClick={() => openDictionary(v.word, v.language)}
+                          title="Edit word"
+                          onClick={() => openEdit(v)}
                         >
-                          <BookOpen className="h-3.5 w-3.5" />
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost" size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary"
+                          title="View context note"
+                          onClick={() => setContextDialog(v)}
+                        >
+                          <StickyNote className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost" size="icon"
@@ -376,12 +416,12 @@ const VocabBank = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Word</Label>
-              <AutoGrowTextarea ref={wordInputRef} placeholder="e.g. hund" value={word} onChange={(e) => setWord(e.target.value)} />
+              <AutoGrowTextarea ref={wordInputRef} placeholder="e.g. hund" value={word} onChange={(e) => setWord(e.target.value.toLowerCase())} />
             </div>
             <div className="space-y-2">
               <Label>Translation</Label>
               <div className="relative">
-                <AutoGrowTextarea placeholder="e.g. dog" value={translation} onChange={(e) => { markUserEdit(); setTranslation(e.target.value); }} className="pr-8" />
+                <AutoGrowTextarea placeholder="e.g. dog" value={translation} onChange={(e) => { markUserEdit(); setTranslation(e.target.value.toLowerCase()); }} className="pr-8" />
                 {translating && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-muted-foreground" />}
               </div>
               {error && !translating && (
@@ -408,6 +448,73 @@ const VocabBank = () => {
             </Button>
             <Button onClick={() => addWord.mutate()} disabled={!word || !translation || addWord.isPending} className="text-sm font-semibold">
               {addWord.isPending ? "Saving…" : "Add Word"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Context Note Dialog */}
+      <Dialog open={!!contextDialog} onOpenChange={(o) => !o && setContextDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Context Note</DialogTitle>
+          </DialogHeader>
+          {contextDialog && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-semibold">{contextDialog.word}</span>
+                <Badge variant="outline" className={`text-[10px] font-mono inline-flex items-center gap-1.5 ${getLangBadgeClasses(contextDialog.language)}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${getLangDotClass(contextDialog.language)}`} />
+                  {contextDialog.language}
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">{contextDialog.translation}</p>
+              <div className="rounded-md bg-muted/50 border border-border/50 p-3 text-sm whitespace-pre-wrap">
+                {contextDialog.context_note || <span className="italic text-muted-foreground">No context note for this word.</span>}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setContextDialog(null)}>Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Word Dialog */}
+      <Dialog open={!!editDialog} onOpenChange={(o) => !o && setEditDialog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Vocabulary Word</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Word</Label>
+              <AutoGrowTextarea placeholder="e.g. hund" value={editWord} onChange={(e) => setEditWord(e.target.value.toLowerCase())} />
+            </div>
+            <div className="space-y-2">
+              <Label>Translation</Label>
+              <AutoGrowTextarea placeholder="e.g. dog" value={editTranslation} onChange={(e) => setEditTranslation(e.target.value.toLowerCase())} />
+            </div>
+            <div className="space-y-2">
+              <Label>Language</Label>
+              <Select value={editLang} onValueChange={(v) => setEditLang(v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {languages.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Context Note (optional)</Label>
+              <AutoGrowTextarea placeholder="Where you encountered this word" value={editContextNote} onChange={(e) => setEditContextNote(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter className="sm:justify-between">
+            <Button variant="ghost" onClick={() => setEditDialog(null)} className="text-muted-foreground hover:text-foreground">
+              Cancel
+            </Button>
+            <Button onClick={() => updateWord.mutate()} disabled={!editWord.trim() || !editTranslation.trim() || updateWord.isPending} className="text-sm font-semibold">
+              {updateWord.isPending ? "Saving…" : "Save changes"}
             </Button>
           </DialogFooter>
         </DialogContent>

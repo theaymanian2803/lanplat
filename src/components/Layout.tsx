@@ -4,7 +4,7 @@ import Navbar from './Navbar'
 import LessonsPanel from './LessonsPanel'
 import { LessonsDrawerContext } from '@/lib/lessonsDrawer'
 import { useOpenSettingsDialog } from '@/lib/settingsDialog'
-import { ACCESS_STORAGE_KEY } from './AccessGate'
+import { lock } from '@/lib/access'
 import { Button } from '@/components/ui/button'
 import { flushSrsQueue } from '@/integrations/turso/db'
 import { dismissSetupBanner, shouldShowSetupBanner } from '@/lib/tursoConfig'
@@ -38,7 +38,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
   const handleOpenLessons = useCallback(() => setLessonsOpen(true), [])
 
   const handleSignOut = useCallback(() => {
-    sessionStorage.removeItem(ACCESS_STORAGE_KEY)
+    lock()
     window.location.reload()
   }, [])
 

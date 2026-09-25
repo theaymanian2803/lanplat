@@ -1,4 +1,5 @@
 import Layout from '@/components/Layout'
+import LanguageSelect from '@/components/LanguageSelect'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -40,7 +41,7 @@ const Index = () => {
   const [newUrl, setNewUrl] = useState('')
   const [newText, setNewText] = useState('')
   const [newTitle, setNewTitle] = useState('')
-  const [newLang, setNewLang] = useState<Language>('Danish')
+  const [newLang, setNewLang] = useState<Language>('')
 
   const { data: videos = [], isLoading } = useQuery({
     queryKey: ['videos', filter],
@@ -338,19 +339,13 @@ const Index = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Language</Label>
-                  <Select value={newLang} onValueChange={(v) => setNewLang(v)}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {languages.map((l) => (
-                        <SelectItem key={l} value={l}>
-                          {l}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="add-video-language">Language</Label>
+                  <LanguageSelect
+                    id="add-video-language"
+                    languages={languages}
+                    value={newLang}
+                    onChange={setNewLang}
+                  />
                 </div>
               </div>
               <DialogFooter>
@@ -383,19 +378,13 @@ const Index = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Language</Label>
-                  <Select value={newLang} onValueChange={(v) => setNewLang(v)}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {languages.map((l) => (
-                        <SelectItem key={l} value={l}>
-                          {l}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="add-text-language">Language</Label>
+                  <LanguageSelect
+                    id="add-text-language"
+                    languages={languages}
+                    value={newLang}
+                    onChange={setNewLang}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Text content</Label>

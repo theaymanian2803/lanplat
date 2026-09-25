@@ -356,9 +356,15 @@ export const languagesDb = {
   },
 
   async add(name: string): Promise<void> {
+    const trimmed = name.trim()
+    if (!trimmed) throw new Error('Language name is required')
+    const rs = await turso.execute('SELECT name FROM languages')
+    const names = rs.rows.map((r) => String(r.name))
+    if (names.some((n) => n.toLowerCase() === trimmed.toLowerCase()))
+      throw new Error('That language already exists')
     await turso.execute({
       sql: 'INSERT INTO languages (name, created_at) VALUES (?, ?)',
-      args: [name, now()],
+      args: [trimmed, now()],
     })
   },
 

@@ -4,10 +4,19 @@ import { ACCESS_STORAGE_KEY, isUnlocked, lock, unlock } from './access'
 describe('access', () => {
   beforeEach(() => {
     sessionStorage.clear()
+    localStorage.clear()
   })
 
   it('uses the key the e2e spec seeds', () => {
     expect(ACCESS_STORAGE_KEY).toBe('lingovault_unlocked')
+  })
+
+  it('unlocks in sessionStorage, because that is the store the e2e spec seeds', () => {
+    unlock()
+    // Reading both stores pins which one the flag lives in. e2e/add-word.spec.ts seeds
+    // sessionStorage, so a localStorage flag would lock that spec out of the app.
+    expect(sessionStorage.getItem(ACCESS_STORAGE_KEY)).toBe('1')
+    expect(localStorage.getItem(ACCESS_STORAGE_KEY)).toBeNull()
   })
 
   it('starts locked', () => {

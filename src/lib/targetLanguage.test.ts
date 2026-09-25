@@ -28,8 +28,18 @@ describe('targetLanguage', () => {
     expect(sessionStorage.getItem('lingovault_target_language')).toBeNull()
   })
 
-  it('stores the name, not the slug', () => {
+  it('stores the name verbatim, not the slug', () => {
+    // `Danish` is the languages.name value the app filters on; `danish` is its URL slug.
+    // Asserting on the stored bytes rather than the getter pins the write path, so a
+    // slugifying writer cannot hide behind a getter that maps the value back.
     setTargetLanguage('Danish')
-    expect(getTargetLanguage()).toBe('Danish')
+    expect(localStorage.getItem('lingovault_target_language')).toBe('Danish')
+  })
+
+  it('reads back the stored value without normalising it', () => {
+    // Seeded directly so the writer never produces the value under test: whichever form
+    // reached storage is the form the app will later filter on.
+    localStorage.setItem('lingovault_target_language', 'danish')
+    expect(getTargetLanguage()).toBe('danish')
   })
 })

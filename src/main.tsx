@@ -1,12 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
-import { ensureSchema, flushSrsQueue } from "@/integrations/turso/db";
 import "./index.css";
 
-ensureSchema().catch((e) => {
-  console.error("Failed to initialize database schema:", e);
-});
-
-flushSrsQueue();
-
+// The database is initialised by <AppBootstrap />, which only mounts once a visitor has
+// entered the access code, so the public landing page never talks to Turso.
 createRoot(document.getElementById("root")!).render(<App />);

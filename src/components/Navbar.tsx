@@ -17,7 +17,7 @@ interface NavbarProps {
 }
 
 const navItems = [
-  { to: "/", label: "Dashboard", icon: Home, tour: "nav-dashboard" },
+  { to: "/dashboard", label: "Dashboard", icon: Home, tour: "nav-dashboard" },
   { to: "/vocab", label: "Vocab Bank", icon: BookOpen, tour: "nav-vocab" },
   { to: "/quiz", label: "Quiz", icon: Zap, tour: "nav-quiz" },
   { to: "/languages", label: "Languages", icon: Languages, tour: "nav-languages" },
@@ -36,7 +36,7 @@ const Navbar = ({ onOpenSettings, onSignOut, lessonsOpen, onToggleLessons }: Nav
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <Link to="/" className="font-display text-xl font-semibold tracking-tight text-primary shrink-0">
+            <Link to="/dashboard" className="font-display text-xl font-semibold tracking-tight text-primary shrink-0">
               LingoVault
             </Link>
             <div className="hidden md:flex items-center gap-1">

@@ -90,7 +90,7 @@ export const OnboardingDialog = ({ open, onOpenChange }: OnboardingDialogProps) 
   const isLast = step === STEPS.length - 1
 
   useEffect(() => {
-    if (open && location.pathname !== '/') navigate('/')
+    if (open && location.pathname !== '/dashboard') navigate('/dashboard')
   }, [open, location.pathname, navigate])
 
   const measure = useCallback(() => {

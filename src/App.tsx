@@ -1,15 +1,18 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { lazy, Suspense, useState } from 'react'
+import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom'
+
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { Toaster } from '@/components/ui/toaster'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import AccessGate from '@/components/AccessGate'
+import AppBootstrap from '@/components/AppBootstrap'
 import ErrorBoundary from '@/components/ErrorBoundary'
 import OnboardingDialog from '@/components/OnboardingDialog'
+import RequireAccess from '@/components/RequireAccess'
 import SettingsDialogProvider from '@/components/SettingsDialogProvider'
 import { isOnboardingDone } from '@/lib/onboarding'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { lazy, Suspense, useState } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
+const Landing = lazy(() => import('./pages/Landing'))
 const Index = lazy(() => import('./pages/Index'))
 const StudyRoom = lazy(() => import('./pages/StudyRoom'))
 const VocabBank = lazy(() => import('./pages/VocabBank'))
@@ -33,24 +36,33 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AccessGate>
-            <SettingsDialogProvider>
-              <ErrorBoundary>
-                <Suspense fallback={null}>
-                  <Routes>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/video/:id" element={<StudyRoom />} />
+          <ErrorBoundary>
+            <Suspense fallback={null}>
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route element={<RequireAccess />}>
+                  <Route
+                    element={
+                      <>
+                        <AppBootstrap />
+                        <SettingsDialogProvider>
+                          <OnboardingDialog open={onboardingOpen} onOpenChange={setOnboardingOpen} />
+                          <Outlet />
+                        </SettingsDialogProvider>
+                      </>
+                    }>
+                    <Route path="/dashboard" element={<Index />} />
                     <Route path="/vocab" element={<VocabBank />} />
                     <Route path="/quiz" element={<FlashcardQuiz />} />
-                    <Route path="/languages" element={<Languages />} />
                     <Route path="/lessons" element={<LessonsPage />} />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-              </ErrorBoundary>
-              <OnboardingDialog open={onboardingOpen} onOpenChange={setOnboardingOpen} />
-            </SettingsDialogProvider>
-          </AccessGate>
+                    <Route path="/languages" element={<Languages />} />
+                    <Route path="/video/:id" element={<StudyRoom />} />
+                  </Route>
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

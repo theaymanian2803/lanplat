@@ -118,7 +118,7 @@ npm run preview
 
 The app is protected by a client-side access code (no login/account system).
 
-1. Open `src/components/AccessGate.tsx`.
+1. Open `src/lib/accessCode.ts` and edit `DEFAULT_ACCESS_CODE`.
 2. Change the value on line 8:
 
    ```ts
@@ -237,7 +237,7 @@ variables for Git-based deploys.
 | 404 on refresh of a deep link                  | The host's SPA fallback isn't configured — see section 9 for the platform file. |
 | YouTube video won't play                       | The uploader may have disabled embedding; the app shows a "Watch on YouTube" fallback. Region/extension blockers can also cause this. |
 | `npm run dev` port is busy                     | Vite automatically picks the next available port; use the printed URL. |
-| Access code forgotten                          | Reset it in `src/components/AccessGate.tsx` and rebuild.            |
+| Access code forgotten                          | Reset `DEFAULT_ACCESS_CODE` in `src/lib/accessCode.ts` and rebuild.   |
 
 ---
 

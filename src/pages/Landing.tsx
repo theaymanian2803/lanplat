@@ -71,6 +71,9 @@ const Landing = () => {
                     </div>
                   ))}
                 </div>
+                <p className="mt-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                  Illustrative figures, not your own counts
+                </p>
                 <ul className="mt-6 space-y-3">
                   {active.highlights.map((highlight) => (
                     <li key={highlight} className="flex items-start gap-3 text-sm text-muted-foreground">

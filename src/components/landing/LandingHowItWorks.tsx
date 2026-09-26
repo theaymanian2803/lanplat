@@ -9,7 +9,7 @@ const STEPS = [
   {
     icon: KeyRound,
     title: 'Unlock the vault',
-    body: 'Your access code is the only thing between the landing page and your library. Nothing is loaded from the database until it is entered.',
+    body: 'The vault stays closed until you enter your access code. Nothing is loaded from the database until it is entered.',
   },
   {
     icon: TrendingUp,

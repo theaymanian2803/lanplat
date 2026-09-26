@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { languagesDb, vocabularyDb } from "@/integrations/turso/db";
 import { getLangBadgeClasses, getLangDotClass } from "@/lib/langColors";
+import { getTargetLanguage } from "@/lib/targetLanguage";
 import { computeSrs, type SrsGrade } from "@/lib/srs";
 import { useAutoTranslate } from "@/hooks/useAutoTranslate";
 import Layout from "@/components/Layout";
@@ -39,7 +40,7 @@ const PAGE_SIZE = 12;
 const VocabBank = () => {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [langFilter, setLangFilter] = useState<string>("all");
+  const [langFilter, setLangFilter] = useState<string>(() => getTargetLanguage() ?? "all");
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [contextDialog, setContextDialog] = useState<VocabWord | null>(null);

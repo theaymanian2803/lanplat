@@ -248,3 +248,23 @@ describe('VocabBank', () => {
     )
   })
 })
+
+describe('VocabBank language filter', () => {
+  beforeEach(() => {
+    localStorage.clear()
+  })
+
+  it('lists every language when nothing was chosen on the landing page', async () => {
+    renderPage([])
+
+    await waitFor(() => expect(vocabularyDb.list).toHaveBeenCalledWith(undefined))
+  })
+
+  it('opens filtered to the language that was chosen on the landing page', async () => {
+    localStorage.setItem('lingovault_target_language', 'Danish')
+
+    renderPage([])
+
+    await waitFor(() => expect(vocabularyDb.list).toHaveBeenCalledWith('Danish'))
+  })
+})

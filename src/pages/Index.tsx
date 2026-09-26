@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/select'
 import { languagesDb, videosDb } from '@/integrations/turso/db'
 import { getLangBadgeClasses, getLangDotClass } from '@/lib/langColors'
+import { getTargetLanguage } from '@/lib/targetLanguage'
 import { extractVideoId, getThumbnailUrl } from '@/lib/youtube'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { FileText, Play, Plus, Trash2 } from 'lucide-react'
@@ -34,7 +35,7 @@ type AddMode = 'choose' | 'video' | 'text'
 
 const Index = () => {
   const queryClient = useQueryClient()
-  const [filter, setFilter] = useState<string>('all')
+  const [filter, setFilter] = useState<string>(() => getTargetLanguage() ?? 'all')
   const [typeFilter, setTypeFilter] = useState<'all' | 'video' | 'text'>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [addMode, setAddMode] = useState<AddMode>('choose')

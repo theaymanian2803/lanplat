@@ -143,3 +143,24 @@ describe('dashboard add video', () => {
     )
   })
 })
+
+describe('Index language filter', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    vi.mocked(videosDb.list).mockResolvedValue([])
+  })
+
+  it('lists every language when nothing was chosen on the landing page', async () => {
+    renderDashboard()
+
+    await waitFor(() => expect(videosDb.list).toHaveBeenCalledWith(undefined))
+  })
+
+  it('opens filtered to the language that was chosen on the landing page', async () => {
+    localStorage.setItem('lingovault_target_language', 'Japanese')
+
+    renderDashboard()
+
+    await waitFor(() => expect(videosDb.list).toHaveBeenCalledWith('Japanese'))
+  })
+})

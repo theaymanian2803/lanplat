@@ -15,7 +15,7 @@
 - **Never rename `ACCESS_STORAGE_KEY` or move it off `sessionStorage`.** `e2e/add-word.spec.ts:38` seeds `sessionStorage.setItem('lingovault_unlocked', '1')` to bypass the gate. Breaking either breaks that spec.
 - **`src/landing/` must not import from `src/integrations/turso/`.** The landing page is public; a DB import there is a data leak.
 - **The `name` field of every entry in `src/landing/languages.ts` must be a key in `src/lib/langColors.ts`.** That is what supplies per-language colour. The three names are `Danish`, `Japanese`, `Spanish` (seeded at `src/integrations/turso/db.ts:152-159`).
-- **Stats in `src/landing/languages.ts` are curated, not live.** Every entry carries a comment saying so.
+- **Stats in `src/landing/languages.ts` are curated, not live.** The manifest carries a file-level JSDoc above the array saying so. (An earlier draft of this constraint demanded a comment on each individual entry; the code block places one JSDoc above the array, and the code block is the authority.)
 - **Reuse the app's visual recipes verbatim**, do not invent new ones:
   - Feature card: `rounded-2xl border border-border/40 bg-card p-5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all` (from `src/pages/LessonsPage.tsx:190`)
   - Icon chip: `rounded-xl border border-primary/30 bg-primary/5` (from `src/components/AccessGate.tsx:34`)
@@ -25,7 +25,7 @@
 - **Dark mode is hardcoded** via `<html class="dark">` (`index.html:2`). Do not add a theme toggle.
 - **The `Landing` page must not use `src/components/Layout.tsx`** — that renders the app navbar with Sign out and Settings.
 - Only these `lucide-react` icons are verified to exist in the installed version: `arrow-right`, `book-marked`, `book-open`, `check`, `chevron-right`, `circle-check`, `database`, `film`, `graduation-cap`, `languages`, `layers`, `library`, `list-checks`, `lock-keyhole`, `play`, `shield-check`, `sparkles`, `table-2`, `target`, `trending-up`, `zap`. Do not use any icon outside this list without first checking `node_modules/lucide-react/dist/esm/icons/<kebab-name>.js` exists.
-- **Verification before a task is called done:** `npm run lint` and `npx tsc -b` must pass, plus the task's own test file.
+- **Verification before a task is called done:** the task's own test file must pass, and the full suite `npx vitest run` must stay green. `npm run lint` and `npx tsc -b` are **not** clean on `main` and are not this change's to fix — the baseline is 6 pre-existing `tsc` errors in `src/components/LessonsPanel.tsx` and `src/pages/LessonsPage.tsx` (TanStack Query v5 overloads) plus 9 pre-existing `eslint` errors in untouched files. The gate is therefore **no NEW errors**: run `npx eslint <the files you created or changed>` and confirm it exits 0, and confirm `npx tsc -b` reports no error in any file you created or changed. Do not fix the pre-existing errors; unrelated refactoring is out of scope for this plan.
 
 ---
 

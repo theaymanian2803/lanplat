@@ -39,3 +39,6 @@ bun.lockb
 # Playwright artifacts
 test-results
 playwright-report
+
+# Superpowers scratch (task briefs, reports, review packages, ledgers)
+.superpowers

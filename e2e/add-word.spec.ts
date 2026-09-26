@@ -36,6 +36,10 @@ test('add word from Study Room appears in Vocab Bank', async ({ page }) => {
 
   await page.addInitScript(() => {
     sessionStorage.setItem('lingovault_unlocked', '1')
+    // The welcome tour redirects a first-visit deep link to /dashboard
+    // (OnboardingDialog navigates away whenever it is open and the path is
+    // not /dashboard), so the Study Room would never render without this.
+    localStorage.setItem('lingovault_onboarded', '1')
   })
 
   try {
@@ -44,16 +48,20 @@ test('add word from Study Room appears in Vocab Bank', async ({ page }) => {
     await page.getByTitle('Add Word').waitFor({ state: 'visible', timeout: 30_000 })
     await page.getByTitle('Add Word').click()
 
-    const dialog = page.getByRole('dialog')
-    await expect(dialog).toBeVisible()
+    // AddWordPanel renders as an <aside>, not a dialog, so scope by its heading.
+    const panel = page.locator('aside').filter({ hasText: 'Add Vocabulary Word' })
+    await expect(panel).toBeVisible()
 
-    await dialog.getByPlaceholder('e.g. hund').fill(TEST_WORD)
-    await dialog.getByPlaceholder('e.g. dog').fill(TEST_TRANSLATION)
+    await panel.getByPlaceholder('e.g. hund').fill(TEST_WORD)
+    await panel.getByPlaceholder('e.g. dog').fill(TEST_TRANSLATION)
 
-    await dialog.getByRole('button', { name: 'Add Word', exact: true }).click()
+    await panel.getByRole('button', { name: 'Save Word', exact: true }).click()
 
     await expect(page.getByText('Word saved to Vocab Bank!')).toBeVisible({ timeout: 15_000 })
-    await expect(dialog).toBeHidden()
+    // The panel stays open and clears itself so the next word can be typed
+    // straight away; it is only closed by its own X button.
+    await expect(panel.getByPlaceholder('e.g. hund')).toHaveValue('')
+    await expect(panel.getByPlaceholder('e.g. dog')).toHaveValue('')
 
     await page.goto('/vocab')
     const row = page.locator('tr').filter({ hasText: TEST_WORD })

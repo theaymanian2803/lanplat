@@ -16,30 +16,32 @@ async function fetchUpstream(path: string): Promise<Response | null> {
   }
 }
 
-export default async function handler(req: Request): Promise<Response> {
-  const url = new URL(req.url)
-  const path = url.searchParams.get('path') ?? ''
-  if (!ALLOWED_PREFIXES.some((prefix) => path.startsWith(prefix))) {
-    return Response.json({ error: 'Disallowed path' }, { status: 400 })
-  }
+export default {
+  async fetch(req: Request): Promise<Response> {
+    const url = new URL(req.url, 'https://languageplatform.unccode.site')
+    const path = url.searchParams.get('path') ?? ''
+    if (!ALLOWED_PREFIXES.some((prefix) => path.startsWith(prefix))) {
+      return Response.json({ error: 'Disallowed path' }, { status: 400 })
+    }
 
-  const upstream = await fetchUpstream(path)
+    const upstream = await fetchUpstream(path)
 
-  if (!upstream?.ok) {
-    return Response.json(
-      { error: `Upstream failed: ${upstream?.status ?? 'timeout'}` },
-      { status: 502 }
-    )
-  }
+    if (!upstream?.ok) {
+      return Response.json(
+        { error: `Upstream failed: ${upstream?.status ?? 'timeout'}` },
+        { status: 502 }
+      )
+    }
 
-  const text = await upstream.text()
-  return new Response(text, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Cache-Control':
-        'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
-      'Content-Type': 'text/plain; charset=utf-8',
-    },
-  })
+    const text = await upstream.text()
+    return new Response(text, {
+      status: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control':
+          'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
+        'Content-Type': 'text/plain; charset=utf-8',
+      },
+    })
+  },
 }

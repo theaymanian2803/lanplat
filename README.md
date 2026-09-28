@@ -28,14 +28,18 @@ The database schema and starter languages are created automatically on first loa
 
 ## Deployment (Vercel)
 
-LingoVault is hosted on Vercel at **https://lingovault.vercel.app**. Deploying is two commands:
+LingoVault is hosted on Vercel at **https://languageplatform.unccode.site**.
+The project is connected to the GitHub repo, so **pushing to `main` deploys
+automatically** — no local build needed. Full details — project identity,
+one-time setup (Git connection + Turso env vars), and troubleshooting — are in
+**[DEPLOYMENT.md](./DEPLOYMENT.md)**.
+
+CLI fallback (bumps the version and logs to `deployments.md`):
 
 ```bash
 npm run build
 node C:\Users\PC\Desktop\workflow\deploy.mjs C:\Users\PC\Desktop\lingo
 ```
-
-Each deploy bumps the version in `package.json` and appends a row to `deployments.md`, so you always know which version is live. Full details — project identity, version bumps, troubleshooting, and gotchas — are in **[DEPLOYMENT.md](./DEPLOYMENT.md)**.
 
 ## Docs
 

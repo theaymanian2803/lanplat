@@ -1,4 +1,4 @@
-const TIMEOUT_MS = 30000
+const TIMEOUT_MS = 55000
 const MAX_ATTEMPTS = 3
 const RETRY_DELAYS_MS = [1000, 2000]
 
@@ -30,7 +30,11 @@ export async function fetchBookText(url: string): Promise<string> {
       lastError = new Error(`Book text request failed: ${res.status}`)
       retryable = res.status >= 500
     } catch (error) {
-      const timedOut = error instanceof Error && error.name === 'AbortError'
+      const timedOut =
+        typeof error === 'object' &&
+        error !== null &&
+        'name' in error &&
+        error.name === 'AbortError'
       lastError = timedOut ? new Error('Book text request timed out') : error
       retryable = true
     } finally {

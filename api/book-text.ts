@@ -23,12 +23,7 @@ export default async function handler(req: Request): Promise<Response> {
     return Response.json({ error: 'Disallowed path' }, { status: 400 })
   }
 
-  let upstream: Response | null = null
-  for (let attempt = 0; attempt < 2; attempt++) {
-    upstream = await fetchUpstream(path)
-    if (upstream?.ok) break
-    if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 500))
-  }
+  const upstream = await fetchUpstream(path)
 
   if (!upstream?.ok) {
     return Response.json(

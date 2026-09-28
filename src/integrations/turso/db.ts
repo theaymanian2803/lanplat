@@ -157,6 +157,16 @@ ALTER TABLE parts_new RENAME TO parts;
     ],
     'write'
   )
+  // Normalise legacy language casing (e.g. 'french') to the canonical name in `languages`,
+  // so the vocab bank filter and badges match. Idempotent — no-op once names agree.
+  await turso.execute(
+    `UPDATE vocabulary
+     SET language = (SELECT name FROM languages WHERE LOWER(name) = LOWER(vocabulary.language) LIMIT 1)
+     WHERE EXISTS (
+       SELECT 1 FROM languages
+       WHERE LOWER(name) = LOWER(vocabulary.language) AND name != vocabulary.language
+     )`
+  )
 }
 
 const newId = () => crypto.randomUUID()

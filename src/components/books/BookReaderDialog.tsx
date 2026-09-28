@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react'
 
 import AddWordPanel from '@/components/AddWordPanel'
@@ -87,16 +87,39 @@ const BookReaderDialog = ({ book, onClose }: BookReaderDialogProps) => {
 
   // Double-clicking a word or dragging over a phrase leaves a selection in the reader;
   // hand it straight to the Add Word form, exactly like the study room.
-  const handleMouseUp = () => {
+  const openVocabForSelection = useCallback(() => {
     const sel = window.getSelection()
     if (!sel || sel.isCollapsed) return
+    const container = scrollRef.current
+    if (!container || !sel.anchorNode || !container.contains(sel.anchorNode)) return
     const text = sel.toString().trim()
     if (!text) return
     setPendingWord(text)
     setVocabSession((s) => s + 1)
     setVocabOpen(true)
     window.getSelection()?.removeAllRanges()
-  }
+  }, [])
+
+  // On touch devices a long-press selection never fires mouseup (the browser
+  // cancels the pointer), so watch selectionchange instead and debounce it.
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const onSelectionChange = () => {
+      const sel = window.getSelection()
+      if (!sel || sel.isCollapsed) return
+      const container = scrollRef.current
+      if (!container || !sel.anchorNode || !container.contains(sel.anchorNode)) return
+      const text = sel.toString().trim()
+      if (!text) return
+      if (timer) window.clearTimeout(timer)
+      timer = window.setTimeout(openVocabForSelection, 250)
+    }
+    document.addEventListener('selectionchange', onSelectionChange)
+    return () => {
+      document.removeEventListener('selectionchange', onSelectionChange)
+      if (timer) window.clearTimeout(timer)
+    }
+  }, [openVocabForSelection])
 
   const authors = book.authors.map((a) => displayAuthorName(a.name)).join(', ')
 
@@ -173,7 +196,7 @@ const BookReaderDialog = ({ book, onClose }: BookReaderDialogProps) => {
             <div
               ref={scrollRef}
               className="reader-scroll min-w-0 flex-1 overflow-y-auto px-6 py-8 lg:px-10"
-              onMouseUp={handleMouseUp}>
+              onMouseUp={openVocabForSelection}>
               <div className="mx-auto max-w-prose font-serif text-[15px] leading-7 text-foreground/90">
                 {current.title ? (
                   <p className="mb-8 mt-2 text-center text-lg font-semibold tracking-wide">

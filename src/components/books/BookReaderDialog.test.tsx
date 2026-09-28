@@ -96,14 +96,34 @@ describe('BookReaderDialog', () => {
     stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
     renderDialog()
 
-    await screen.findByText('Le fantôme existait.')
+    const paragraph = await screen.findByText('Le fantôme existait.')
     window.getSelection = vi.fn().mockReturnValue({
       isCollapsed: false,
+      anchorNode: paragraph,
       toString: () => 'fantôme',
       removeAllRanges: vi.fn(),
     } as unknown as Selection)
 
-    fireEvent.mouseUp(screen.getByText('Le fantôme existait.'))
+    fireEvent.mouseUp(paragraph)
+
+    await waitFor(() =>
+      expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('fantôme')
+    )
+  })
+
+  it('opens the vocab form from a touch-style selectionchange', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    renderDialog()
+
+    const paragraph = await screen.findByText('Le fantôme existait.')
+    window.getSelection = vi.fn().mockReturnValue({
+      isCollapsed: false,
+      anchorNode: paragraph,
+      toString: () => 'fantôme',
+      removeAllRanges: vi.fn(),
+    } as unknown as Selection)
+
+    fireEvent(document, new Event('selectionchange'))
 
     await waitFor(() =>
       expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('fantôme')

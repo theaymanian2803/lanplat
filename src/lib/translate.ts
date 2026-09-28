@@ -3,9 +3,10 @@ const LANG_CODES: Record<string, string> = {
   Spanish: "es",
   Japanese: "ja",
   English: "en",
+  French: "fr",
+  Swedish: "sv",
 };
 
-const TARGET = "en";
 const TIMEOUT_MS = 8000;
 
 const cache = new Map<string, string>();
@@ -41,10 +42,10 @@ async function parseJson(res: Response): Promise<unknown> {
   return res.json();
 }
 
-async function googleTranslate(word: string, from: string): Promise<string> {
+async function googleTranslate(text: string, from: string, to: string): Promise<string> {
   const url =
     `https://translate.googleapis.com/translate_a/single` +
-    `?client=dict-chrome-ex&sl=${from}&tl=${TARGET}&dt=t&q=${encodeURIComponent(word)}`;
+    `?client=dict-chrome-ex&sl=${from}&tl=${to}&dt=t&q=${encodeURIComponent(text)}`;
   const res = await fetchWithTimeout(url);
   const data = (await parseJson(res)) as Array<Array<Array<unknown>>>;
   const translated = data?.[0]?.[0]?.[0];
@@ -54,12 +55,12 @@ async function googleTranslate(word: string, from: string): Promise<string> {
   return translated;
 }
 
-async function myMemoryTranslate(word: string, from: string): Promise<string> {
+async function myMemoryTranslate(text: string, from: string, to: string): Promise<string> {
   const email = import.meta.env.VITE_MYMEMORY_EMAIL as string | undefined;
   const de = email ? `&de=${encodeURIComponent(email)}` : "";
   const url =
     `https://api.mymemory.translated.net/get` +
-    `?q=${encodeURIComponent(word)}&langpair=${encodeURIComponent(`${from}|${TARGET}`)}${de}`;
+    `?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(`${from}|${to}`)}${de}`;
   const res = await fetchWithTimeout(url);
   const data = (await parseJson(res)) as {
     responseData?: { translatedText?: string };
@@ -80,19 +81,24 @@ async function myMemoryTranslate(word: string, from: string): Promise<string> {
 
 const providers = [googleTranslate, myMemoryTranslate];
 
-export async function translateWord(word: string, language: string): Promise<string> {
-  const key = `${language}:${word.toLowerCase()}`;
+export async function translateWord(
+  text: string,
+  from: string,
+  to: string = "English"
+): Promise<string> {
+  const key = `${from}:${to}:${text.toLowerCase()}`;
   const cached = cache.get(key);
   if (cached) return cached;
   const pending = inflight.get(key);
   if (pending) return pending;
 
   const promise = (async () => {
-    const from = langCode(language);
+    const source = langCode(from);
+    const target = langCode(to);
     const errors: string[] = [];
     for (const provider of providers) {
       try {
-        const result = await provider(word, from);
+        const result = await provider(text, source, target);
         cache.set(key, result);
         return result;
       } catch (error) {

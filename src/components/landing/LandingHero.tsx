@@ -13,7 +13,7 @@ interface LandingHeroProps {
 export const LandingHero = ({ language }: LandingHeroProps) => (
   <section className="flex flex-col items-center py-20 text-center sm:py-28">
     <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
-      Danish · Japanese · Spanish
+      Danish · Japanese · Spanish · French · Swedish
     </p>
     <h1 className="mt-5 max-w-3xl font-display text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
       A quiet place to <span className="text-primary">actually learn</span> a language

@@ -40,4 +40,26 @@ export const landingLanguages: LandingLanguage[] = [
     ],
     stats: { words: 1520, decks: 24, lessons: 15 },
   },
+  {
+    slug: 'french',
+    name: 'French',
+    tagline: 'A language of contours — the ear learns before the mouth obeys.',
+    highlights: [
+      'Liaisons marked the moment you meet them',
+      'Passé composé and imparfait side by side',
+      'Everyday conversations you can actually keep up with',
+    ],
+    stats: { words: 980, decks: 14, lessons: 11 },
+  },
+  {
+    slug: 'swedish',
+    name: 'Swedish',
+    tagline: 'Melody first, grammar second — a language that rewards just listening.',
+    highlights: [
+      'Word melody charted as you hear it',
+      'En and ett endings without the guesswork',
+      'Street-level Swedish, subtitled and noteable',
+    ],
+    stats: { words: 640, decks: 9, lessons: 8 },
+  },
 ]

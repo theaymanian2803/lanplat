@@ -7,6 +7,7 @@ import { LandingFooter } from '@/components/landing/LandingFooter'
 import { LandingHero } from '@/components/landing/LandingHero'
 import { LandingHowItWorks } from '@/components/landing/LandingHowItWorks'
 import { LandingNavbar } from '@/components/landing/LandingNavbar'
+import { VaultVideos } from '@/components/landing/VaultVideos'
 import { landingLanguages } from '@/landing/languages'
 import { getTargetLanguage, setTargetLanguage } from '@/lib/targetLanguage'
 
@@ -17,9 +18,9 @@ const STAT_LABELS: { key: 'words' | 'decks' | 'lessons'; label: string }[] = [
 ]
 
 /**
- * The public face of the app. Reads nothing but the static manifest, so it paints without
- * a database call. The language choice is persisted here, before the visitor authenticates,
- * so the app can open pre-filtered.
+ * The public face of the app. Paints instantly from the static manifest; only the vault
+ * videos section queries the database. The language choice is persisted here, before the
+ * visitor authenticates, so the app can open pre-filtered.
  */
 const Landing = () => {
   const [language, setLanguage] = useState<string | null>(() => getTargetLanguage())
@@ -85,6 +86,8 @@ const Landing = () => {
               </div>
             ) : null}
           </section>
+
+          <VaultVideos />
 
           <section id="modules" className="scroll-mt-20 border-t border-border/40 py-16">
             <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">

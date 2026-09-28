@@ -12,6 +12,27 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    proxy: {
+      "/gutenberg": {
+        target: "https://www.gutenberg.org",
+        changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on("proxyReq", (proxyReq, req) => {
+            const url = req.url ?? "";
+            proxyReq.path = url.replace(/^\/gutenberg/, "");
+          });
+          proxy.on("proxyRes", (proxyRes) => {
+            const location = proxyRes.headers["location"];
+            if (typeof location === "string") {
+              const parsed = new URL(location, "https://www.gutenberg.org");
+              if (parsed.hostname === "www.gutenberg.org") {
+                proxyRes.headers["location"] = `/gutenberg${parsed.pathname}`;
+              }
+            }
+          });
+        },
+      },
+    },
   },
   plugins: [
     react(),

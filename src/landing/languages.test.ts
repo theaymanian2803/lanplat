@@ -4,7 +4,7 @@ import { landingModules } from './modules'
 import { getLangBadgeClasses, getLangDotClass } from '@/lib/langColors'
 
 /** The only names langColors.ts can colour; anything else silently falls back to zinc. */
-const COLOURED = ['Danish', 'Japanese', 'Spanish']
+const COLOURED = ['Danish', 'French', 'Japanese', 'Spanish', 'Swedish']
 
 describe('landing manifest', () => {
   it('ships a language for every colour the app can render', () => {

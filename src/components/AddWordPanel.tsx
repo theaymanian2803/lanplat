@@ -22,9 +22,17 @@ interface AddWordPanelProps {
   onClose: () => void
   position?: PanelPosition
   initialWord?: string
+  /** Tailwind width class for the panel on large screens. */
+  widthClassName?: string
 }
 
-const AddWordPanel = ({ defaultLanguage, onClose, position = 'left', initialWord }: AddWordPanelProps) => {
+const AddWordPanel = ({
+  defaultLanguage,
+  onClose,
+  position = 'left',
+  initialWord,
+  widthClassName = 'lg:w-80',
+}: AddWordPanelProps) => {
   const queryClient = useQueryClient()
   const inputRef = useRef<HTMLTextAreaElement>(null)
   const savingRef = useRef(false)
@@ -93,7 +101,7 @@ const AddWordPanel = ({ defaultLanguage, onClose, position = 'left', initialWord
 
   return (
     <aside
-    className={`w-full lg:w-80 shrink-0 bg-card rounded-xl border border-primary/20 shadow-2xl p-5 h-fit animate-in fade-in ${
+    className={`w-full ${widthClassName} shrink-0 bg-card rounded-xl border border-primary/20 shadow-2xl p-5 h-fit animate-in fade-in ${
       position === 'right' ? 'slide-in-from-right-4' : 'slide-in-from-left-4'
     } duration-300`}>
       <div className="flex items-start justify-between gap-2 mb-4">

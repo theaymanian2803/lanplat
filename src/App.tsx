@@ -19,6 +19,8 @@ const VocabBank = lazy(() => import('./pages/VocabBank'))
 const FlashcardQuiz = lazy(() => import('./pages/FlashcardQuiz'))
 const Languages = lazy(() => import('./pages/Languages'))
 const LessonsPage = lazy(() => import('./pages/LessonsPage'))
+const Translate = lazy(() => import('./pages/Translate'))
+const Books = lazy(() => import('./pages/Books'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 const queryClient = new QueryClient({
@@ -55,6 +57,8 @@ const App = () => {
                     <Route path="/vocab" element={<VocabBank />} />
                     <Route path="/quiz" element={<FlashcardQuiz />} />
                     <Route path="/lessons" element={<LessonsPage />} />
+                    <Route path="/translate" element={<Translate />} />
+                    <Route path="/books" element={<Books />} />
                     <Route path="/languages" element={<Languages />} />
                     <Route path="/video/:id" element={<StudyRoom />} />
                   </Route>

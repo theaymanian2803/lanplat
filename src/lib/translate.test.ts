@@ -39,11 +39,25 @@ afterEach(() => {
   clearTranslateCache();
 });
 
+const googleResult = (text: string) => [
+  [[text, "", null, null, 10]],
+  null,
+  "sv",
+  null,
+  null,
+  null,
+  null,
+  [],
+];
+
 describe("langCode", () => {
   it("maps known language names to ISO codes", () => {
     expect(langCode("Danish")).toBe("da");
     expect(langCode("Spanish")).toBe("es");
     expect(langCode("Japanese")).toBe("ja");
+    expect(langCode("English")).toBe("en");
+    expect(langCode("French")).toBe("fr");
+    expect(langCode("Swedish")).toBe("sv");
   });
 
   it("defaults to auto for unknown languages", () => {
@@ -143,6 +157,50 @@ describe("translateWord", () => {
 
     expect(results).toEqual(["dog", "dog", "dog"]);
     expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it("translates into a chosen language, not just English", async () => {
+    const fn = stubFetch({ ok: true, json: async () => googleResult("hund") });
+
+    await expect(translateWord("dog", "English", "Swedish")).resolves.toBe("hund");
+
+    const url = fn.mock.calls[0][0] as string;
+    expect(url).toContain("sl=en");
+    expect(url).toContain("tl=sv");
+  });
+
+  it("translates between two non-English languages", async () => {
+    const fn = stubFetch({ ok: true, json: async () => googleResult("chien") });
+
+    await expect(translateWord("hund", "Swedish", "French")).resolves.toBe("chien");
+
+    const url = fn.mock.calls[0][0] as string;
+    expect(url).toContain("sl=sv");
+    expect(url).toContain("tl=fr");
+  });
+
+  it("sends the pair to MyMemory when Google fails", async () => {
+    const fn = stubFetchSequence(
+      new Error("network down"),
+      {
+        ok: true,
+        json: async () => ({ responseData: { translatedText: "perro" }, quotaFinished: false, responseStatus: 200 }),
+      }
+    );
+
+    await expect(translateWord("dog", "English", "Spanish")).resolves.toBe("perro");
+    expect(fn).toHaveBeenCalledTimes(2);
+    const url = decodeURIComponent(fn.mock.calls[1][0] as string);
+    expect(url).toContain("langpair=en|es");
+  });
+
+  it("keeps distinct targets separate in the cache", async () => {
+    const fn = stubFetch({ ok: true, json: async () => googleResponse });
+
+    await translateWord("hund", "Danish");
+    await translateWord("hund", "Danish", "French");
+
+    expect(fn).toHaveBeenCalledTimes(2);
   });
 
   it("throws when both providers fail", async () => {

@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/gutenberg/(.*)",
+      "destination": "/api/book-text?path=/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

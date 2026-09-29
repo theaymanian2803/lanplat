@@ -31,25 +31,25 @@ const BookCard = ({ book, onRead }: { book: GutendexBook; onRead: (book: Gutende
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <BookOpen className="h-10 w-10 text-muted-foreground/40" />
+            <BookOpen className="h-5 w-5 text-muted-foreground/40" />
           </div>
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <p className="line-clamp-2 font-medium text-sm leading-snug">{book.title}</p>
-        <p className="line-clamp-1 text-xs text-muted-foreground">
+      <div className="flex flex-1 flex-col gap-1 p-2">
+        <p className="line-clamp-2 font-medium text-[11px] leading-tight">{book.title}</p>
+        <p className="line-clamp-1 text-[9px] leading-tight text-muted-foreground">
           {book.authors.length > 0
             ? book.authors.map((a) => displayAuthorName(a.name)).join(', ')
             : 'Unknown author'}
         </p>
-        <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
+        <div className="mt-auto flex flex-wrap gap-1 pt-1">
           {links.html || links.text ? (
             <Button
               variant="outline"
               size="sm"
-              className="h-7 gap-1 px-2 text-[11px] font-mono"
+              className="h-5 gap-1 rounded px-1.5 text-[9px] font-mono [&_svg]:size-2.5"
               onClick={() => onRead(book)}>
-              <BookOpen className="h-3 w-3" />
+              <BookOpen className="h-2.5 w-2.5" />
               Read
             </Button>
           ) : null}
@@ -57,10 +57,10 @@ const BookCard = ({ book, onRead }: { book: GutendexBook; onRead: (book: Gutende
             <Button
               variant="outline"
               size="sm"
-              className="h-7 gap-1 px-2 text-[11px] font-mono"
+              className="h-5 gap-1 rounded px-1.5 text-[9px] font-mono [&_svg]:size-2.5"
               asChild>
               <a href={links.epub} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-3 w-3" />
+                <ExternalLink className="h-2.5 w-2.5" />
                 EPUB
               </a>
             </Button>
@@ -136,13 +136,13 @@ const Books = () => {
         ) : null}
 
         {isLoading ? (
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="overflow-hidden rounded-2xl border border-border/50 bg-card">
+          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="overflow-hidden rounded-lg border border-border/50 bg-card">
                 <div className="aspect-[3/4] animate-pulse bg-muted" />
-                <div className="space-y-2 p-4">
-                  <div className="h-4 w-4/5 animate-pulse rounded bg-muted" />
-                  <div className="h-3 w-2/3 animate-pulse rounded bg-muted" />
+                <div className="space-y-1.5 p-2">
+                  <div className="h-2.5 w-4/5 animate-pulse rounded bg-muted" />
+                  <div className="h-2 w-2/3 animate-pulse rounded bg-muted" />
                 </div>
               </div>
             ))}
@@ -164,7 +164,7 @@ const Books = () => {
           </Card>
         ) : (
           <>
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
               {books.map((book) => (
                 <BookCard key={book.id} book={book} onRead={setReaderBook} />
               ))}

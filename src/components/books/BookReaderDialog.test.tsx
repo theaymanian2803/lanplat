@@ -33,11 +33,11 @@ function stubFetch(value: unknown) {
   return fn
 }
 
-const renderDialog = (overrides: Partial<GutendexBook> = {}) => {
+const renderDialog = (overrides: Partial<GutendexBook> = {}, onClose = vi.fn()) => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
-      <BookReaderDialog book={{ ...book, ...overrides }} onClose={vi.fn()} />
+      <BookReaderDialog book={{ ...book, ...overrides }} onClose={onClose} />
     </QueryClientProvider>
   )
 }
@@ -146,6 +146,26 @@ describe('BookReaderDialog', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Prev/ }))
     expect(await screen.findByText('Le fantôme existait.')).toBeInTheDocument()
+  })
+
+  it('opens the reader with a single close control', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    renderDialog()
+
+    expect(await screen.findByText('Le fantôme existait.')).toBeInTheDocument()
+    // The shared DialogContent renders its own close button; the reader also places one in
+    // the header, and two overlapping X icons in the same corner are not a usable control.
+    expect(screen.getAllByRole('button', { name: /close/i })).toHaveLength(1)
+  })
+
+  it('closes the reader from its close button', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    const onClose = vi.fn()
+    renderDialog({}, onClose)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Close reader' }))
+
+    expect(onClose).toHaveBeenCalled()
   })
 
   it('advances pages with the right arrow key', async () => {

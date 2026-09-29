@@ -125,7 +125,9 @@ const BookReaderDialog = ({ book, onClose }: BookReaderDialogProps) => {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="flex h-[85vh] max-w-6xl flex-col gap-0 p-0">
+      <DialogContent
+        showCloseButton={false}
+        className="flex h-[85vh] max-w-6xl flex-col gap-0 p-0">
         <DialogHeader className="border-b border-border/40 px-6 py-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">

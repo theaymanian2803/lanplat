@@ -130,6 +130,21 @@ describe('Translate', () => {
     expect(screen.getByRole('combobox', { name: 'Vocab language' })).toHaveTextContent('Danish')
   })
 
+  it('clears the translation input after the word is saved', async () => {
+    stubFetch()
+    renderPage()
+
+    typeInput('hello')
+    await screen.findByText('hej', {}, { timeout: 2000 })
+
+    fireEvent.click(screen.getByRole('button', { name: /Add to Vocab Bank/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Save Word' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(screen.getByPlaceholderText(/Type or paste text/i)).toHaveValue('')
+    expect(screen.queryByText('hej')).toBeNull()
+  })
+
   it('saves the translation into the vocab bank with the chosen language', async () => {
     stubFetch()
     renderPage()

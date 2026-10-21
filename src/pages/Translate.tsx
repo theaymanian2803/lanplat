@@ -122,6 +122,9 @@ const Translate = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['vocabulary'] })
       setDialogOpen(false)
+      setInput('')
+      setOutput('')
+      setError(null)
       toast.success('Word saved to Vocab Bank!')
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : 'Could not save word'),

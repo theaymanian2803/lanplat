@@ -10,11 +10,11 @@ const ANCHORS = [
 ]
 
 export const LandingNavbar = () => (
-  <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/80 backdrop-blur-sm">
-    <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+  <nav className="sticky top-0 z-50 border-b border-border bg-background">
+    <div className="mx-auto flex h-16 w-full max-w-[1500px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
       <Link
         to="/"
-        className="font-display text-xl font-semibold tracking-tight text-primary">
+        className="font-display text-xl font-extrabold tracking-[-0.04em] text-foreground">
         LingoVault
       </Link>
       <div className="hidden items-center gap-1 md:flex">

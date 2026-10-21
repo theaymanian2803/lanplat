@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { BookOpen, ExternalLink, Library, Loader2 } from 'lucide-react'
+import { BookOpen, ExternalLink, Loader2 } from 'lucide-react'
 
 import BookReaderDialog from '@/components/books/BookReaderDialog'
 import Layout from '@/components/Layout'
@@ -107,30 +107,35 @@ const Books = () => {
 
   return (
     <Layout>
-      <div className="mx-auto w-full max-w-7xl">
-        <div className="flex items-center gap-3">
-          <Library className="h-5 w-5 text-primary" />
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Books</h1>
+      <div className="mx-auto w-full max-w-[1500px]">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-[30px] font-extrabold leading-tight tracking-[-0.035em]">Books</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+              Public-domain literature from Project Gutenberg. Select a word while you read and it
+              lands in the vault with the book's language.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="mono-label text-muted-foreground">Shelf</span>
+            <Select value={languageName} onValueChange={setLanguageName}>
+              <SelectTrigger aria-label="Book language" className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {BOOK_LANGUAGES.map((item) => (
+                  <SelectItem key={item.code} value={item.name}>
+                    {item.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          Public-domain literature from Project Gutenberg — free books you can read in the
-          language you are learning.
-        </p>
 
-        <div className="mt-6 max-w-xs">
-          <Select value={languageName} onValueChange={setLanguageName}>
-            <SelectTrigger aria-label="Book language">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {BOOK_LANGUAGES.map((item) => (
-                <SelectItem key={item.code} value={item.name}>
-                  {item.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <p className="mono-label mt-4 text-muted-foreground">
+          {books.length} loaded · five at a time
+        </p>
 
         {isLoading ? (
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">

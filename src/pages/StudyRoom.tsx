@@ -14,7 +14,7 @@ import { getFloatingButtonPosition, getWordRangeAtPoint, isDoubleTap, type TextT
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BookMarked, Copy, Eraser, Forward, ImagePlus, Layers, Loader2, Minus, Pause, Play, Plus, Rewind, StickyNote, Trash2, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 declare global {
@@ -592,10 +592,19 @@ const StudyRoom = () => {
 
   return (
     <Layout>
-      <div className="space-y-6 relative">
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight truncate pb-1">
-          {video.title}
-        </h1>
+      <div className="relative mx-auto w-full max-w-[1700px] space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border pb-3">
+          <div className="min-w-0">
+            <Link
+              to="/dashboard#library"
+              className="mono-label text-muted-foreground transition-colors hover:text-foreground">
+              ← Library
+            </Link>
+            <h1 className="mt-1 line-clamp-2 text-2xl font-extrabold leading-tight tracking-[-0.035em] sm:text-3xl">
+              {video.title}
+            </h1>
+          </div>
+        </div>
 
         {/* Main Layout: flex row */}
         <div className="flex flex-col lg:flex-row w-full gap-4 items-stretch lg:items-start">
@@ -713,7 +722,7 @@ const StudyRoom = () => {
           {isText ? (
             <div className="rounded-xl border border-primary/20 shadow-xl shadow-primary/5 overflow-hidden bg-card flex flex-col max-h-[75vh]">
               <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-border/40 shrink-0">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
                   Text
                 </span>
                 <div className="flex flex-wrap items-center gap-2">

@@ -40,11 +40,8 @@ const Landing = () => {
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <LandingHero language={active} />
 
-          <section id="languages" className="scroll-mt-20 border-t border-border/40 py-16">
-            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
-              Pick your language
-            </p>
-            <h2 className="mt-3 max-w-2xl font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+          <section id="languages" className="scroll-mt-20 border-t border-border py-16">
+            <h2 className="max-w-2xl text-3xl font-extrabold tracking-[-0.035em] sm:text-4xl">
               Your choice follows you in
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
@@ -58,21 +55,19 @@ const Landing = () => {
 
             {active ? (
               <div className="mt-10">
-                <div className="grid gap-4 sm:grid-cols-3">
+                <div className="grid divide-y divide-border border-y border-border sm:grid-cols-3 sm:divide-x sm:divide-y-0">
                   {STAT_LABELS.map(({ key, label }) => (
-                    <div
-                      key={key}
-                      className="rounded-2xl border border-border/40 bg-card p-5">
-                      <p className="font-display text-3xl font-semibold tracking-tight text-primary">
+                    <div key={key} className="px-4 py-5">
+                      <p className="text-3xl font-extrabold tracking-[-0.03em]">
                         {active.stats[key].toLocaleString()}
                       </p>
-                      <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                      <p className="mt-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                         {label}
                       </p>
                     </div>
                   ))}
                 </div>
-                <p className="mt-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+                <p className="mt-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
                   Illustrative figures, not your own counts
                 </p>
                 <ul className="mt-6 space-y-3">
@@ -90,10 +85,7 @@ const Landing = () => {
           <VaultVideos />
 
           <section id="modules" className="scroll-mt-20 border-t border-border/40 py-16">
-            <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
-              Everything inside
-            </p>
-            <h2 className="mt-3 max-w-2xl font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h2 className="max-w-2xl text-3xl font-extrabold tracking-[-0.035em] sm:text-4xl">
               Five ways in, one vault
             </h2>
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">

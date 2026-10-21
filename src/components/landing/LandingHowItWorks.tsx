@@ -19,27 +19,24 @@ const STEPS = [
 ]
 
 export const LandingHowItWorks = () => (
-  <section id="how" className="scroll-mt-20 border-t border-border/40 py-16">
-    <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
-      How it works
-    </p>
-    <h2 className="mt-3 max-w-2xl font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+  <section id="how" className="scroll-mt-20 border-t border-border py-16">
+    <h2 className="max-w-2xl text-3xl font-extrabold tracking-[-0.035em] sm:text-4xl">
       Three steps, then you are studying
     </h2>
     <div className="mt-10 grid gap-4 sm:grid-cols-3">
       {STEPS.map(({ icon: Icon, title, body }, index) => (
         <div
           key={title}
-          className="rounded-2xl border border-border/40 bg-card p-5 transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5">
+          className="rounded-sm border border-border bg-card p-5 transition-colors hover:border-primary/40">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-primary/30 bg-primary/5">
+            <span className="flex h-10 w-10 items-center justify-center rounded-sm border border-primary/30 bg-primary/10">
               <Icon className="h-5 w-5 text-primary" />
             </span>
-            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+            <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
               Step {index + 1}
             </span>
           </div>
-          <h3 className="mt-4 font-display text-lg font-semibold tracking-tight">{title}</h3>
+          <h3 className="mt-4 text-lg font-bold tracking-[-0.02em]">{title}</h3>
           <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{body}</p>
         </div>
       ))}

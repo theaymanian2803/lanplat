@@ -16,7 +16,7 @@ export const LandingFooter = () => (
           </p>
         </div>
         <div>
-          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
+          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
             Modules
           </p>
           <ul className="mt-3 space-y-2">
@@ -32,7 +32,7 @@ export const LandingFooter = () => (
           </ul>
         </div>
       </div>
-      <p className="mt-10 border-t border-border/40 pt-6 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/60">
+      <p className="mt-10 border-t border-border/40 pt-6 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
         LingoVault
       </p>
     </div>

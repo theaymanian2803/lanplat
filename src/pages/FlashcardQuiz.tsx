@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { vocabularyDb } from "@/integrations/turso/db";
-import { getLangBadgeClasses, getLangDotClass } from "@/lib/langColors";
+import { getLangDotClass } from "@/lib/langColors";
 import { computeSrs, type SrsGrade } from "@/lib/srs";
 import { openDictionary } from "@/lib/dictionary";
 import Layout from "@/components/Layout";
@@ -82,12 +82,19 @@ const FlashcardQuiz = () => {
 
   return (
     <Layout>
-      <div className="max-w-2xl mx-auto space-y-6" tabIndex={0} onKeyDown={handleKeyDown}>
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <h1 className="text-2xl font-bold tracking-tight">Flashcard Quiz</h1>
+      <div className="mx-auto w-full max-w-3xl space-y-4" tabIndex={0} onKeyDown={handleKeyDown}>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-[30px] font-extrabold leading-tight tracking-[-0.035em]">
+              Flashcard Quiz
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Only what is due. Grade the recall and the interval moves.
+            </p>
+          </div>
           <div className="flex items-center gap-3">
             {dueWords.length > 0 && (
-              <span className="text-xs font-mono text-muted-foreground">
+              <span className="mono-label text-muted-foreground">
                 {Math.min(currentIndex + 1, dueWords.length)} / {dueWords.length}
               </span>
             )}
@@ -135,34 +142,36 @@ const FlashcardQuiz = () => {
         ) : card ? (
           <div className="space-y-4">
             {/* Flashcard */}
-            <Card className="border-border/50 min-h-[280px] flex flex-col">
-              <CardContent className="flex-1 flex flex-col items-center justify-center py-12 gap-6">
-                <Badge variant="outline" className={`text-[10px] font-mono inline-flex items-center gap-1.5 ${getLangBadgeClasses(card.language)}`}>
+            <div className="flex min-h-[320px] flex-col rounded-sm bg-enamel text-ink">
+              <div className="flex flex-1 flex-col items-center justify-center gap-5 px-6 py-12">
+                <span className="inline-flex items-center gap-1.5 rounded-sm border border-ink/25 bg-ink/5 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider">
                   <span className={`h-1.5 w-1.5 rounded-full ${getLangDotClass(card.language)}`} />
                   {card.language}
-                </Badge>
-                <p className="text-3xl font-bold tracking-tight text-center">{card.word}</p>
+                </span>
+                <p className="text-center text-[clamp(2.4rem,6vw,4.4rem)] font-extrabold leading-[0.95] tracking-[-0.045em]">
+                  {card.word}
+                </p>
 
                 {revealed ? (
-                  <div className="text-center space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                    <p className="text-xl text-primary">{card.translation}</p>
+                  <div className="space-y-2 text-center animate-in fade-in slide-in-from-bottom-2 duration-200">
+                    <p className="text-xl text-ink/70">{card.translation}</p>
                     {card.context_note && (
-                      <p className="text-xs text-muted-foreground italic">"{card.context_note}"</p>
+                      <p className="text-xs italic text-ink/75">"{card.context_note}"</p>
                     )}
                   </div>
                 ) : (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-sm font-medium gap-2"
+                    className="gap-2 border-ink/25 bg-transparent text-sm font-medium text-ink hover:bg-ink/10 hover:text-ink"
                     onClick={() => setRevealed(true)}
                   >
                     <Eye className="h-3.5 w-3.5" />
                     Reveal Answer (Space)
                   </Button>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Grade buttons */}
             {revealed && (

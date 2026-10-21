@@ -73,32 +73,35 @@ const Languages = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Languages</h1>
+      <div className="mx-auto w-full max-w-[1500px] space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-[30px] font-extrabold leading-tight tracking-[-0.035em]">
+              Languages
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Languages added here are available when adding new media.
+            </p>
+          </div>
           <Button onClick={() => setDialogOpen(true)} className="gap-2 text-sm font-semibold">
             <Plus className="h-4 w-4" />
             Add Language
           </Button>
         </div>
 
-        <p className="text-xs text-muted-foreground/80 font-mono">
-          Languages added here are available when adding new media.
-        </p>
-
         {isLoading ? (
           <p className="text-muted-foreground text-sm">Loading…</p>
         ) : languages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 px-4 border border-dashed border-border/50 rounded-xl bg-card/30">
+          <div className="flex flex-col items-center justify-center rounded-sm border border-dashed border-border py-12 px-4 bg-card/30">
             <LanguagesIcon className="h-8 w-8 text-muted-foreground/30 mb-3" />
             <p className="text-muted-foreground text-sm font-medium">No languages yet.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {languages.map((lang) => (
               <div
                 key={lang}
-                className="group rounded-xl border border-border/40 bg-card p-4 flex items-center justify-between gap-2 hover:border-primary/30 hover:shadow-md transition-all">
+                className="group flex items-center justify-between gap-2 rounded-sm border border-border bg-card p-4 transition-colors hover:border-primary/40">
                 <Badge variant="outline" className={`text-[11px] font-mono inline-flex items-center gap-1.5 ${getLangBadgeClasses(lang)}`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${getLangDotClass(lang)}`} />
                   {lang}
@@ -176,7 +179,7 @@ const Languages = () => {
               autoFocus
             />
             {editLang && (
-              <p className="text-xs text-muted-foreground/70">
+              <p className="text-xs text-muted-foreground">
                 Renaming &quot;{editLang}&quot; also updates all videos, words, and lessons
                 tagged with it.
               </p>

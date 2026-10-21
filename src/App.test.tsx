@@ -8,7 +8,7 @@ vi.mock('@/integrations/turso/db', () => ({
   ensureSchema: vi.fn().mockResolvedValue(undefined),
   flushSrsQueue: vi.fn(),
   videosDb: { list: vi.fn().mockResolvedValue([]), insert: vi.fn(), remove: vi.fn() },
-  vocabularyDb: { list: vi.fn().mockResolvedValue([]) },
+  vocabularyDb: { list: vi.fn().mockResolvedValue([]), listDue: vi.fn().mockResolvedValue([]) },
   languagesDb: { list: vi.fn().mockResolvedValue(['Danish']) },
   lessonsDb: { list: vi.fn().mockResolvedValue([]) },
   notesDb: { listByVideo: vi.fn().mockResolvedValue([]) },

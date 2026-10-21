@@ -40,7 +40,7 @@ export const VaultVideos = () => {
   if (!isLoading && byLanguage.length === 0) return null
 
   const cardClass =
-    'overflow-hidden rounded-2xl border border-border/40 bg-card transition-colors'
+          'overflow-hidden rounded-sm border border-border bg-card transition-colors'
 
   const renderCard = (video: Video, language: string) => {
     const videoId = extractVideoId(video.youtube_url ?? '')!
@@ -114,11 +114,8 @@ export const VaultVideos = () => {
         <section
           key={language}
           id={`vault-videos-${language.toLowerCase().replace(/\s+/g, '-')}`}
-          className="scroll-mt-20 border-t border-border/40 py-16">
-          <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
-            Watch the vault
-          </p>
-          <h2 className="mt-3 max-w-2xl font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+          className="scroll-mt-20 border-t border-border py-16">
+          <h2 className="max-w-2xl text-3xl font-extrabold tracking-[-0.035em] sm:text-4xl">
             {language}
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">

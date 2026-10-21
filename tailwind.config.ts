@@ -14,11 +14,19 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
-        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        sans: ['Archivo', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Archivo', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['Courier Prime', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       colors: {
+        enamel: {
+          DEFAULT: 'hsl(var(--enamel))',
+          foreground: 'hsl(var(--enamel-foreground))',
+        },
+        ink: 'hsl(var(--ink))',
+        tape: 'hsl(var(--tape))',
+        olive: 'hsl(var(--olive))',
+        signal: 'hsl(var(--signal))',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

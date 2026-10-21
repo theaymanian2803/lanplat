@@ -88,10 +88,10 @@ const LessonsPage = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div className="mx-auto w-full max-w-[1500px] space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
+            <h1 className="flex items-center gap-2 text-[30px] font-extrabold leading-tight tracking-[-0.035em]">
               <GraduationCap className="h-6 w-6 text-primary" />
               Lesson Library
             </h1>
@@ -112,7 +112,7 @@ const LessonsPage = () => {
           <div className="flex flex-col items-center justify-center py-16 px-4 border border-dashed border-border/50 rounded-2xl bg-card/30 text-center">
             <GraduationCap className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-muted-foreground text-sm font-medium">No lessons yet.</p>
-            <p className="text-xs text-muted-foreground/70 mt-1 mb-4">
+            <p className="text-xs text-muted-foreground mt-1 mb-4">
               Create lessons and rich-text parts from the management drawer.
             </p>
             <Button size="sm" className="gap-2" onClick={openDrawer}>
@@ -187,7 +187,7 @@ const LessonCard = ({ lesson, videoTitle, mediaTypes, onClick, onEdit, onDelete 
   const parts = lesson.parts.length
   return (
     <div
-      className="group cursor-pointer rounded-2xl border border-border/40 bg-card p-5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all"
+      className="group cursor-pointer rounded-sm border border-border bg-card p-5 transition-colors hover:border-primary/40"
       onClick={onClick}>
       <div className="flex items-start justify-between gap-2">
         <h2 className="font-display text-lg font-semibold tracking-tight leading-snug">
@@ -234,7 +234,7 @@ const LessonCard = ({ lesson, videoTitle, mediaTypes, onClick, onEdit, onDelete 
             )}
           </Badge>
         ) : (
-          <Badge variant="outline" className="gap-1 text-[11px] font-mono text-muted-foreground/70">
+          <Badge variant="outline" className="gap-1 text-[11px] font-mono text-muted-foreground">
             <BookOpen className="h-3 w-3" />
             No media
           </Badge>
@@ -342,17 +342,17 @@ const LessonDetail = ({ lesson, onBack, onEdit, onDelete }: LessonDetailProps) =
                 }`}
                 onClick={() => togglePart(part.id)}>
                 <div className="flex items-center justify-between gap-2 mb-2.5">
-                  <h4 className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground/70">
+                  <h4 className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
                     Part {idx + 1}
                   </h4>
                   <ChevronDown
-                    className={`h-3.5 w-3.5 text-muted-foreground/60 transition-transform ${
+                    className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${
                       isOpen ? 'rotate-180' : ''
                     }`}
                   />
                 </div>
                 {blocks.length === 0 ? (
-                  <p className="text-xs text-muted-foreground/60">Empty part.</p>
+                  <p className="text-xs text-muted-foreground">Empty part.</p>
                 ) : isOpen ? (
                   <LessonBlocks blocks={blocks} />
                 ) : (
@@ -369,7 +369,7 @@ const LessonDetail = ({ lesson, onBack, onEdit, onDelete }: LessonDetailProps) =
                     </div>
                     <div className="flex items-center justify-between mt-1.5">
                       {hiddenRows > 0 && (
-                        <span className="text-[10px] font-mono text-muted-foreground/70">
+                        <span className="text-[10px] font-mono text-muted-foreground">
                           +{hiddenRows} more row{hiddenRows === 1 ? '' : 's'}
                         </span>
                       )}

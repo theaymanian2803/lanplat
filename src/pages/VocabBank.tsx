@@ -217,10 +217,18 @@ const VocabBank = () => {
 
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold tracking-tight">Vocab Bank</h1>
-          <div className="flex gap-2 flex-wrap">
+      <div className="mx-auto w-full max-w-[1500px] space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-[30px] font-extrabold leading-tight tracking-[-0.035em]">
+              Vocab Bank
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {filtered.length} {filtered.length === 1 ? 'word' : 'words'} ·{' '}
+              {langFilter === 'all' ? 'all languages' : langFilter}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2 text-sm font-medium" disabled={filtered.length === 0}>
@@ -268,16 +276,16 @@ const VocabBank = () => {
           <p className="text-muted-foreground text-sm">No vocabulary words found.</p>
         ) : (
           <>
-            <div className="hidden md:block rounded-lg border border-border/50 overflow-hidden">
+            <div className="hidden overflow-hidden rounded-sm border border-border md:block">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="font-mono text-xs">Word</TableHead>
-                  <TableHead className="font-mono text-xs">Translation</TableHead>
-                  <TableHead className="font-mono text-xs">Language</TableHead>
-                  <TableHead className="font-mono text-xs">Mastery</TableHead>
-                  <TableHead className="font-mono text-xs">Review</TableHead>
-                  <TableHead className="font-mono text-xs">Actions</TableHead>
+                  <TableHead className="mono-label text-muted-foreground">Word</TableHead>
+                  <TableHead className="mono-label text-muted-foreground">Translation</TableHead>
+                  <TableHead className="mono-label text-muted-foreground">Language</TableHead>
+                  <TableHead className="mono-label text-muted-foreground">Mastery</TableHead>
+                  <TableHead className="mono-label text-muted-foreground">Review</TableHead>
+                  <TableHead className="mono-label text-muted-foreground">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

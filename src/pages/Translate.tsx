@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRightLeft, BookMarked, Check, Copy, Languages as LanguagesIcon, Loader2 } from 'lucide-react'
+import { ArrowRightLeft, BookMarked, Check, Copy, Loader2 } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 
 import Layout from '@/components/Layout'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -137,7 +136,7 @@ const Translate = () => {
 
   const languageOptions = (value: string, onChange: (v: string) => void, label: string) => (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-44" aria-label={label}>
+      <SelectTrigger className="w-full sm:w-40" aria-label={label}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -157,105 +156,117 @@ const Translate = () => {
 
   return (
     <Layout>
-      <div className="mx-auto w-full max-w-3xl">
-        <div className="flex items-center gap-3">
-          <LanguagesIcon className="h-5 w-5 text-primary" />
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Translate</h1>
+      <div className="mx-auto w-full max-w-[1500px] space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-[30px] font-extrabold leading-tight tracking-[-0.035em]">
+              Translate
+            </h1>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
+              Translate between the languages you study, then send the result straight into the
+              vault with its source sentence.
+            </p>
+          </div>
+          <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2 sm:flex sm:w-auto sm:flex-wrap">
+            {languageOptions(from, setFrom, 'Source language')}
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9"
+              onClick={handleSwap}
+              aria-label="Swap languages"
+              title="Swap languages">
+              <ArrowRightLeft className="h-4 w-4" />
+            </Button>
+            {languageOptions(to, setTo, 'Target language')}
+          </div>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Translate between any of the languages you study — English, Danish, Spanish,
-          Japanese, French and Swedish — without leaving the vault. It translates as you
-          type.
-        </p>
 
-        <Card className="mt-6">
-          <CardContent className="space-y-4 p-5">
-            <div className="flex flex-wrap items-center gap-3">
-              <div>
-                <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                  From
-                </p>
-                {languageOptions(from, setFrom, 'Source language')}
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="mt-5 h-9 w-9"
-                onClick={handleSwap}
-                aria-label="Swap languages"
-                title="Swap languages">
-                <ArrowRightLeft className="h-4 w-4" />
-              </Button>
-              <div>
-                <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                  To
-                </p>
-                {languageOptions(to, setTo, 'Target language')}
-              </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <section className="panel-enamel rounded-sm p-4">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="mono-label text-ink/75">From · {from}</span>
+              <span className="mono-label text-ink/65">{input.trim().length} chars</span>
             </div>
-
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type or paste text to translate…"
-              rows={4}
-              className="resize-none"
+              rows={9}
+              className="mt-2 min-h-[220px] resize-none border-ink/20 bg-transparent text-[17px] leading-relaxed text-ink placeholder:text-ink/65 focus-visible:ring-ink/30"
             />
-
-            <div className="flex items-center gap-3">
+            <div className="mt-2 min-h-[24px]">
               {translating ? (
-                <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <p className="flex items-center gap-2 text-sm text-ink/60">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Translating…
                 </p>
-              ) : null}
-              {!translating && error ? (
+              ) : error ? (
                 <p className="text-sm text-destructive" role="alert">
                   {error}
                 </p>
-              ) : null}
-              {!translating && !error && input.trim() && from === to ? (
-                <p className="text-sm text-muted-foreground">Choose two different languages</p>
-              ) : null}
-              {!translating && !error && input.trim() && from !== to && !output ? (
-                <p className="flex items-center gap-1.5 text-xs text-muted-foreground/70">
+              ) : input.trim() && from === to ? (
+                <p className="text-sm text-ink/60">Choose two different languages</p>
+              ) : input.trim() && !output ? (
+                <p className="flex items-center gap-1.5 text-xs text-ink/75">
                   <Check className="h-3.5 w-3.5" />
                   Translates automatically as you type.
                 </p>
-              ) : null}
-            </div>
-          </CardContent>
-        </Card>
-
-        {output ? (
-          <Card className="mt-4">
-            <CardContent className="p-5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                  {from} → {to}
+              ) : (
+                <p className="text-xs text-ink/70">
+                  Select a word and its sentence works better as a saved card.
                 </p>
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="gap-1.5 text-muted-foreground"
-                    onClick={handleCopy}>
-                    <Copy className="h-3.5 w-3.5" />
-                    Copy
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="gap-1.5 font-semibold"
-                    onClick={handleOpenVocab}>
-                    <BookMarked className="h-3.5 w-3.5" />
-                    Add to Vocab Bank
-                  </Button>
-                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="flex min-h-[320px] flex-col rounded-sm border border-border bg-card p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="mono-label text-muted-foreground">To · {to}</span>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-muted-foreground"
+                  onClick={handleCopy}
+                  disabled={!output}>
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy
+                </Button>
+                <Button
+                  size="sm"
+                  className="gap-1.5 font-semibold"
+                  onClick={handleOpenVocab}
+                  disabled={!output}>
+                  <BookMarked className="h-3.5 w-3.5" />
+                  Add to Vocab Bank
+                </Button>
               </div>
-              <p className="mt-3 whitespace-pre-wrap text-base leading-relaxed">{output}</p>
-            </CardContent>
-          </Card>
-        ) : null}
+            </div>
+
+            <div className="flex flex-1 items-center py-6">
+              {output ? (
+                <p className="whitespace-pre-wrap text-[clamp(1.7rem,2.8vw,2.6rem)] font-semibold leading-[1.12] tracking-[-0.025em]">
+                  {output}
+                </p>
+              ) : (
+                <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
+                  The translation appears here as you type. Save it with the original sentence so
+                  the card has context when it comes back in review.
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-baseline justify-between border-t border-border pt-3">
+              <span className="mono-label text-muted-foreground/70">
+                {from} → {to}
+              </span>
+              <span className="mono-label text-muted-foreground/50">
+                {output ? `${output.trim().length} chars` : 'Waiting for input'}
+              </span>
+            </div>
+          </section>
+        </div>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -267,7 +278,7 @@ const Translate = () => {
             <div className="space-y-1.5">
               <Label
                 htmlFor="vocab-word"
-                className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                className="mono-label text-muted-foreground">
                 Word
               </Label>
               <Input
@@ -279,7 +290,7 @@ const Translate = () => {
             <div className="space-y-1.5">
               <Label
                 htmlFor="vocab-translation"
-                className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                className="mono-label text-muted-foreground">
                 Translation
               </Label>
               <Input
@@ -289,9 +300,7 @@ const Translate = () => {
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-                Language
-              </Label>
+              <Label className="mono-label text-muted-foreground">Language</Label>
               <Select value={saveLanguage} onValueChange={setSaveLanguage}>
                 <SelectTrigger aria-label="Vocab language">
                   <SelectValue />

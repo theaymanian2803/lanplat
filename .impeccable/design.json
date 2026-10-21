@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-21T00:00:00.000Z",
+  "title": "Design System: LingoVault",
+  "extensions": {
+    "colorMeta": {
+      "desk": {
+        "role": "neutral",
+        "displayName": "Graphite Desk",
+        "canonical": "#191b16",
+        "tonalRamp": ["#0b0c09", "#11130e", "#191b16", "#23261f", "#2d3128", "#3a3f33", "#4a503f", "#5d6450"]
+      },
+      "enamel": {
+        "role": "neutral",
+        "displayName": "Enamel Bone",
+        "canonical": "#e9e2d1",
+        "tonalRamp": ["#3a372f", "#5a564a", "#7a7566", "#9a9482", "#b9b29e", "#d3cbb6", "#e9e2d1", "#f6f1e6"]
+      },
+      "signal": {
+        "role": "primary",
+        "displayName": "Signal Orange",
+        "canonical": "#d4552b",
+        "tonalRamp": ["#2a0f08", "#4a1a0e", "#6b2514", "#8c301a", "#ad3b21", "#c94628", "#d4552b", "#e88a68"]
+      },
+      "tape": {
+        "role": "secondary",
+        "displayName": "Tape Teal",
+        "canonical": "#2e6b63",
+        "tonalRamp": ["#0e2421", "#153430", "#1c443f", "#24544e", "#2e6b63", "#3f837a", "#5a9c93", "#7fb7ae"]
+      },
+      "olive": {
+        "role": "secondary",
+        "displayName": "Swedish Olive",
+        "canonical": "#7a8f4f",
+        "tonalRamp": ["#1b2112", "#2c341d", "#3d4928", "#4f5e33", "#61733e", "#7a8f4f", "#96a96c", "#b3c18d"]
+      },
+      "overdue": {
+        "role": "tertiary",
+        "displayName": "Overdue Red",
+        "canonical": "#b83226",
+        "tonalRamp": ["#2b0a07", "#45120d", "#601b14", "#7c241b", "#982d22", "#b83226", "#d15a4e", "#e58a80"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page titles, the next word, quiz word, book titles." },
+      "body": { "displayName": "Body", "purpose": "Prose, descriptions and row copy." },
+      "label": { "displayName": "Counter label", "purpose": "Counters, timestamps, section labels; Courier Prime only." }
+    },
+    "shadows": [],
+    "motion": [
+      { "name": "step", "value": "steps(2, end) 90ms", "purpose": "Mechanical state changes: ticks, counters, disclosure." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The single signal action on a viewport.",
+      "html": "<button class=\"ds-btn-primary\">Start review →</button>",
+      "css": ".ds-btn-primary { background: #d4552b; color: #1b1d16; padding: 12px 20px; border: 0; border-radius: 4px; font-family: Archivo, sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0; cursor: pointer; transition: background 90ms steps(2, end); } .ds-btn-primary:hover { background: #b8441f; } .ds-btn-primary:focus-visible { outline: 2px solid #d4552b; outline-offset: 2px; }"
+    },
+    {
+      "name": "Enamel Work Panel",
+      "kind": "card",
+      "refersTo": "panel-enamel",
+      "description": "Bone panel for reading or acting; the review tape and next word live here.",
+      "html": "<section class=\"ds-panel-enamel\"><p class=\"ds-label\">Next up</p><p class=\"ds-word\">forgæves</p><p class=\"ds-translation\">in vain</p></section>",
+      "css": ".ds-panel-enamel { background: #e9e2d1; color: #1b1d16; border-radius: 4px; padding: 16px; } .ds-label { margin: 0; font-family: 'Courier Prime', monospace; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.75; } .ds-word { margin: 8px 0 0; font-family: Archivo, sans-serif; font-size: 2.4rem; font-weight: 800; letter-spacing: -0.04em; line-height: 0.95; } .ds-translation { margin: 4px 0 0; font-size: 18px; opacity: 0.7; }"
+    },
+    {
+      "name": "Navigation Rail Item",
+      "kind": "nav",
+      "refersTo": "nav-rail",
+      "description": "Grouped rail item; active uses the signal field.",
+      "html": "<a class=\"ds-nav-item ds-nav-active\" href=\"#\">Carrel</a>",
+      "css": ".ds-nav-item { display: block; padding: 8px 10px; border-radius: 4px; color: #c9c6b4; text-decoration: none; font-family: Archivo, sans-serif; font-size: 14px; transition: background 90ms steps(2, end); } .ds-nav-item:hover { background: #2a2f25; color: #f2ead8; } .ds-nav-active, .ds-nav-active:hover { background: #d4552b; color: #1b1d16; font-weight: 600; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Hairline field on graphite or enamel.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search words…\" />",
+      "css": ".ds-input { background: #20241d; color: #e9e2d1; border: 1px solid #343a2d; border-radius: 4px; padding: 8px 12px; font-family: Archivo, sans-serif; font-size: 14px; } .ds-input::placeholder { color: #9a9d86; } .ds-input:focus-visible { outline: 2px solid #d4552b; outline-offset: 2px; border-color: #d4552b; }"
+    },
+    {
+      "name": "Review Tape",
+      "kind": "custom",
+      "refersTo": "review-tape",
+      "description": "The signature plot: review time as measured length.",
+      "html": "<div class=\"ds-tape\"><span class=\"ds-tick\" style=\"left:18%;height:26px;background:#d4552b\"></span><span class=\"ds-tick\" style=\"left:34%;height:18px;background:#2e6b63\"></span><span class=\"ds-tick\" style=\"left:62%;height:30px;background:#7a8f4f\"></span><span class=\"ds-now\"></span></div>",
+      "css": ".ds-tape { position: relative; height: 96px; background: #20241d; border-radius: 4px; overflow: hidden; } .ds-tick { position: absolute; bottom: 12px; width: 3px; border-radius: 1px; } .ds-now { position: absolute; inset-block: 0; left: 64%; width: 1px; background: #d4552b; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Study Carrel",
+    "overview": "The app is a working language-lab carrel: a graphite desk with enamel panels, mechanical counters and a tape that shows when every word comes back. It replaces the category's greeting-plus-stat-tiles dashboard and its card soup. The world appears through four contributions only — type, palette, density, and one signature move — while navigation, controls and layout stay familiar web patterns.\n\nThe mood is a desk lamp at night, not a game. Nothing celebrates, nags or confettis. Density is high where the learner scans, and quiet where they read. Enamel means act or read here; graphite means media and background.",
+    "keyCharacteristics": [
+      "Graphite ground with warm enamel work panels.",
+      "Signal orange reserved for the primary action and due state.",
+      "One dense data object per viewport, ruled by hairlines.",
+      "Archivo for every voice; Courier Prime only for counters and machine labels.",
+      "2–4px corners, no decorative shadows."
+    ],
+    "rules": [
+      { "name": "The Enamel Rule", "body": "Enamel is a promise of work: if a surface is bone-coloured, the learner can read or act on it. Graphite never carries body copy.", "section": "colors" },
+      { "name": "The Signal Rule", "body": "Signal orange marks exactly one primary action per viewport; everything else is outline, ghost or ink.", "section": "colors" },
+      { "name": "The One Voice Rule", "body": "Archivo speaks; Courier Prime only measures. Mono is never used for prose or to look technical.", "section": "typography" },
+      { "name": "The Hairline Rule", "body": "If two surfaces need separating, use a 1px border or a tonal step; a shadow is a costume from another world.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep the review tape as the first viewport's dense object; one plot owns the field.",
+      "Do use enamel for surfaces the learner reads or acts on, and graphite for media and background.",
+      "Do reserve signal orange for the primary action, the NOW playhead and due emphasis.",
+      "Do set labels in 10px Courier Prime with 0.2em tracking, and body copy in Archivo at 15–17px.",
+      "Do separate surfaces with 1px hairlines and tonal steps.",
+      "Do isolate destructive actions with space and a hairline."
+    ],
+    "donts": [
+      "Don't add shadows, glass, gradients or glow; depth is tonal.",
+      "Don't use rounded pills for panels, buttons or inputs; 2–4px only.",
+      "Don't turn the dashboard into equal stat tiles or a card grid.",
+      "Don't let a language colour become a large field; it is ink, dot or tick.",
+      "Don't use mono for prose or as a generic technical costume.",
+      "Don't put body copy on graphite; it belongs on enamel."
+    ]
+  }
+}

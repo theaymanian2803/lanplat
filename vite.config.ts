@@ -45,8 +45,8 @@ export default defineConfig(({ mode }) => ({
         short_name: "LingoVault",
         description:
           "Personal language learning dashboard for studying with YouTube videos, timestamped notes, vocabulary tracking, and spaced-repetition flashcards.",
-        theme_color: "#14120f",
-        background_color: "#14120f",
+        theme_color: "#191b16",
+        background_color: "#191b16",
         display: "standalone",
         start_url: "/dashboard",
         scope: "/",

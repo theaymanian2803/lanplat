@@ -45,3 +45,9 @@ playwright-report
 
 # Book catalogue download cache
 scripts/.cache
+
+# Impeccable working artifacts (keep surfaces/ and design.json)
+.impeccable/mocks
+.impeccable/questions
+.impeccable/review
+.impeccable/build

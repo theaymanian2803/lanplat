@@ -1,22 +1,22 @@
 const LANG_BADGE: Record<string, string> = {
-  Danish: 'bg-red-500/15 text-red-300 border-red-500/30',
-  Japanese: 'bg-pink-500/15 text-pink-300 border-pink-500/30',
-  Spanish: 'bg-orange-500/15 text-orange-300 border-orange-500/30',
-  French: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-  Swedish: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+  Danish: 'bg-[#d4552b]/15 text-[#e9a184] border-[#d4552b]/40',
+  Japanese: 'bg-[#8a5a7a]/20 text-[#c79bb6] border-[#8a5a7a]/50',
+  Spanish: 'bg-[#d19a2a]/15 text-[#e6c37a] border-[#d19a2a]/40',
+  French: 'bg-[#2e6b63]/20 text-[#8fc4bc] border-[#2e6b63]/50',
+  Swedish: 'bg-[#7a8f4f]/20 text-[#b8c98e] border-[#7a8f4f]/50',
 }
 
-const FALLBACK_BADGE = 'bg-zinc-500/15 text-zinc-300 border-zinc-500/30'
+const FALLBACK_BADGE = 'bg-[#8a8f7a]/15 text-[#c2c4b4] border-[#8a8f7a]/40'
 
 const LANG_DOT: Record<string, string> = {
-  Danish: 'bg-red-400',
-  Japanese: 'bg-pink-400',
-  Spanish: 'bg-orange-400',
-  French: 'bg-blue-400',
-  Swedish: 'bg-amber-400',
+  Danish: 'bg-[#d4552b]',
+  Japanese: 'bg-[#8a5a7a]',
+  Spanish: 'bg-[#d19a2a]',
+  French: 'bg-[#2e6b63]',
+  Swedish: 'bg-[#7a8f4f]',
 }
 
-const FALLBACK_DOT = 'bg-zinc-400'
+const FALLBACK_DOT = 'bg-[#8a8f7a]'
 
 export const getLangBadgeClasses = (lang: string) => LANG_BADGE[lang] || FALLBACK_BADGE
 

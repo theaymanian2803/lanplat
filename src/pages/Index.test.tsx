@@ -19,6 +19,10 @@ vi.mock('@/integrations/turso/db', () => ({
     insert: vi.fn().mockResolvedValue(undefined),
     remove: vi.fn().mockResolvedValue(undefined),
   },
+  vocabularyDb: {
+    list: vi.fn().mockResolvedValue([]),
+    listDue: vi.fn().mockResolvedValue([]),
+  },
 }))
 
 const URL_UNDER_TEST = 'https://youtube.com/watch?v=dQw4w9WgXcQ'

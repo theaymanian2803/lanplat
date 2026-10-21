@@ -1,0 +1,105 @@
+{
+  "books": [
+    {
+      "id": 4564,
+      "title": "Rouge mémoire: Poésie",
+      "authors": [
+        {
+          "name": "Bertrand, Huguette",
+          "birth_year": 1942,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4564/pg4564.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4564.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4564.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4564/pg4564.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 4565,
+      "title": "Jusqu'à l'extrême regard: Poésie",
+      "authors": [
+        {
+          "name": "Bertrand, Huguette",
+          "birth_year": 1942,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4565/pg4565.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4565.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4565.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4565/pg4565.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 4566,
+      "title": "Entre la chair et l'âme: Poésie",
+      "authors": [
+        {
+          "name": "Bertrand, Huguette",
+          "birth_year": 1942,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4566/pg4566.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4566.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4566.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4566/pg4566.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 4567,
+      "title": "Strates Amoureuses: Poésie",
+      "authors": [
+        {
+          "name": "Bertrand, Huguette",
+          "birth_year": 1942,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4567/pg4567.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4567.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4567.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4567/pg4567.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 4568,
+      "title": "Les Visages Du Temps: Poésie",
+      "authors": [
+        {
+          "name": "Bertrand, Huguette",
+          "birth_year": 1942,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4568/pg4568.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4568.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4568.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4568/pg4568.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    }
+  ],
+  "hasMore": true
+}

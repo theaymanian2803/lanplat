@@ -1,21 +1,28 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { BookOpen, ExternalLink, Library, Loader2, Search, X } from 'lucide-react'
+import { BookOpen, ExternalLink, Library, Loader2 } from 'lucide-react'
 
 import BookReaderDialog from '@/components/books/BookReaderDialog'
 import Layout from '@/components/Layout'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  BOOK_LANGUAGES,
   displayAuthorName,
-  fetchFrenchBooks,
+  fetchBookPage,
   getCoverUrl,
   getDownloadLinks,
-  type GutendexBook,
-} from '@/lib/gutendex'
+  type Book,
+} from '@/lib/bookCatalog'
 
-const BookCard = ({ book, onRead }: { book: GutendexBook; onRead: (book: GutendexBook) => void }) => {
+const BookCard = ({ book, onRead }: { book: Book; onRead: (book: Book) => void }) => {
   const cover = getCoverUrl(book)
   const links = getDownloadLinks(book)
 
@@ -72,26 +79,28 @@ const BookCard = ({ book, onRead }: { book: GutendexBook; onRead: (book: Gutende
 }
 
 const Books = () => {
-  const [search, setSearch] = useState('')
-  const [debounced, setDebounced] = useState('')
-  const [readerBook, setReaderBook] = useState<GutendexBook | null>(null)
+  const [languageName, setLanguageName] = useState(BOOK_LANGUAGES[0].name)
+  const [readerBook, setReaderBook] = useState<Book | null>(null)
 
-  useEffect(() => {
-    const handle = setTimeout(() => setDebounced(search.trim()), 600)
-    return () => clearTimeout(handle)
-  }, [search])
+  const language = BOOK_LANGUAGES.find((item) => item.name === languageName) ?? BOOK_LANGUAGES[0]
 
-  const { data, isLoading, isError, error, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } =
-    useInfiniteQuery({
-      queryKey: ['gutendex', 'fr', debounced],
-      queryFn: ({ pageParam }) => fetchFrenchBooks(pageParam, debounced),
-      initialPageParam: 1,
-      getNextPageParam: (lastPage, allPages) =>
-        lastPage.next ? allPages.length + 1 : undefined,
-    })
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+  } = useInfiniteQuery({
+    queryKey: ['books', language.code],
+    queryFn: ({ pageParam }) => fetchBookPage(language.code, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => (lastPage.hasMore ? allPages.length + 1 : undefined),
+  })
 
-  const books = data?.pages.flatMap((page) => page.results) ?? []
-  const total = data?.pages[0]?.count
+  const books = data?.pages.flatMap((page) => page.books) ?? []
 
   const errorMessage =
     error instanceof Error ? error.message : 'Could not load books right now.'
@@ -104,40 +113,28 @@ const Books = () => {
           <h1 className="font-display text-2xl font-semibold tracking-tight">Books</h1>
         </div>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          French literature from Project Gutenberg — free, public-domain books you can read
-          in the language you are learning.
+          Public-domain literature from Project Gutenberg — free books you can read in the
+          language you are learning.
         </p>
 
-        <div className="relative mt-6 max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search French books…"
-            aria-label="Search books"
-            className="pl-9 pr-9"
-          />
-          {search ? (
-            <button
-              type="button"
-              onClick={() => setSearch('')}
-              aria-label="Clear search"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground">
-              <X className="h-4 w-4" />
-            </button>
-          ) : null}
+        <div className="mt-6 max-w-xs">
+          <Select value={languageName} onValueChange={setLanguageName}>
+            <SelectTrigger aria-label="Book language">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {BOOK_LANGUAGES.map((item) => (
+                <SelectItem key={item.code} value={item.name}>
+                  {item.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-
-        {total !== undefined && books.length > 0 ? (
-          <p className="mt-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground/70">
-            {total.toLocaleString()} book{total === 1 ? '' : 's'}
-            {debounced ? ` matching “${debounced}”` : ' in French'}
-          </p>
-        ) : null}
 
         {isLoading ? (
           <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-            {Array.from({ length: 12 }).map((_, i) => (
+            {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="overflow-hidden rounded-lg border border-border/50 bg-card">
                 <div className="aspect-[3/4] animate-pulse bg-muted" />
                 <div className="space-y-1.5 p-2">
@@ -159,7 +156,7 @@ const Books = () => {
         ) : books.length === 0 ? (
           <Card className="mt-8 p-6 text-center">
             <p className="text-sm text-muted-foreground">
-              {debounced ? `No books match “${debounced}”.` : 'No French books found.'}
+              No {language.name} books found.
             </p>
           </Card>
         ) : (
@@ -192,7 +189,11 @@ const Books = () => {
       </div>
 
       {readerBook ? (
-        <BookReaderDialog book={readerBook} onClose={() => setReaderBook(null)} />
+        <BookReaderDialog
+          book={readerBook}
+          language={language.name}
+          onClose={() => setReaderBook(null)}
+        />
       ) : null}
     </Layout>
   )

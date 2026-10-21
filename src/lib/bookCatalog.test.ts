@@ -1,14 +1,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  BOOKS_PAGE_SIZE,
+  BOOK_LANGUAGES,
   displayAuthorName,
-  fetchFrenchBooks,
+  fetchBookPage,
   getCoverUrl,
   getDownloadLinks,
-  type GutendexBook,
-} from '@/lib/gutendex'
+  type Book,
+} from '@/lib/bookCatalog'
 
-const book = (overrides: Partial<GutendexBook> = {}): GutendexBook => ({
+const book = (overrides: Partial<Book> = {}): Book => ({
   id: 1,
   title: 'Le Fantôme de l’Opéra',
   authors: [{ name: 'Leroux, Gaston', birth_year: 1868, death_year: 1927 }],
@@ -19,16 +21,8 @@ const book = (overrides: Partial<GutendexBook> = {}): GutendexBook => ({
     'text/plain; charset=utf-8': 'https://www.gutenberg.org/files/1/1-0.txt',
   },
   languages: ['fr'],
-  download_count: 101041,
   ...overrides,
 })
-
-const response = {
-  count: 4240,
-  next: 'https://gutendex.com/books/?languages=fr&page=2',
-  previous: null,
-  results: [book()],
-}
 
 function stubFetch(value: unknown) {
   const fn = vi.fn().mockResolvedValue({ ok: true, json: async () => value })
@@ -40,39 +34,51 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('fetchFrenchBooks', () => {
-  it('requests French books from Gutendex', async () => {
-    const fn = stubFetch(response)
-
-    const result = await fetchFrenchBooks()
-
-    expect(fn.mock.calls[0][0]).toBe('https://gutendex.com/books/?languages=fr&page=1')
-    expect(result.count).toBe(4240)
-    expect(result.results[0].title).toBe('Le Fantôme de l’Opéra')
+describe('BOOK_LANGUAGES', () => {
+  it('offers exactly the four supported languages', () => {
+    expect(BOOK_LANGUAGES).toEqual([
+      { name: 'French', code: 'fr' },
+      { name: 'Spanish', code: 'es' },
+      { name: 'Swedish', code: 'sv' },
+      { name: 'Danish', code: 'da' },
+    ])
   })
 
-  it('requests a given page', async () => {
-    const fn = stubFetch(response)
+  it('does not offer Japanese', () => {
+    expect(BOOK_LANGUAGES.map((language) => language.name)).not.toContain('Japanese')
+  })
+})
 
-    await fetchFrenchBooks(3)
+describe('BOOKS_PAGE_SIZE', () => {
+  it('caps each page at five books', () => {
+    expect(BOOKS_PAGE_SIZE).toBe(5)
+  })
+})
 
-    expect(fn.mock.calls[0][0]).toBe('https://gutendex.com/books/?languages=fr&page=3')
+describe('fetchBookPage', () => {
+  it('loads the static page for a language', async () => {
+    const fn = stubFetch({ books: [book()], hasMore: true })
+
+    const page = await fetchBookPage('fr', 1)
+
+    expect(fn.mock.calls[0][0]).toBe('/books/fr/1.json')
+    expect(page.books).toHaveLength(1)
+    expect(page.books[0].title).toBe('Le Fantôme de l’Opéra')
+    expect(page.hasMore).toBe(true)
   })
 
-  it('adds the search term when one is given', async () => {
-    const fn = stubFetch(response)
+  it('requests the requested page number', async () => {
+    const fn = stubFetch({ books: [], hasMore: false })
 
-    await fetchFrenchBooks(1, 'verne')
+    await fetchBookPage('es', 3)
 
-    expect(fn.mock.calls[0][0]).toBe(
-      'https://gutendex.com/books/?languages=fr&page=1&search=verne'
-    )
+    expect(fn.mock.calls[0][0]).toBe('/books/es/3.json')
   })
 
-  it('throws when the request fails', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }))
+  it('throws when the page is missing', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404 }))
 
-    await expect(fetchFrenchBooks()).rejects.toThrow('Gutendex request failed: 500')
+    await expect(fetchBookPage('da', 1)).rejects.toThrow('Book page request failed: 404')
   })
 })
 

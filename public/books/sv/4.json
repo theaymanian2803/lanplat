@@ -1,0 +1,110 @@
+{
+  "books": [
+    {
+      "id": 15024,
+      "title": "\"Sämre folk\": En berättelse",
+      "authors": [
+        {
+          "name": "Lange, Ina",
+          "birth_year": 1846,
+          "death_year": 1930
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/15024/pg15024.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/15024.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/15024.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/15024/pg15024.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 15703,
+      "title": "Modern: En Berättelse",
+      "authors": [
+        {
+          "name": "Benedictsson, Victoria",
+          "birth_year": 1850,
+          "death_year": 1888
+        },
+        {
+          "name": "Lundegård, Axel",
+          "birth_year": 1861,
+          "death_year": 1930
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/15703/pg15703.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/15703.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/15703.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/15703/pg15703.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 15719,
+      "title": "Baron Olson och andra historier",
+      "authors": [
+        {
+          "name": "Strömberg, Sigge",
+          "birth_year": 1885,
+          "death_year": 1920
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/15719/pg15719.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/15719.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/15719.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/15719/pg15719.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 15724,
+      "title": "Vi Bookar, Krokar och Rothar: Ur en stadskrönika",
+      "authors": [
+        {
+          "name": "Bergman, Hjalmar",
+          "birth_year": 1883,
+          "death_year": 1931
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/15724/pg15724.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/15724.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/15724.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/15724/pg15724.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 15731,
+      "title": "Allvarsord om allting och ingenting",
+      "authors": [
+        {
+          "name": "Bülow, Waldemar",
+          "birth_year": 1864,
+          "death_year": 1934
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/15731/pg15731.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/15731.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/15731.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/15731/pg15731.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    }
+  ],
+  "hasMore": true
+}

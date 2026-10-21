@@ -1,0 +1,105 @@
+{
+  "books": [
+    {
+      "id": 4650,
+      "title": "Candide, ou l'optimisme",
+      "authors": [
+        {
+          "name": "Voltaire",
+          "birth_year": 1694,
+          "death_year": 1778
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4650/pg4650.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4650.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4650.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4650/pg4650.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 4651,
+      "title": "L'Ingénu",
+      "authors": [
+        {
+          "name": "Voltaire",
+          "birth_year": 1694,
+          "death_year": 1778
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4651/pg4651.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4651.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4651.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4651/pg4651.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 4688,
+      "title": "Pages",
+      "authors": [
+        {
+          "name": "Mallarmé, Stéphane",
+          "birth_year": 1842,
+          "death_year": 1898
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4688/pg4688.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4688.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4688.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4688/pg4688.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 4708,
+      "title": "Les chansons de Bilitis",
+      "authors": [
+        {
+          "name": "Louÿs, Pierre",
+          "birth_year": 1870,
+          "death_year": 1925
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4708/pg4708.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4708.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4708.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4708/pg4708.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 4717,
+      "title": "Autour de la Lune",
+      "authors": [
+        {
+          "name": "Verne, Jules",
+          "birth_year": 1828,
+          "death_year": 1905
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4717/pg4717.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4717.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4717.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4717/pg4717.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    }
+  ],
+  "hasMore": false
+}

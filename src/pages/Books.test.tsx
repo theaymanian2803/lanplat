@@ -3,72 +3,49 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import Books from './Books'
-import type { GutendexBook } from '@/lib/gutendex'
+import type { Book } from '@/lib/bookCatalog'
 
 vi.mock('@/components/Layout', () => ({
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
-const book = (overrides: Partial<GutendexBook> = {}): GutendexBook => ({
-  id: 1,
-  title: 'Le Fantôme de l’Opéra',
+vi.mock('@/integrations/turso/db', () => ({
+  languagesDb: { list: vi.fn().mockResolvedValue([]) },
+  vocabularyDb: { insert: vi.fn().mockResolvedValue(undefined) },
+}))
+
+const book = (id: number, title: string, overrides: Partial<Book> = {}): Book => ({
+  id,
+  title,
   authors: [{ name: 'Leroux, Gaston', birth_year: 1868, death_year: 1927 }],
   formats: {
-    'image/jpeg': 'https://www.gutenberg.org/cache/epub/1/pg1.cover.medium.jpg',
-    'application/epub+zip': 'https://www.gutenberg.org/ebooks/1.epub3.images',
-    'text/html': 'https://www.gutenberg.org/ebooks/1.html.images',
-    'text/plain; charset=utf-8': 'https://www.gutenberg.org/files/1/1-0.txt',
+    'text/plain; charset=utf-8': `https://www.gutenberg.org/cache/epub/${id}/pg${id}.txt`,
   },
   languages: ['fr'],
-  download_count: 101041,
   ...overrides,
 })
 
-const pageOne = {
-  count: 4240,
-  next: 'https://gutendex.com/books/?languages=fr&page=2',
-  previous: null,
-  results: [
-    book(),
-    book({
-      id: 2,
-      title: 'Candide',
-      authors: [{ name: 'Voltaire', birth_year: 1694, death_year: 1778 }],
-      formats: { 'text/plain; charset=utf-8': 'https://www.gutenberg.org/files/2/2-0.txt' },
-    }),
-  ],
-}
+const five = (prefix: string) =>
+  Array.from({ length: 5 }, (_, i) => book(i + 1, `${prefix} ${i + 1}`))
 
-const pageTwo = {
-  count: 4240,
-  next: null,
-  previous: 'https://gutendex.com/books/?languages=fr&page=1',
-  results: [book({ id: 3, title: 'Madame Bovary' })],
-}
+const jsonResponse = (value: unknown) => ({
+  ok: true,
+  json: async () => value,
+  text: async () => JSON.stringify(value),
+})
 
-const searchResults = {
-  count: 48,
-  next: null,
-  previous: null,
-  results: [
-    book({ id: 4791, title: 'Voyage au Centre de la Terre', authors: [{ name: 'Verne, Jules', birth_year: 1828, death_year: 1905 }] }),
-    book({ id: 5097, title: 'Vingt mille Lieues Sous Les Mers', authors: [{ name: 'Verne, Jules', birth_year: 1828, death_year: 1905 }] }),
-  ],
-}
+const textResponse = (value: string) => ({
+  ok: true,
+  json: async () => ({}),
+  text: async () => value,
+})
 
-function stubFetchPages(...pages: unknown[]) {
+type Stub = [matcher: string, response: unknown]
+
+function stubFetch(entries: Stub[]) {
   const fn = vi.fn().mockImplementation(async (url: string) => {
-    const page = url.includes('page=2') ? pages[1] ?? pages[0] : pages[0]
-    return { ok: true, json: async () => page }
-  })
-  vi.stubGlobal('fetch', fn)
-  return fn
-}
-
-function stubFetchByUrl(pages: Record<string, unknown>) {
-  const fn = vi.fn().mockImplementation(async (url: string) => {
-    const page = Object.entries(pages).find(([key]) => url.includes(key))?.[1] ?? pages['default']
-    return { ok: true, json: async () => page }
+    const entry = entries.find(([matcher]) => String(url).includes(matcher))
+    return entry ? entry[1] : { ok: false, status: 404, json: async () => ({}), text: async () => '' }
   })
   vi.stubGlobal('fetch', fn)
   return fn
@@ -83,6 +60,11 @@ const renderPage = () => {
   )
 }
 
+const pickLanguage = async (name: string) => {
+  fireEvent.click(screen.getByRole('combobox', { name: 'Book language' }))
+  fireEvent.click(await screen.findByRole('option', { name }))
+}
+
 describe('Books', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -92,48 +74,72 @@ describe('Books', () => {
     vi.unstubAllGlobals()
   })
 
-  it('renders titles, authors and read buttons for French books', async () => {
-    const fn = stubFetchPages(pageOne)
+  it('loads exactly five French books on the first visit', async () => {
+    const fn = stubFetch([['/books/fr/1.json', jsonResponse({ books: five('Livre'), hasMore: true })]])
     renderPage()
 
-    expect(await screen.findByText('Le Fantôme de l’Opéra')).toBeInTheDocument()
-    expect(screen.getByText('Gaston Leroux')).toBeInTheDocument()
-    expect(screen.getByText('Candide')).toBeInTheDocument()
-    expect(screen.getByText('Voltaire')).toBeInTheDocument()
+    expect(await screen.findByText('Livre 1')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /Read/ })).toHaveLength(5)
 
-    expect(fn.mock.calls[0][0]).toContain('languages=fr')
-
-    // Both books have plain-text links, so both get a Read button.
-    expect(screen.getAllByRole('button', { name: /Read/ })).toHaveLength(2)
-    // Only the first book has an epub, and it stays an external download.
-    const epub = screen.getByRole('link', { name: /EPUB/ })
-    expect(epub).toHaveAttribute('href', 'https://www.gutenberg.org/ebooks/1.epub3.images')
-    expect(epub).toHaveAttribute('target', '_blank')
-    // Nothing sends the user away except the epub download.
-    expect(screen.queryByRole('link', { name: /HTML/ })).toBeNull()
-    expect(screen.queryByRole('link', { name: /TXT/ })).toBeNull()
+    const bookCalls = fn.mock.calls.filter(([url]) => String(url).includes('/books/'))
+    expect(bookCalls).toHaveLength(1)
+    expect(bookCalls[0][0]).toBe('/books/fr/1.json')
   })
 
-  it('opens the reader in place when Read is clicked', async () => {
-    stubFetchByUrl({ default: pageOne })
+  it('lists the four supported languages and no Japanese', async () => {
+    stubFetch([['/books/fr/1.json', jsonResponse({ books: five('Livre'), hasMore: false })]])
     renderPage()
+    await screen.findByText('Livre 1')
 
-    fireEvent.click((await screen.findAllByRole('button', { name: /Read/ }))[0])
+    fireEvent.click(screen.getByRole('combobox', { name: 'Book language' }))
 
-    const dialog = screen.getByRole('dialog')
-    expect(dialog).toBeInTheDocument()
-    expect(within(dialog).getByText('Le Fantôme de l’Opéra')).toBeInTheDocument()
+    for (const name of ['French', 'Spanish', 'Swedish', 'Danish']) {
+      expect(await screen.findByRole('option', { name })).toBeInTheDocument()
+    }
+    expect(screen.queryByRole('option', { name: 'Japanese' })).toBeNull()
   })
 
-  it('loads the next page of books', async () => {
-    stubFetchPages(pageOne, pageTwo)
+  it('loads five books in the selected language', async () => {
+    const fn = stubFetch([
+      ['/books/fr/1.json', jsonResponse({ books: five('Livre'), hasMore: false })],
+      ['/books/es/1.json', jsonResponse({ books: five('Libro'), hasMore: false })],
+    ])
+    renderPage()
+    await screen.findByText('Livre 1')
+
+    await pickLanguage('Spanish')
+
+    expect(await screen.findByText('Libro 1')).toBeInTheDocument()
+    expect(screen.queryByText('Livre 1')).toBeNull()
+    expect(screen.getAllByRole('button', { name: /Read/ })).toHaveLength(5)
+    expect(fn.mock.calls.some(([url]) => url === '/books/es/1.json')).toBe(true)
+  })
+
+  it('appends the next five books when Load more is clicked', async () => {
+    const fn = stubFetch([
+      ['/books/fr/1.json', jsonResponse({ books: five('Livre'), hasMore: true })],
+      [
+        '/books/fr/2.json',
+        jsonResponse({ books: Array.from({ length: 5 }, (_, i) => book(i + 6, `Suite ${i + 1}`)), hasMore: false }),
+      ],
+    ])
+    renderPage()
+    await screen.findByText('Livre 1')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Load more books' }))
+
+    expect(await screen.findByText('Suite 1')).toBeInTheDocument()
+    expect(screen.getByText('Livre 1')).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /Read/ })).toHaveLength(10)
+    expect(fn.mock.calls.some(([url]) => url === '/books/fr/2.json')).toBe(true)
+    expect(screen.queryByRole('button', { name: 'Load more books' })).toBeNull()
+  })
+
+  it('does not show Load more when there are no further pages', async () => {
+    stubFetch([['/books/fr/1.json', jsonResponse({ books: five('Livre'), hasMore: false })]])
     renderPage()
 
-    fireEvent.click(await screen.findByRole('button', { name: 'Load more books' }))
-
-    expect(await screen.findByText('Madame Bovary')).toBeInTheDocument()
-    // Both pages are still on screen.
-    expect(screen.getByText('Le Fantôme de l’Opéra')).toBeInTheDocument()
+    await screen.findByText('Livre 1')
     expect(screen.queryByRole('button', { name: 'Load more books' })).toBeNull()
   })
 
@@ -143,64 +149,49 @@ describe('Books', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('network down')
 
-    const fn = stubFetchPages(pageOne)
+    const fn = stubFetch([['/books/fr/1.json', jsonResponse({ books: five('Livre'), hasMore: false })]])
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
 
-    expect(await screen.findByText('Le Fantôme de l’Opéra')).toBeInTheDocument()
+    expect(await screen.findByText('Livre 1')).toBeInTheDocument()
     expect(fn).toHaveBeenCalled()
   })
 
-  it('searches French books by title and shows the match count', async () => {
-    const fn = stubFetchByUrl({ 'search=verne': searchResults, default: pageOne })
+  it('opens the reader in place when Read is clicked', async () => {
+    stubFetch([
+      ['/books/fr/1.json', jsonResponse({ books: five('Livre'), hasMore: false })],
+      [
+        '/gutenberg/',
+        textResponse(
+          '*** START OF THE PROJECT GUTENBERG EBOOK ***\n\nCHAPITRE PREMIER\n\nLe fantôme existait.\n\n*** END OF THE PROJECT GUTENBERG EBOOK ***'
+        ),
+      ],
+    ])
     renderPage()
 
-    fireEvent.change(screen.getByRole('textbox', { name: 'Search books' }), {
-      target: { value: 'verne' },
-    })
+    fireEvent.click((await screen.findAllByRole('button', { name: /Read/ }))[0])
 
-    expect(await screen.findByText('Voyage au Centre de la Terre', {}, { timeout: 2000 })).toBeInTheDocument()
-    expect(screen.getByText('Vingt mille Lieues Sous Les Mers')).toBeInTheDocument()
-    expect(screen.getByText(/48 books matching “verne”/)).toBeInTheDocument()
-    expect(fn.mock.calls.some(([url]) => url.includes('search=verne'))).toBe(true)
-  })
-
-  it('returns to browsing when the search is cleared', async () => {
-    stubFetchByUrl({ 'search=verne': searchResults, default: pageOne })
-    renderPage()
-
-    fireEvent.change(screen.getByRole('textbox', { name: 'Search books' }), {
-      target: { value: 'verne' },
-    })
-    await screen.findByText('Voyage au Centre de la Terre', {}, { timeout: 2000 })
-
-    fireEvent.click(screen.getByRole('button', { name: 'Clear search' }))
-
-    expect(await screen.findByText('Le Fantôme de l’Opéra', {}, { timeout: 2000 })).toBeInTheDocument()
-    expect(screen.queryByText('Voyage au Centre de la Terre')).toBeNull()
-  })
-
-  it('shows an empty state when no books match the search', async () => {
-    stubFetchByUrl({ default: { count: 0, next: null, previous: null, results: [] } })
-    renderPage()
-
-    fireEvent.change(screen.getByRole('textbox', { name: 'Search books' }), {
-      target: { value: 'zzzznope' },
-    })
-
-    expect(
-      await screen.findByText(/No books match “zzzznope”/, {}, { timeout: 2000 })
-    ).toBeInTheDocument()
-  })
-
-  it('shows an empty state when no books match', async () => {
-    stubFetchPages({ count: 0, next: null, previous: null, results: [] })
-    renderPage()
-
-    expect(await screen.findByText('No French books found.')).toBeInTheDocument()
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toBeInTheDocument()
+    expect(within(dialog).getByText('Livre 1')).toBeInTheDocument()
   })
 
   it('shows the cover image when the book has one', async () => {
-    stubFetchPages(pageOne)
+    stubFetch([
+      [
+        '/books/fr/1.json',
+        jsonResponse({
+          books: [
+            book(1, 'Le Fantôme de l’Opéra', {
+              formats: {
+                'image/jpeg': 'https://www.gutenberg.org/cache/epub/1/pg1.cover.medium.jpg',
+                'text/plain; charset=utf-8': 'https://www.gutenberg.org/files/1/1-0.txt',
+              },
+            }),
+          ],
+          hasMore: false,
+        }),
+      ],
+    ])
     renderPage()
 
     await waitFor(() =>

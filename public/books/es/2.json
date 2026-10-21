@@ -1,0 +1,125 @@
+{
+  "books": [
+    {
+      "id": 5878,
+      "title": "Reina Valera New Testament of the Bible 1858",
+      "authors": [
+        {
+          "name": "Reina, Casiodoro de, 1520?-1594",
+          "birth_year": null,
+          "death_year": null
+        },
+        {
+          "name": "Valera, Cipriano de, 1532?-1625",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/5878/pg5878.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/5878.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/5878.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/5878/pg5878.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 5879,
+      "title": "Reina Valera New Testament of the Bible 1862",
+      "authors": [
+        {
+          "name": "Reina, Casiodoro de, 1520?-1594",
+          "birth_year": null,
+          "death_year": null
+        },
+        {
+          "name": "Valera, Cipriano de, 1532?-1625",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/5879/pg5879.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/5879.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/5879.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/5879/pg5879.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 5880,
+      "title": "Reina Valera New Testament of the Bible 1865",
+      "authors": [
+        {
+          "name": "Reina, Casiodoro de, 1520?-1594",
+          "birth_year": null,
+          "death_year": null
+        },
+        {
+          "name": "Valera, Cipriano de, 1532?-1625",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/5880/pg5880.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/5880.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/5880.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/5880/pg5880.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 5881,
+      "title": "Reina Valera New Testament of the Bible 1909",
+      "authors": [
+        {
+          "name": "Reina, Casiodoro de, 1520?-1594",
+          "birth_year": null,
+          "death_year": null
+        },
+        {
+          "name": "Valera, Cipriano de, 1532?-1625",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/5881/pg5881.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/5881.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/5881.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/5881/pg5881.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 5985,
+      "title": "Zadig, ó El Destino, Historia Oriental",
+      "authors": [
+        {
+          "name": "Voltaire",
+          "birth_year": 1694,
+          "death_year": 1778
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/5985/pg5985.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/5985.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/5985.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/5985/pg5985.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    }
+  ],
+  "hasMore": true
+}

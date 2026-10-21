@@ -1,0 +1,105 @@
+{
+  "books": [
+    {
+      "id": 2999,
+      "title": "A l'ombre des jeunes filles en fleurs — Deuxième partie",
+      "authors": [
+        {
+          "name": "Proust, Marcel",
+          "birth_year": 1871,
+          "death_year": 1922
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/2999/pg2999.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/2999.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/2999.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/2999/pg2999.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 3000,
+      "title": "A l'ombre des jeunes filles en fleurs — Troisième partie",
+      "authors": [
+        {
+          "name": "Proust, Marcel",
+          "birth_year": 1871,
+          "death_year": 1922
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/3000/pg3000.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/3000.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/3000.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/3000/pg3000.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 3456,
+      "title": "Le tour du monde en quatre-vingts jours",
+      "authors": [
+        {
+          "name": "Verne, Jules",
+          "birth_year": 1828,
+          "death_year": 1905
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/3456/pg3456.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/3456.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/3456.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/3456/pg3456.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 3644,
+      "title": "Vie de Molière",
+      "authors": [
+        {
+          "name": "Voltaire",
+          "birth_year": 1694,
+          "death_year": 1778
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/3644/pg3644.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/3644.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/3644.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/3644/pg3644.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 3645,
+      "title": "L'Étourdi ou les contre-temps",
+      "authors": [
+        {
+          "name": "Molière",
+          "birth_year": 1622,
+          "death_year": 1673
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/3645/pg3645.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/3645.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/3645.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/3645/pg3645.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    }
+  ],
+  "hasMore": true
+}

@@ -1,0 +1,81 @@
+{
+  "books": [
+    {
+      "id": 12457,
+      "title": "El Diablo Cojuelo",
+      "authors": [
+        {
+          "name": "Vélez de Guevara, Luis",
+          "birth_year": 1579,
+          "death_year": 1644
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12457/pg12457.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12457.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12457.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12457/pg12457.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 12500,
+      "title": "Buena Nueva de acuerdo a Mateo: Traducción de dominio público abierta a mejoras",
+      "authors": [],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12500/pg12500.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12500.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12500.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12500/pg12500.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 12501,
+      "title": "Buena Nueva de acuerdo a Marcos: Traducción de dominio público abierta a mejoras",
+      "authors": [],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12501/pg12501.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12501.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12501.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12501/pg12501.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 12502,
+      "title": "Buena Nueva de acuerdo a Lucas: Traducción de dominio público abierta a mejoras",
+      "authors": [],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12502/pg12502.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12502.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12502.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12502/pg12502.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 12503,
+      "title": "Buena Nueva de acuerdo a Juan: Traducción de dominio público abierta a mejoras",
+      "authors": [],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12503/pg12503.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12503.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12503.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12503/pg12503.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    }
+  ],
+  "hasMore": false
+}

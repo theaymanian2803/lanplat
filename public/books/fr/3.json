@@ -1,0 +1,110 @@
+{
+  "books": [
+    {
+      "id": 1910,
+      "title": "La Tulipe Noire",
+      "authors": [
+        {
+          "name": "Dumas, Alexandre",
+          "birth_year": 1802,
+          "death_year": 1870
+        },
+        {
+          "name": "Maquet, Auguste",
+          "birth_year": 1813,
+          "death_year": 1888
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/1910/pg1910.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/1910.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/1910.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/1910/pg1910.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 2419,
+      "title": "La dame aux camélias",
+      "authors": [
+        {
+          "name": "Dumas, Alexandre",
+          "birth_year": 1824,
+          "death_year": 1895
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/2419/pg2419.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/2419.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/2419.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/2419/pg2419.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 2650,
+      "title": "Du côté de chez Swann",
+      "authors": [
+        {
+          "name": "Proust, Marcel",
+          "birth_year": 1871,
+          "death_year": 1922
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/2650/pg2650.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/2650.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/2650.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/2650/pg2650.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 2682,
+      "title": "Henri III et sa Cour",
+      "authors": [
+        {
+          "name": "Dumas, Alexandre",
+          "birth_year": 1802,
+          "death_year": 1870
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/2682/pg2682.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/2682.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/2682.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/2682/pg2682.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 2998,
+      "title": "A l'ombre des jeunes filles en fleurs — Première partie",
+      "authors": [
+        {
+          "name": "Proust, Marcel",
+          "birth_year": 1871,
+          "death_year": 1922
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/2998/pg2998.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/2998.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/2998.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/2998/pg2998.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    }
+  ],
+  "hasMore": true
+}

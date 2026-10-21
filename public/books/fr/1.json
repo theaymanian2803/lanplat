@@ -1,0 +1,105 @@
+{
+  "books": [
+    {
+      "id": 796,
+      "title": "La Chartreuse De Parme",
+      "authors": [
+        {
+          "name": "Stendhal",
+          "birth_year": 1783,
+          "death_year": 1842
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/796/pg796.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/796.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/796.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/796/pg796.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 797,
+      "title": "L'Abbesse De Castro",
+      "authors": [
+        {
+          "name": "Stendhal",
+          "birth_year": 1783,
+          "death_year": 1842
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/797/pg797.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/797.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/797.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/797/pg797.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 798,
+      "title": "Le rouge et le noir: chronique du XIXe siècle",
+      "authors": [
+        {
+          "name": "Stendhal",
+          "birth_year": 1783,
+          "death_year": 1842
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/798/pg798.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/798.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/798.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/798/pg798.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 799,
+      "title": "De la terre à la lune: trajet direct en 97 heures 20 minutes",
+      "authors": [
+        {
+          "name": "Verne, Jules",
+          "birth_year": 1828,
+          "death_year": 1905
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/799/pg799.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/799.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/799.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/799/pg799.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 800,
+      "title": "Le tour du monde en quatre-vingts jours",
+      "authors": [
+        {
+          "name": "Verne, Jules",
+          "birth_year": 1828,
+          "death_year": 1905
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/800/pg800.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/800.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/800.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/800/pg800.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    }
+  ],
+  "hasMore": true
+}

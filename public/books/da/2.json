@@ -1,0 +1,105 @@
+{
+  "books": [
+    {
+      "id": 10686,
+      "title": "Tine",
+      "authors": [
+        {
+          "name": "Bang, Herman",
+          "birth_year": 1857,
+          "death_year": 1912
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/10686/pg10686.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/10686.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/10686.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/10686/pg10686.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 10829,
+      "title": "Ludvigsbakke",
+      "authors": [
+        {
+          "name": "Bang, Herman",
+          "birth_year": 1857,
+          "death_year": 1912
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/10829/pg10829.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/10829.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/10829.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/10829/pg10829.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 11139,
+      "title": "Haabløse Slægter",
+      "authors": [
+        {
+          "name": "Bang, Herman",
+          "birth_year": 1857,
+          "death_year": 1912
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/11139/pg11139.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/11139.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/11139.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/11139/pg11139.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 11396,
+      "title": "Fædra: Brudstykker af et Livs Historie",
+      "authors": [
+        {
+          "name": "Bang, Herman",
+          "birth_year": 1857,
+          "death_year": 1912
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/11396/pg11396.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/11396.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/11396.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/11396/pg11396.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 12117,
+      "title": "Excentriske Noveller",
+      "authors": [
+        {
+          "name": "Bang, Herman",
+          "birth_year": 1857,
+          "death_year": 1912
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12117/pg12117.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12117.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12117.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12117/pg12117.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    }
+  ],
+  "hasMore": true
+}

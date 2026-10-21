@@ -1,0 +1,115 @@
+{
+  "books": [
+    {
+      "id": 32865,
+      "title": "En adelig Opdager",
+      "authors": [
+        {
+          "name": "Marsh, Richard",
+          "birth_year": 1857,
+          "death_year": 1915
+        },
+        {
+          "name": "Thomsen, Axel",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/32865/pg32865.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/32865.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/32865.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/32865/pg32865.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 33360,
+      "title": "Kaptajnen paa 15 Aar (I Slavelænker)",
+      "authors": [
+        {
+          "name": "Verne, Jules",
+          "birth_year": 1828,
+          "death_year": 1905
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/33360/pg33360.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/33360.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/33360.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/33360/pg33360.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 33562,
+      "title": "Minna",
+      "authors": [
+        {
+          "name": "Gjellerup, Karl",
+          "birth_year": 1857,
+          "death_year": 1919
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/33562/pg33562.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/33562.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/33562.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/33562/pg33562.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 33632,
+      "title": "Evangelines Genvordigheder: Til Kvinder med rødt Haar",
+      "authors": [
+        {
+          "name": "Glyn, Elinor",
+          "birth_year": 1864,
+          "death_year": 1943
+        },
+        {
+          "name": "Magnussen, Hedvig",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/33632/pg33632.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/33632.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/33632.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/33632/pg33632.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 34103,
+      "title": "Korvetten Heimdals Togt til de vestindiske Farvande i Aarene 1861 & 1862",
+      "authors": [
+        {
+          "name": "Holm, Jacob",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/34103/pg34103.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/34103.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/34103.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/34103/pg34103.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    }
+  ],
+  "hasMore": true
+}

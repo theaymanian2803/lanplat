@@ -1,0 +1,105 @@
+{
+  "books": [
+    {
+      "id": 35102,
+      "title": "Udvalgte Digtninger",
+      "authors": [
+        {
+          "name": "Heiberg, J. L. (Johan Ludvig)",
+          "birth_year": 1791,
+          "death_year": 1860
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/35102/pg35102.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/35102.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/35102.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/35102/pg35102.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 35886,
+      "title": "Det stille Vand: En Fortælling om Ungdom",
+      "authors": [
+        {
+          "name": "Gnudtzmann, Albert Theodor",
+          "birth_year": 1865,
+          "death_year": 1912
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/35886/pg35886.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/35886.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/35886.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/35886/pg35886.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 36430,
+      "title": "Af mit Levned",
+      "authors": [
+        {
+          "name": "Ussing, Johan Louis",
+          "birth_year": 1820,
+          "death_year": 1905
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/36430/pg36430.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/36430.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/36430.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/36430/pg36430.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 36871,
+      "title": "Strandingshistorier: Skildringer fra jydske Vestkyst og Skagen",
+      "authors": [
+        {
+          "name": "Erichsen, L. Mylius (Ludvig Mylius)",
+          "birth_year": 1872,
+          "death_year": 1907
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/36871/pg36871.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/36871.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/36871.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/36871/pg36871.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 36942,
+      "title": "Kongens Fald",
+      "authors": [
+        {
+          "name": "Jensen, Johannes V. (Johannes Vilhelm)",
+          "birth_year": 1873,
+          "death_year": 1950
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/36942/pg36942.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/36942.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/36942.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/36942/pg36942.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    }
+  ],
+  "hasMore": false
+}

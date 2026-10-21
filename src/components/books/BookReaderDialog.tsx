@@ -9,17 +9,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { displayAuthorName, getDownloadLinks, type GutendexBook } from '@/lib/gutendex'
+import { displayAuthorName, getDownloadLinks, type Book } from '@/lib/bookCatalog'
 import { extractBookBody, fetchBookText, isChapterHeading, splitIntoChapters } from '@/lib/bookReader'
 
 interface BookReaderDialogProps {
-  book: GutendexBook
+  book: Book
+  /** Display name of the language the book is written in, e.g. "French". */
+  language: string
   onClose: () => void
 }
 
 type Status = 'loading' | 'ready' | 'error' | 'none'
 
-const BookReaderDialog = ({ book, onClose }: BookReaderDialogProps) => {
+const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) => {
   const [status, setStatus] = useState<Status>('loading')
   const [body, setBody] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -103,7 +105,7 @@ const BookReaderDialog = ({ book, onClose }: BookReaderDialogProps) => {
   // On touch devices a long-press selection never fires mouseup (the browser
   // cancels the pointer), so watch selectionchange instead and debounce it.
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined
+    let timer: number | undefined
     const onSelectionChange = () => {
       const sel = window.getSelection()
       if (!sel || sel.isCollapsed) return
@@ -225,7 +227,7 @@ const BookReaderDialog = ({ book, onClose }: BookReaderDialogProps) => {
               <div className="shrink-0 border-t border-border/40 p-4 lg:w-[26rem] lg:border-l lg:border-t-0">
                 <AddWordPanel
                   key={vocabSession}
-                  defaultLanguage="French"
+                  defaultLanguage={language}
                   position="right"
                   initialWord={pendingWord}
                   widthClassName="lg:w-full"

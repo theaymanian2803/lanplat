@@ -1,0 +1,125 @@
+{
+  "books": [
+    {
+      "id": 9980,
+      "title": "Platero y yo",
+      "authors": [
+        {
+          "name": "Jiménez, Juan Ramón",
+          "birth_year": 1881,
+          "death_year": 1958
+        },
+        {
+          "name": "Onís, Federico de",
+          "birth_year": 1885,
+          "death_year": 1966
+        },
+        {
+          "name": "Walsh, Gertrude M. (Gertrude Margaret)",
+          "birth_year": 1884,
+          "death_year": null
+        },
+        {
+          "name": "Petersham, Maud",
+          "birth_year": 1890,
+          "death_year": 1971
+        },
+        {
+          "name": "Petersham, Miska",
+          "birth_year": 1888,
+          "death_year": 1960
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/9980/pg9980.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/9980.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/9980.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/9980/pg9980.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 10293,
+      "title": "Relación historica de los sucesos de la rebelión de José Gabriel Tupac-Amaru en las provincias del Peru, el año de 1780",
+      "authors": [
+        {
+          "name": "Anonymous",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/10293/pg10293.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/10293.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/10293.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/10293/pg10293.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 10506,
+      "title": "Romance de lobos, comedia barbara",
+      "authors": [
+        {
+          "name": "Valle-Inclán, Ramón del",
+          "birth_year": 1866,
+          "death_year": 1936
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/10506/pg10506.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/10506.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/10506.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/10506/pg10506.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 10821,
+      "title": "Manfredo\nDrama en tres actos",
+      "authors": [
+        {
+          "name": "Byron, George Gordon Byron, Baron",
+          "birth_year": 1788,
+          "death_year": 1824
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/10821/pg10821.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/10821.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/10821.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/10821/pg10821.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 10822,
+      "title": "El paraiso de las mujeres\r\nNovela",
+      "authors": [
+        {
+          "name": "Blasco Ibáñez, Vicente",
+          "birth_year": 1867,
+          "death_year": 1928
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/10822/pg10822.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/10822.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/10822.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/10822/pg10822.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    }
+  ],
+  "hasMore": true
+}

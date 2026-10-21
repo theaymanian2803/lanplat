@@ -1,0 +1,105 @@
+{
+  "books": [
+    {
+      "id": 21916,
+      "title": "Villkor och möjligheter för kemisk storindustri i Sverige",
+      "authors": [
+        {
+          "name": "Larsson, Ernst",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/21916/pg21916.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/21916.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/21916.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/21916/pg21916.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 22122,
+      "title": "Elias Lönnrot: Biografiskt utkast",
+      "authors": [
+        {
+          "name": "Ahlqvist, August",
+          "birth_year": 1826,
+          "death_year": 1889
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/22122/pg22122.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/22122.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/22122.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/22122/pg22122.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 23891,
+      "title": "En roman om förste konsuln\r\nFrån den 18 Brumaire till freden i Amiens",
+      "authors": [
+        {
+          "name": "Malling, Mathilda",
+          "birth_year": 1864,
+          "death_year": 1942
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/23891/pg23891.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/23891.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/23891.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/23891/pg23891.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 24100,
+      "title": "Jephthas bok\nEn Minnes-Sång i Israël",
+      "authors": [
+        {
+          "name": "Nervander, Johan Jacob",
+          "birth_year": 1805,
+          "death_year": 1848
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/24100/pg24100.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/24100.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/24100.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/24100/pg24100.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 26347,
+      "title": "I marginalen",
+      "authors": [
+        {
+          "name": "Homén, Olaf",
+          "birth_year": 1879,
+          "death_year": 1949
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/26347/pg26347.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/26347.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/26347.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/26347/pg26347.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    }
+  ],
+  "hasMore": false
+}

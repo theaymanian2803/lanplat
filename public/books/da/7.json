@@ -1,0 +1,110 @@
+{
+  "books": [
+    {
+      "id": 34178,
+      "title": "Græsk Mythologi",
+      "authors": [
+        {
+          "name": "Holten-Bechtolsheim, Hans",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/34178/pg34178.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/34178.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/34178.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/34178/pg34178.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 34213,
+      "title": "Kort og sandfærdig Beretning om den vidtudraabte Besættelse udi Thisted",
+      "authors": [
+        {
+          "name": "Árni Magnússon",
+          "birth_year": 1663,
+          "death_year": 1730
+        },
+        {
+          "name": "Ipsen, Alfred",
+          "birth_year": 1852,
+          "death_year": 1922
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/34213/pg34213.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/34213.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/34213.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/34213/pg34213.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 34272,
+      "title": "Beretning om Folke-Høiskolen i Rødding",
+      "authors": [
+        {
+          "name": "Flor, Christian",
+          "birth_year": 1792,
+          "death_year": 1875
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/34272/pg34272.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/34272.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/34272.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/34272/pg34272.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 34747,
+      "title": "Under Nordenvindens Svøbe",
+      "authors": [
+        {
+          "name": "Rasmussen, Knud",
+          "birth_year": 1879,
+          "death_year": 1933
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/34747/pg34747.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/34747.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/34747.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/34747/pg34747.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 34786,
+      "title": "Fra Færø: Fire Fortællinger",
+      "authors": [
+        {
+          "name": "Sørensen, Carl",
+          "birth_year": 1875,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/34786/pg34786.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/34786.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/34786.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/34786/pg34786.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    }
+  ],
+  "hasMore": true
+}

@@ -1,0 +1,105 @@
+{
+  "books": [
+    {
+      "id": 4569,
+      "title": "Mots Rouge Espoir: Poésie",
+      "authors": [
+        {
+          "name": "Bertrand, Huguette",
+          "birth_year": 1942,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4569/pg4569.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4569.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4569.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4569/pg4569.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 4570,
+      "title": "Ascension Du Désir: Poésie",
+      "authors": [
+        {
+          "name": "Bertrand, Huguette",
+          "birth_year": 1942,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4570/pg4570.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4570.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4570.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4570/pg4570.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 4647,
+      "title": "Zadig, ou la Destinée, histoire orientale",
+      "authors": [
+        {
+          "name": "Voltaire",
+          "birth_year": 1694,
+          "death_year": 1778
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4647/pg4647.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4647.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4647.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4647/pg4647.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 4648,
+      "title": "Memnon ou la sagesse humaine",
+      "authors": [
+        {
+          "name": "Voltaire",
+          "birth_year": 1694,
+          "death_year": 1778
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4648/pg4648.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4648.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4648.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4648/pg4648.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    },
+    {
+      "id": 4649,
+      "title": "Micromégas",
+      "authors": [
+        {
+          "name": "Voltaire",
+          "birth_year": 1694,
+          "death_year": 1778
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/4649/pg4649.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/4649.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/4649.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/4649/pg4649.cover.medium.jpg"
+      },
+      "languages": [
+        "fr"
+      ]
+    }
+  ],
+  "hasMore": true
+}

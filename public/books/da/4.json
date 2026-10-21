@@ -1,0 +1,110 @@
+{
+  "books": [
+    {
+      "id": 12987,
+      "title": "Det graa Hus",
+      "authors": [
+        {
+          "name": "Bang, Herman",
+          "birth_year": 1857,
+          "death_year": 1912
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12987/pg12987.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12987.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12987.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12987/pg12987.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 13175,
+      "title": "Ved Vejen",
+      "authors": [
+        {
+          "name": "Bang, Herman",
+          "birth_year": 1857,
+          "death_year": 1912
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/13175/pg13175.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/13175.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/13175.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/13175/pg13175.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 13599,
+      "title": "Ambrosius",
+      "authors": [
+        {
+          "name": "Molbech, Chr. K. F. (Christian Knud Frederik)",
+          "birth_year": 1821,
+          "death_year": 1888
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/13599/pg13599.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/13599.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/13599.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/13599/pg13599.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 24447,
+      "title": "En Nihilist",
+      "authors": [
+        {
+          "name": "Stepniak, S.",
+          "birth_year": 1851,
+          "death_year": 1895
+        },
+        {
+          "name": "Drachman, E.",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/24447/pg24447.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/24447.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/24447.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/24447/pg24447.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 24486,
+      "title": "Samlede Værker, Første Bind",
+      "authors": [
+        {
+          "name": "Aakjær, Jeppe",
+          "birth_year": 1866,
+          "death_year": 1930
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/24486/pg24486.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/24486.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/24486.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/24486/pg24486.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    }
+  ],
+  "hasMore": true
+}

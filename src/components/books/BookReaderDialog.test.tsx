@@ -3,14 +3,14 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import BookReaderDialog from '@/components/books/BookReaderDialog'
-import type { GutendexBook } from '@/lib/gutendex'
+import type { Book } from '@/lib/bookCatalog'
 
 vi.mock('@/integrations/turso/db', () => ({
   languagesDb: { list: vi.fn().mockResolvedValue([]) },
   vocabularyDb: { insert: vi.fn().mockResolvedValue(undefined) },
 }))
 
-const book: GutendexBook = {
+const book: Book = {
   id: 62215,
   title: 'Le Fantôme de l’Opéra',
   authors: [{ name: 'Leroux, Gaston', birth_year: 1868, death_year: 1927 }],
@@ -18,7 +18,6 @@ const book: GutendexBook = {
     'text/plain; charset=utf-8': 'https://www.gutenberg.org/cache/epub/62215/pg62215.txt',
   },
   languages: ['fr'],
-  download_count: 101041,
 }
 
 const SAMPLE_TEXT =
@@ -33,11 +32,15 @@ function stubFetch(value: unknown) {
   return fn
 }
 
-const renderDialog = (overrides: Partial<GutendexBook> = {}, onClose = vi.fn()) => {
+const renderDialog = (
+  overrides: Partial<Book> = {},
+  onClose = vi.fn(),
+  language = 'French'
+) => {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
-      <BookReaderDialog book={{ ...book, ...overrides }} onClose={onClose} />
+      <BookReaderDialog book={{ ...book, ...overrides }} language={language} onClose={onClose} />
     </QueryClientProvider>
   )
 }
@@ -108,6 +111,25 @@ describe('BookReaderDialog', () => {
 
     await waitFor(() =>
       expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('fantôme')
+    )
+  })
+
+  it('pre-fills the vocab form with the language of the book being read', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    renderDialog({}, vi.fn(), 'Spanish')
+
+    const paragraph = await screen.findByText('Le fantôme existait.')
+    window.getSelection = vi.fn().mockReturnValue({
+      isCollapsed: false,
+      anchorNode: paragraph,
+      toString: () => 'fantôme',
+      removeAllRanges: vi.fn(),
+    } as unknown as Selection)
+
+    fireEvent.mouseUp(paragraph)
+
+    await waitFor(() =>
+      expect(screen.getByRole('combobox')).toHaveTextContent('Spanish')
     )
   })
 

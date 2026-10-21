@@ -8,6 +8,7 @@
     "build": "vite build",
     "postbuild": "node scripts/copy-vercel.mjs",
     "build:dev": "vite build --mode development",
+    "books:catalog": "node scripts/build-book-catalog.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "package": "node scripts/package.mjs",

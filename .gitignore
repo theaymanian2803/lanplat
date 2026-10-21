@@ -42,3 +42,6 @@ playwright-report
 
 # Superpowers scratch (task briefs, reports, review packages, ledgers)
 .superpowers
+
+# Book catalogue download cache
+scripts/.cache

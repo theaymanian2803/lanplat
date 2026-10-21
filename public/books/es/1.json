@@ -1,0 +1,110 @@
+{
+  "books": [
+    {
+      "id": 320,
+      "title": "Vida De Lazarillo De Tormes Y De Sus Fortunas Y Adversidades",
+      "authors": [
+        {
+          "name": "Anonymous",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/320/pg320.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/320.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/320.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/320/pg320.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 1619,
+      "title": "La Celestina",
+      "authors": [
+        {
+          "name": "Rojas, Fernando de",
+          "birth_year": null,
+          "death_year": 1541
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/1619/pg1619.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/1619.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/1619.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/1619/pg1619.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 2000,
+      "title": "Don Quijote",
+      "authors": [
+        {
+          "name": "Cervantes Saavedra, Miguel de",
+          "birth_year": 1547,
+          "death_year": 1616
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/2000/pg2000.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/2000.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/2000.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/2000/pg2000.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 2367,
+      "title": "Los Bombardeos Atomicos de Hiroshima y Nagasaki",
+      "authors": [
+        {
+          "name": "United States. Army. Corps of Engineers. Manhattan District",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/2367/pg2367.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/2367.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/2367.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/2367/pg2367.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 5877,
+      "title": "Reina Valera New Testament of the Bible 1602, Book of Matthew",
+      "authors": [
+        {
+          "name": "Reina, Casiodoro de, 1520?-1594",
+          "birth_year": null,
+          "death_year": null
+        },
+        {
+          "name": "Valera, Cipriano de, 1532?-1625",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/5877/pg5877.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/5877.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/5877.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/5877/pg5877.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    }
+  ],
+  "hasMore": true
+}

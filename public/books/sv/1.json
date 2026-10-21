@@ -1,0 +1,99 @@
+{
+  "books": [
+    {
+      "id": 2100,
+      "title": "Bibeln, Gamla och Nya Testamentet",
+      "authors": [],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/2100/pg2100.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/2100.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/2100.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/2100/pg2100.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 9827,
+      "title": "De vandrande djäknarne",
+      "authors": [
+        {
+          "name": "Rydberg, Viktor",
+          "birth_year": 1828,
+          "death_year": 1895
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/9827/pg9827.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/9827.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/9827.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/9827/pg9827.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 9828,
+      "title": "Barnen ifrån Frostmofjället",
+      "authors": [
+        {
+          "name": "Fitinghoff, Laura",
+          "birth_year": 1848,
+          "death_year": 1908
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/9828/pg9828.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/9828.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/9828.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/9828/pg9828.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 9951,
+      "title": "Arbetets Herravälde",
+      "authors": [
+        {
+          "name": "Carnegie, Andrew",
+          "birth_year": 1835,
+          "death_year": 1919
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/9951/pg9951.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/9951.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/9951.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/9951/pg9951.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 10117,
+      "title": "Den siste Atenaren",
+      "authors": [
+        {
+          "name": "Rydberg, Viktor",
+          "birth_year": 1828,
+          "death_year": 1895
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/10117/pg10117.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/10117.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/10117.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/10117/pg10117.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    }
+  ],
+  "hasMore": true
+}

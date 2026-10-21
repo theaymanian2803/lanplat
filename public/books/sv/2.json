@@ -1,0 +1,105 @@
+{
+  "books": [
+    {
+      "id": 12119,
+      "title": "Krigskorrespondenter och andra lögnare",
+      "authors": [
+        {
+          "name": "Strömberg, Sigge",
+          "birth_year": 1885,
+          "death_year": 1920
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12119/pg12119.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12119.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12119.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12119/pg12119.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 12499,
+      "title": "Förbannelse över de otrogna!",
+      "authors": [
+        {
+          "name": "Heller, Frank",
+          "birth_year": 1886,
+          "death_year": 1947
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12499/pg12499.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12499.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12499.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12499/pg12499.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 12613,
+      "title": "Eros' begravning",
+      "authors": [
+        {
+          "name": "Bergman, Hjalmar",
+          "birth_year": 1883,
+          "death_year": 1931
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12613/pg12613.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12613.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12613.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12613/pg12613.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 13100,
+      "title": "Samlade arbeten I",
+      "authors": [
+        {
+          "name": "Runeberg, Johan Ludvig",
+          "birth_year": 1804,
+          "death_year": 1877
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/13100/pg13100.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/13100.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/13100.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/13100/pg13100.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 13101,
+      "title": "Samlade arbeten II",
+      "authors": [
+        {
+          "name": "Runeberg, Johan Ludvig",
+          "birth_year": 1804,
+          "death_year": 1877
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/13101/pg13101.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/13101.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/13101.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/13101/pg13101.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    }
+  ],
+  "hasMore": true
+}

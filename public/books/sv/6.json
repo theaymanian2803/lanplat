@@ -1,0 +1,110 @@
+{
+  "books": [
+    {
+      "id": 15959,
+      "title": "Dagdrömmar\nEn man utan humor I",
+      "authors": [
+        {
+          "name": "Hellström, Gustaf",
+          "birth_year": 1882,
+          "death_year": 1953
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/15959/pg15959.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/15959.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/15959.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/15959/pg15959.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 17015,
+      "title": "Mor i Sutre",
+      "authors": [
+        {
+          "name": "Bergman, Hjalmar",
+          "birth_year": 1883,
+          "death_year": 1931
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/17015/pg17015.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/17015.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/17015.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/17015/pg17015.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 17904,
+      "title": "Anna-Clara och Hennes Bröder\r\nEn Bok om Barn",
+      "authors": [
+        {
+          "name": "Zetterström, Hasse",
+          "birth_year": 1877,
+          "death_year": 1946
+        },
+        {
+          "name": "Schwab, Eigil",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/17904/pg17904.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/17904.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/17904.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/17904/pg17904.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 18017,
+      "title": "Om viljans frihet: Ett föredrag",
+      "authors": [
+        {
+          "name": "Schéele, Frans von",
+          "birth_year": 1853,
+          "death_year": 1931
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/18017/pg18017.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/18017.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/18017.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/18017/pg18017.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 18043,
+      "title": "Göteborgsflickor, och andra historier",
+      "authors": [
+        {
+          "name": "Strömberg, Sigge",
+          "birth_year": 1885,
+          "death_year": 1920
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/18043/pg18043.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/18043.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/18043.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/18043/pg18043.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    }
+  ],
+  "hasMore": true
+}

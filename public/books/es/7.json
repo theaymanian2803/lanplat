@@ -1,0 +1,105 @@
+{
+  "books": [
+    {
+      "id": 11669,
+      "title": "La Puerta de Bronce y Otros Cuentos",
+      "authors": [
+        {
+          "name": "Romero de Terreros, Manuel, marqués de San Francisco",
+          "birth_year": 1880,
+          "death_year": 1968
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/11669/pg11669.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/11669.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/11669.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/11669/pg11669.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 12274,
+      "title": "Viajes por Filipinas: De Manila á Marianas",
+      "authors": [
+        {
+          "name": "Alvarez Guerra, Juan",
+          "birth_year": 1843,
+          "death_year": 1905
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12274/pg12274.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12274.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12274.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12274/pg12274.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 12275,
+      "title": "Viajes por Filipinas: De Manila á Albay",
+      "authors": [
+        {
+          "name": "Alvarez Guerra, Juan",
+          "birth_year": 1843,
+          "death_year": 1905
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12275/pg12275.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12275.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12275.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12275/pg12275.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 12276,
+      "title": "Viajes por Filipinas: De Manila á Tayabas",
+      "authors": [
+        {
+          "name": "Alvarez Guerra, Juan",
+          "birth_year": 1843,
+          "death_year": 1905
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12276/pg12276.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12276.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12276.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12276/pg12276.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 12435,
+      "title": "Paginas Sudamericanas",
+      "authors": [
+        {
+          "name": "Phipps, Helen",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12435/pg12435.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12435.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12435.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12435/pg12435.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    }
+  ],
+  "hasMore": true
+}

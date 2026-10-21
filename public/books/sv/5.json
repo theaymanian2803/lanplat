@@ -1,0 +1,110 @@
+{
+  "books": [
+    {
+      "id": 15753,
+      "title": "Svensk diktning II\nSelections from Swedish Poets with Brief Monographies",
+      "authors": [
+        {
+          "name": "Mauritzson, Jules",
+          "birth_year": 1868,
+          "death_year": 1930
+        },
+        {
+          "name": "Olson, Ernst W. (Ernst Wilhelm)",
+          "birth_year": 1870,
+          "death_year": 1958
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/15753/pg15753.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/15753.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/15753.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/15753/pg15753.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 15761,
+      "title": "Om utvandringen, dess betydelse och orsaker\r\nFöredrag, hållet i Stockholm den 25 och den 28 November samt i Upsala den 3 December 1881",
+      "authors": [
+        {
+          "name": "Wicksell, Knut",
+          "birth_year": 1851,
+          "death_year": 1926
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/15761/pg15761.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/15761.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/15761.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/15761/pg15761.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 15783,
+      "title": "Utan anförare: Fem svenskors fjellvandring i Norge",
+      "authors": [
+        {
+          "name": "Wigström, Eva",
+          "birth_year": 1832,
+          "death_year": 1901
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/15783/pg15783.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/15783.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/15783.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/15783/pg15783.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 15786,
+      "title": "Himlauret eller det profetiska ordet\nHänvisningar. 3 öfversigtstabeller och 1 diagram",
+      "authors": [
+        {
+          "name": "Franson, Fredrik",
+          "birth_year": 1852,
+          "death_year": 1908
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/15786/pg15786.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/15786.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/15786.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/15786/pg15786.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 15821,
+      "title": "Elsa Finne I-II",
+      "authors": [
+        {
+          "name": "Lundegård, Axel",
+          "birth_year": 1861,
+          "death_year": 1930
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/15821/pg15821.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/15821.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/15821.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/15821/pg15821.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    }
+  ],
+  "hasMore": true
+}

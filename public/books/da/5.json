@@ -1,0 +1,125 @@
+{
+  "books": [
+    {
+      "id": 24747,
+      "title": "Samlede Værker, Andet Bind",
+      "authors": [
+        {
+          "name": "Aakjær, Jeppe",
+          "birth_year": 1866,
+          "death_year": 1930
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/24747/pg24747.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/24747.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/24747.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/24747/pg24747.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 29124,
+      "title": "The Gold Horns",
+      "authors": [
+        {
+          "name": "Oehlenschläger, Adam",
+          "birth_year": 1779,
+          "death_year": 1850
+        },
+        {
+          "name": "Gosse, Edmund",
+          "birth_year": 1849,
+          "death_year": 1928
+        },
+        {
+          "name": "Borrow, George",
+          "birth_year": 1803,
+          "death_year": 1881
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/29124/pg29124.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/29124.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/29124.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/29124/pg29124.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 29392,
+      "title": "Etienne Gerards Bedrifter",
+      "authors": [
+        {
+          "name": "Doyle, Arthur Conan",
+          "birth_year": 1859,
+          "death_year": 1930
+        },
+        {
+          "name": "Salskov, Knud",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/29392/pg29392.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/29392.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/29392.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/29392/pg29392.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 32366,
+      "title": "Et Aar",
+      "authors": [
+        {
+          "name": "Nielsen, Antonius",
+          "birth_year": 1894,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/32366/pg32366.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/32366.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/32366.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/32366/pg32366.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 32494,
+      "title": "Doktor Nikola",
+      "authors": [
+        {
+          "name": "Boothby, Guy",
+          "birth_year": 1867,
+          "death_year": 1905
+        },
+        {
+          "name": "Magnussen, Johs. (Johannes)",
+          "birth_year": 1848,
+          "death_year": 1906
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/32494/pg32494.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/32494.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/32494.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/32494/pg32494.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    }
+  ],
+  "hasMore": true
+}

@@ -1,0 +1,93 @@
+{
+  "books": [
+    {
+      "id": 2143,
+      "title": "Bibelen, Det nye Testamente",
+      "authors": [],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/2143/pg2143.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/2143.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/2143.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/2143/pg2143.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 2144,
+      "title": "Det Gamle Testamente af 1931",
+      "authors": [],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/2144/pg2144.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/2144.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/2144.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/2144/pg2144.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 9264,
+      "title": "Vand- og stenhoejsplanter en vejledning for havevenner",
+      "authors": [
+        {
+          "name": "Brandt, G. N. (Gudmund Nyeland)",
+          "birth_year": 1878,
+          "death_year": 1945
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/9264/pg9264.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/9264.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/9264.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/9264/pg9264.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 9843,
+      "title": "Fra det moderne Frankrig",
+      "authors": [
+        {
+          "name": "Kaufmann, Richard",
+          "birth_year": 1846,
+          "death_year": 1894
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/9843/pg9843.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/9843.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/9843.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/9843/pg9843.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 10218,
+      "title": "Stauder",
+      "authors": [
+        {
+          "name": "Brandt, G. N. (Gudmund Nyeland)",
+          "birth_year": 1878,
+          "death_year": 1945
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/10218/pg10218.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/10218.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/10218.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/10218/pg10218.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    }
+  ],
+  "hasMore": true
+}

@@ -1,0 +1,105 @@
+{
+  "books": [
+    {
+      "id": 13371,
+      "title": "Folkungaträdet",
+      "authors": [
+        {
+          "name": "Heidenstam, Verner von",
+          "birth_year": 1859,
+          "death_year": 1940
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/13371/pg13371.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/13371.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/13371.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/13371/pg13371.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 14050,
+      "title": "Daniel Hjort: Sorgespel i fem akter med fyra tablåer",
+      "authors": [
+        {
+          "name": "Wecksell, J. J. (Josef Julius)",
+          "birth_year": 1838,
+          "death_year": 1907
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/14050/pg14050.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/14050.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/14050.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/14050/pg14050.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 14073,
+      "title": "Berättelser från Finland",
+      "authors": [
+        {
+          "name": "Lange, Ina",
+          "birth_year": 1846,
+          "death_year": 1930
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/14073/pg14073.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/14073.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/14073.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/14073/pg14073.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 14144,
+      "title": "Carl Wilhelm Scheele ett minnesblad på hundrade årsdagen af hans död",
+      "authors": [
+        {
+          "name": "Cleve, P. T. (Per Teodor)",
+          "birth_year": 1840,
+          "death_year": 1905
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/14144/pg14144.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/14144.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/14144.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/14144/pg14144.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 14670,
+      "title": "Det går an",
+      "authors": [
+        {
+          "name": "Almqvist, C. J. L. (Carl Jonas Love)",
+          "birth_year": 1793,
+          "death_year": 1866
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/14670/pg14670.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/14670.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/14670.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/14670/pg14670.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    }
+  ],
+  "hasMore": true
+}

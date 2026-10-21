@@ -1,0 +1,105 @@
+{
+  "books": [
+    {
+      "id": 12167,
+      "title": "Enkens Søn",
+      "authors": [
+        {
+          "name": "Bang, Herman",
+          "birth_year": 1857,
+          "death_year": 1912
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12167/pg12167.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12167.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12167.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12167/pg12167.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 12168,
+      "title": "Min gamle Kammerat",
+      "authors": [
+        {
+          "name": "Bang, Herman",
+          "birth_year": 1857,
+          "death_year": 1912
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12168/pg12168.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12168.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12168.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12168/pg12168.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 12339,
+      "title": "Hendes Højhed",
+      "authors": [
+        {
+          "name": "Bang, Herman",
+          "birth_year": 1857,
+          "death_year": 1912
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12339/pg12339.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12339.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12339.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12339/pg12339.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 12698,
+      "title": "Stuk",
+      "authors": [
+        {
+          "name": "Bang, Herman",
+          "birth_year": 1857,
+          "death_year": 1912
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12698/pg12698.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12698.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12698.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12698/pg12698.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    },
+    {
+      "id": 12831,
+      "title": "Det hvide Hus",
+      "authors": [
+        {
+          "name": "Bang, Herman",
+          "birth_year": 1857,
+          "death_year": 1912
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/12831/pg12831.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/12831.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/12831.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/12831/pg12831.cover.medium.jpg"
+      },
+      "languages": [
+        "da"
+      ]
+    }
+  ],
+  "hasMore": true
+}

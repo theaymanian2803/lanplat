@@ -1,0 +1,110 @@
+{
+  "books": [
+    {
+      "id": 10825,
+      "title": "La Navidad en las Montañas",
+      "authors": [
+        {
+          "name": "Altamirano, Ignacio Manuel",
+          "birth_year": 1834,
+          "death_year": 1893
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/10825/pg10825.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/10825.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/10825.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/10825/pg10825.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 10909,
+      "title": "Los Amantes de Teruel\r\nDrama en cuatro actos en verso y prosa",
+      "authors": [
+        {
+          "name": "Hartzenbusch, Juan Eugenio",
+          "birth_year": 1806,
+          "death_year": 1880
+        },
+        {
+          "name": "Umphrey, G. W. (George Wallace)",
+          "birth_year": 1878,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/10909/pg10909.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/10909.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/10909.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/10909/pg10909.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 11070,
+      "title": "La Fontana de Oro",
+      "authors": [
+        {
+          "name": "Pérez Galdós, Benito",
+          "birth_year": 1843,
+          "death_year": 1920
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/11070/pg11070.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/11070.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/11070.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/11070/pg11070.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 11071,
+      "title": "Naufragios de Alvar Núñez Cabeza de Vaca",
+      "authors": [
+        {
+          "name": "Núñez Cabeza de Vaca, Alvar, active 16th century",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/11071/pg11071.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/11071.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/11071.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/11071/pg11071.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 11081,
+      "title": "Extracto de la gramatica mutsun",
+      "authors": [
+        {
+          "name": "Arroyo de la Cuesta, Felipe",
+          "birth_year": 1780,
+          "death_year": 1842
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/11081/pg11081.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/11081.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/11081.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/11081/pg11081.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    }
+  ],
+  "hasMore": true
+}

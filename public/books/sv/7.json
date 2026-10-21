@@ -1,0 +1,110 @@
+{
+  "books": [
+    {
+      "id": 18317,
+      "title": "David Ramms arv",
+      "authors": [
+        {
+          "name": "Andersson, Dan",
+          "birth_year": 1888,
+          "death_year": 1920
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/18317/pg18317.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/18317.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/18317.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/18317/pg18317.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 18447,
+      "title": "Bland ödebygder och skär: Berättelser från Finland",
+      "authors": [
+        {
+          "name": "Lange, Ina",
+          "birth_year": 1846,
+          "death_year": 1930
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/18447/pg18447.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/18447.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/18447.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/18447/pg18447.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 19128,
+      "title": "Ada",
+      "authors": [
+        {
+          "name": "Zetterström, Hasse",
+          "birth_year": 1877,
+          "death_year": 1946
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/19128/pg19128.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/19128.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/19128.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/19128/pg19128.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 20518,
+      "title": "Lifsbilder från finska hem 1\nBland fattigt folk",
+      "authors": [
+        {
+          "name": "Canth, Minna",
+          "birth_year": 1844,
+          "death_year": 1897
+        },
+        {
+          "name": "Hertzberg, Rafaël",
+          "birth_year": 1845,
+          "death_year": 1896
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/20518/pg20518.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/20518.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/20518.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/20518/pg20518.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    },
+    {
+      "id": 21862,
+      "title": "Förvillelser",
+      "authors": [
+        {
+          "name": "Söderberg, Hjalmar",
+          "birth_year": 1869,
+          "death_year": 1941
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/21862/pg21862.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/21862.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/21862.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/21862/pg21862.cover.medium.jpg"
+      },
+      "languages": [
+        "sv"
+      ]
+    }
+  ],
+  "hasMore": true
+}

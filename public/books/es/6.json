@@ -1,0 +1,110 @@
+{
+  "books": [
+    {
+      "id": 11302,
+      "title": "Diario de la navegacion empredida en 1781\r\nDesde el Rio Negro, para reconocer la Bahia de Todos los Santos, las Islas del Buen Suceso, y el desague del Rio Colorado",
+      "authors": [
+        {
+          "name": "Villarino, Basilio",
+          "birth_year": 1741,
+          "death_year": 1785
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/11302/pg11302.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/11302.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/11302.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/11302/pg11302.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 11529,
+      "title": "La Espuma\r\nObras completas de D. Armando Palacio Valdés, Tomo 7.",
+      "authors": [
+        {
+          "name": "Palacio Valdés, Armando",
+          "birth_year": 1853,
+          "death_year": 1938
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/11529/pg11529.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/11529.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/11529.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/11529/pg11529.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 11598,
+      "title": "La Montaña",
+      "authors": [
+        {
+          "name": "Reclus, Elisée",
+          "birth_year": 1830,
+          "death_year": 1905
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/11598/pg11598.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/11598.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/11598.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/11598/pg11598.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 11657,
+      "title": "La Niña de Luzmela",
+      "authors": [
+        {
+          "name": "Espina, Concha",
+          "birth_year": 1869,
+          "death_year": 1955
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/11657/pg11657.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/11657.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/11657.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/11657/pg11657.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    },
+    {
+      "id": 11663,
+      "title": "El Arroyo",
+      "authors": [
+        {
+          "name": "Reclus, Elisée",
+          "birth_year": 1830,
+          "death_year": 1905
+        },
+        {
+          "name": "López Rodrigo, A.‏",
+          "birth_year": null,
+          "death_year": null
+        }
+      ],
+      "formats": {
+        "text/plain; charset=utf-8": "https://www.gutenberg.org/cache/epub/11663/pg11663.txt",
+        "text/html": "https://www.gutenberg.org/ebooks/11663.html.images",
+        "application/epub+zip": "https://www.gutenberg.org/ebooks/11663.epub3.images",
+        "image/jpeg": "https://www.gutenberg.org/cache/epub/11663/pg11663.cover.medium.jpg"
+      },
+      "languages": [
+        "es"
+      ]
+    }
+  ],
+  "hasMore": true
+}

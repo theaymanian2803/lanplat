@@ -7,7 +7,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { DEFAULT_ACCESS_CODE, isCustomAccessCode, resetAccessCode, setAccessCode } from '@/lib/accessCode'
+import { isCustomAccessCode, resetAccessCode, setAccessCode } from '@/lib/accessCode'
 import {
   Dialog,
   DialogContent,
@@ -100,7 +100,7 @@ export const TursoSettingsDialog = ({ open, onOpenChange }: TursoSettingsDialogP
     setNewCode('')
     setCodeError('')
     setHasCustomCode(false)
-    toast.success(`Access code reset to ${DEFAULT_ACCESS_CODE}.`)
+    toast.success('Access code reset to the default.')
   }
 
   const usingCustom = isUsingCustomConfig()
@@ -233,8 +233,7 @@ export const TursoSettingsDialog = ({ open, onOpenChange }: TursoSettingsDialogP
           {usingCustom ? (
             <>
               <p className="text-xs text-muted-foreground">
-                The code required to open this app. Default: {DEFAULT_ACCESS_CODE}. Changing it
-                applies after you sign out.
+                The code required to open this app. Changing it applies after you sign out.
               </p>
               <div className="space-y-2">
                 <Label htmlFor="access-code" className="font-mono text-xs">

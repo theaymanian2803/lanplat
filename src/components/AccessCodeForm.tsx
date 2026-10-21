@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { unlock } from '@/lib/access'
-import { DEFAULT_ACCESS_CODE, getAccessCode, isCustomAccessCode } from '@/lib/accessCode'
+import { getAccessCode } from '@/lib/accessCode'
 
 interface AccessCodeFormProps {
   /** Called after the flag is written, so the caller can render the page. */
@@ -55,11 +55,6 @@ export const AccessCodeForm = ({ onUnlock }: AccessCodeFormProps) => {
               }}
               className={error ? 'border-destructive focus-visible:ring-destructive/30' : ''}
             />
-            <p className="text-xs text-muted-foreground font-mono">
-              {isCustomAccessCode()
-                ? 'Access code set by the owner'
-                : `Demo access code: ${DEFAULT_ACCESS_CODE}`}
-            </p>
             {error && (
               <p className="text-xs text-destructive font-mono">Incorrect code, try again.</p>
             )}

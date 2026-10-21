@@ -52,6 +52,14 @@ describe('App routing', () => {
     expect(await screen.findByPlaceholderText('Access code')).toBeInTheDocument()
   })
 
+  it('never reveals the default access code on the gate', async () => {
+    renderAt('/vocab')
+
+    await screen.findByPlaceholderText('Access code')
+    expect(screen.queryByText(/123123123/)).toBeNull()
+    expect(screen.queryByText(/Demo access code/i)).toBeNull()
+  })
+
   it('asks for the code on every gated route', async () => {
     for (const path of ['/dashboard', '/quiz', '/lessons', '/languages', '/video/abc']) {
       const view = renderAt(path)

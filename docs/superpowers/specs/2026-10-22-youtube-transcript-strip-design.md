@@ -50,7 +50,11 @@ Success (`200`):
 Failures return `{ "error": string, "reason": "invalid-id" | "no-captions" | "upstream" }`
 with `400`, `404` or `502`.
 
-### Fetch chain (`api/_transcript.ts`)
+### Fetch chain (`api/transcript.ts`)
+
+The handler and its helpers live in one self-contained file: Vercel ignores `_`-prefixed
+files in `api/` and recommends keeping shared code outside that directory, so there is no
+sibling module to import.
 
 1. Validate the video id (`^[A-Za-z0-9_-]{11}$`).
 2. POST `youtubei/v1/player` with the ANDROID client context to read
@@ -86,7 +90,8 @@ cached. A stale cache version is discarded by the existing `CACHE_VERSION` mecha
 - Header: captions icon, `Transcript` label, track `Select` when more than one track exists,
   an `auto` badge for generated captions, a `Jump to current` chip when the user has scrolled
   away, and a `...` popover containing the existing `VideoControls` (speed + A-B loop).
-- Body: `~148px` scroll container of cue buttons. Each row shows a mono timestamp and the text.
+- Body: `~148px` scroll container of cue rows. Rows are focusable `div`s (`role="button"`,
+  `tabIndex=0`) so their text stays selectable; each shows a mono timestamp and the text.
   The active row uses a primary left border plus `bg-primary/10`.
 - The component owns a 250 ms interval reading `playerRef.getCurrentTime()` and re-renders only
   itself. StudyRoom does not tick.
@@ -94,9 +99,10 @@ cached. A stale cache version is discarded by the existing `CACHE_VERSION` mecha
   `Jump to current` is pressed.
 - Clicking a row calls `onSeekPause(cue.start)` and freezes that row. Keyboard Enter/Space does
   the same. The freeze clears when the vocabulary form closes.
-- Drag selection is read from `selectionchange`; touch double-tap uses `getWordRangeAtPoint`.
-  Both pause via `onPause`, freeze the containing cue, and show the same floating "Add word"
-  button used elsewhere. The context is `cueContext(cue)`.
+- Drag selection is read from `selectionchange` with a 300 ms settle; touch double-tap uses
+  `getWordRangeAtPoint`. Both pause via `onPause`, freeze the containing cue, clear the
+  selection and call `onWord` directly, so the vocabulary form opens without an intermediate
+  button. The context is `cueContext(cue)`.
 - States: three skeleton lines while loading; `No captions for this video.` for an empty
   result; the error message plus a Retry button for a failed fetch.
 

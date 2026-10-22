@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { memo, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -16,9 +16,33 @@ import {
   Library,
   LogOut,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   Settings2,
   Zap,
 } from "lucide-react";
+
+const SIDEBAR_COLLAPSED_KEY = "lingovault_sidebar_collapsed";
+
+const readSidebarCollapsed = () => {
+  try {
+    return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
+const persistSidebarCollapsed = (collapsed: boolean) => {
+  try {
+    if (collapsed) {
+      window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, "1");
+    } else {
+      window.localStorage.removeItem(SIDEBAR_COLLAPSED_KEY);
+    }
+  } catch {
+    // Storage can be unavailable; the in-memory preference still applies.
+  }
+};
 
 interface NavbarProps {
   onOpenSettings: () => void;
@@ -67,6 +91,15 @@ const groups: { label: string; items: NavItem[] }[] = [
 const Navbar = ({ onOpenSettings, onSignOut, lessonsOpen, onToggleLessons }: NavbarProps) => {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(readSidebarCollapsed);
+
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed((previous) => {
+      const next = !previous;
+      persistSidebarCollapsed(next);
+      return next;
+    });
+  }, []);
 
   const isActive = (item: NavItem) => {
     if (item.to.includes("#")) return false;
@@ -193,12 +226,39 @@ const Navbar = ({ onOpenSettings, onSignOut, lessonsOpen, onToggleLessons }: Nav
         </div>
       </header>
 
-      <aside className="sticky top-0 hidden h-screen w-[224px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-6 md:flex">
-        <div className="px-2.5">{wordmark}</div>
-        <div className="mt-7 flex-1 overflow-y-auto">
-          {groupsMarkup()}
+      <aside
+        className={`sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar py-6 transition-[width] duration-200 ease-linear md:flex ${
+          collapsed ? "w-12 px-1.5" : "w-[224px] px-3"
+        }`}
+      >
+        <div
+          className={
+            collapsed
+              ? "flex justify-center"
+              : "flex items-start justify-between gap-2 px-2.5"
+          }
+        >
+          {collapsed ? null : wordmark}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-expanded={!collapsed}
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="h-8 w-8 shrink-0 text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground"
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="h-4 w-4" strokeWidth={1.6} />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" strokeWidth={1.6} />
+            )}
+          </Button>
         </div>
-        {footer()}
+        {collapsed ? null : (
+          <div className="mt-7 flex-1 overflow-y-auto">{groupsMarkup()}</div>
+        )}
+        {collapsed ? null : footer()}
       </aside>
 
       <Sheet open={menuOpen} onOpenChange={setMenuOpen}>

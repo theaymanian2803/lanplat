@@ -2,6 +2,7 @@ import AddWordPanel from '@/components/AddWordPanel'
 import AddLessonContentPanel from '@/components/AddLessonContentPanel'
 import Layout from '@/components/Layout'
 import NoteEditor from '@/components/NoteEditor'
+import TranscriptStrip from '@/components/TranscriptStrip'
 import VideoControls from '@/components/VideoControls'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -41,6 +42,9 @@ const StudyRoom = () => {
 
   const [addWordOpen, setAddWordOpen] = useState(false)
   const [addWordSession, setAddWordSession] = useState(0)
+  const [pendingWord, setPendingWord] = useState('')
+  const [pendingContext, setPendingContext] = useState('')
+  const wasPlayingRef = useRef(false)
   const [addLessonOpen, setAddLessonOpen] = useState(false)
   const [panelSide, setPanelSide] = useState<'left' | 'right'>(() => {
     const saved = localStorage.getItem('studyroom-panel-side')
@@ -90,7 +94,6 @@ const StudyRoom = () => {
     left: number
     rect?: { top: number; left: number; width: number; height: number }
   } | null>(null)
-  const [pendingWord, setPendingWord] = useState('')
   const lastTapRef = useRef<TextTap | null>(null)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
 
@@ -335,13 +338,54 @@ const StudyRoom = () => {
     setAddLessonOpen(false)
   }, [getCurrentPlayerTime, isText])
 
-  const openAddWordPanel = useCallback((word?: string) => {
+  const openAddWordPanel = useCallback((word?: string, context?: string) => {
     setPendingWord(word ?? '')
+    setPendingContext(context ?? '')
     setAddWordSession((s) => s + 1)
     setAddWordOpen(true)
     setNoteOpen(false)
     setAddLessonOpen(false)
   }, [])
+
+  // Any capture flow that opens the vocab form pauses playback. The ref remembers whether
+  // the video was actually running so saving can resume it and closing cannot.
+  const pauseForCapture = useCallback(() => {
+    const state = playerRef.current?.getPlayerState?.()
+    if (state === 1) wasPlayingRef.current = true
+    playerRef.current?.pauseVideo?.()
+  }, [])
+
+  const pauseAtForCapture = useCallback((seconds: number) => {
+    const state = playerRef.current?.getPlayerState?.()
+    if (state === 1) wasPlayingRef.current = true
+    playerRef.current?.pauseVideo?.()
+    playerRef.current?.seekTo?.(seconds, true)
+  }, [])
+
+  const closeAddWordPanel = useCallback(() => {
+    setAddWordOpen(false)
+    wasPlayingRef.current = false
+  }, [])
+
+  const handleWordSaved = useCallback(() => {
+    setAddWordOpen(false)
+    setTextSelection(null)
+    if (wasPlayingRef.current) {
+      wasPlayingRef.current = false
+      playerRef.current?.playVideo?.()
+    }
+  }, [])
+
+  const captureWordFromTranscript = useCallback(
+    (word: string, context: string) => {
+      openAddWordPanel(word, context)
+    },
+    [openAddWordPanel],
+  )
+
+  useEffect(() => {
+    if (isPlaying) wasPlayingRef.current = false
+  }, [isPlaying])
 
   const addWordFromSelection = useCallback(() => {
     if (!textSelection) return
@@ -622,9 +666,11 @@ const StudyRoom = () => {
             <AddWordPanel
               key={addWordSession}
               defaultLanguage={video.language}
-              onClose={() => setAddWordOpen(false)}
+              onClose={closeAddWordPanel}
+              onSaved={handleWordSaved}
               position={panelSide}
               initialWord={pendingWord}
+              initialContext={pendingContext}
             />
           )}
           {panelSide === 'left' && addLessonOpen && (
@@ -853,18 +899,29 @@ const StudyRoom = () => {
             </div>
           )}
 
-          {/* Video Controls Bar */}
-          {!isText && (
-            <VideoControls
+          {/* Transcript strip (speed and A-B live in its options popover) */}
+          {!isText && videoId && (
+            <TranscriptStrip
+              videoId={videoId}
+              language={video.language}
               playerRef={playerRef}
-              loopA={loopA}
-              loopB={loopB}
-              onSetA={() => setLoopA(getCurrentPlayerTime())}
-              onSetB={() => setLoopB(getCurrentPlayerTime())}
-              onClearLoop={() => {
-                setLoopA(null)
-                setLoopB(null)
-              }}
+              captureOpen={addWordOpen}
+              onPause={pauseForCapture}
+              onSeekPause={pauseAtForCapture}
+              onWord={captureWordFromTranscript}
+              controls={
+                <VideoControls
+                  playerRef={playerRef}
+                  loopA={loopA}
+                  loopB={loopB}
+                  onSetA={() => setLoopA(getCurrentPlayerTime())}
+                  onSetB={() => setLoopB(getCurrentPlayerTime())}
+                  onClearLoop={() => {
+                    setLoopA(null)
+                    setLoopB(null)
+                  }}
+                />
+              }
             />
           )}
 
@@ -921,9 +978,11 @@ const StudyRoom = () => {
           <AddWordPanel
             key={addWordSession}
             defaultLanguage={video.language}
-            onClose={() => setAddWordOpen(false)}
+            onClose={closeAddWordPanel}
+            onSaved={handleWordSaved}
             position={panelSide}
             initialWord={pendingWord}
+            initialContext={pendingContext}
           />
         )}
         {panelSide === 'right' && addLessonOpen && (

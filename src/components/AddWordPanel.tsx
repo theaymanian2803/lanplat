@@ -22,6 +22,8 @@ interface AddWordPanelProps {
   onClose: () => void
   position?: PanelPosition
   initialWord?: string
+  initialContext?: string
+  onSaved?: () => void
   /** Tailwind width class for the panel on large screens. */
   widthClassName?: string
 }
@@ -31,6 +33,8 @@ const AddWordPanel = ({
   onClose,
   position = 'left',
   initialWord,
+  initialContext,
+  onSaved,
   widthClassName = 'lg:w-80',
 }: AddWordPanelProps) => {
   const queryClient = useQueryClient()
@@ -38,7 +42,7 @@ const AddWordPanel = ({
   const savingRef = useRef(false)
   const [word, setWord] = useState((initialWord ?? '').toLowerCase())
   const [translation, setTranslation] = useState('')
-  const [contextNote, setContextNote] = useState('')
+  const [contextNote, setContextNote] = useState(initialContext ?? '')
   const [wordLang, setWordLang] = useState(defaultLanguage)
 
   const { translating, markUserEdit, error } = useAutoTranslate(word, wordLang, translation, setTranslation)
@@ -55,8 +59,8 @@ const AddWordPanel = ({
   useEffect(() => {
     setWord((initialWord ?? '').toLowerCase())
     setTranslation('')
-    setContextNote('')
-  }, [initialWord])
+    setContextNote(initialContext ?? '')
+  }, [initialWord, initialContext])
 
   const addWord = useMutation({
     mutationFn: async () => {
@@ -73,6 +77,7 @@ const AddWordPanel = ({
       setTranslation('')
       setContextNote('')
       toast.success('Word saved to Vocab Bank!')
+      onSaved?.()
     },
     onError: (e) => toast.error(e instanceof Error ? e.message : 'Could not save word'),
     onSettled: () => {

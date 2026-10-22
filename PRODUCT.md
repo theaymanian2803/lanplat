@@ -30,7 +30,7 @@ The shared-context loop: a saved word can originate from a timestamped video mom
 
 Confirmed:
 
-- Study Room: YouTube playback, A–B loop, speed/caption controls, drawing overlay, timestamped notes and screenshots.
+- Study Room: YouTube playback, A–B loop, speed controls, a synced caption strip whose lines pause the video and feed selected words to the vocab form, drawing overlay, timestamped notes and screenshots.
 - Vocab Bank: per-language words with translation and optional context note; search/filter; export.
 - Flashcard Quiz: spaced-repetition review.
 - Translate: live translation across English, Danish, Spanish, Japanese, French, Swedish; one-click handoff to the vocab form.

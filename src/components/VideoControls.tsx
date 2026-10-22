@@ -1,12 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Gauge, Repeat, X } from "lucide-react";
 import { formatTimestamp } from "@/lib/youtube";
+import type { YouTubePlayer } from "@/lib/youtubePlayer";
 
 interface VideoControlsProps {
-  playerRef: React.MutableRefObject<any>;
+  playerRef: React.MutableRefObject<YouTubePlayer | null>;
   loopA: number | null;
   loopB: number | null;
   onSetA: () => void;
@@ -17,7 +16,10 @@ interface VideoControlsProps {
 const SPEEDS = [0.5, 0.75, 1, 1.25] as const;
 
 const VideoControls = ({ playerRef, loopA, loopB, onSetA, onSetB, onClearLoop }: VideoControlsProps) => {
-  const [speed, setSpeed] = useState(1);
+  const [speed, setSpeed] = useState(() => {
+    const rate = playerRef.current?.getPlaybackRate?.();
+    return typeof rate === "number" && rate > 0 ? rate : 1;
+  });
 
   const changeSpeed = (s: number) => {
     setSpeed(s);
@@ -25,26 +27,27 @@ const VideoControls = ({ playerRef, loopA, loopB, onSetA, onSetB, onClearLoop }:
   };
 
   return (
-    <div className="flex items-center gap-2 flex-wrap">
-      {/* Speed */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-1.5 font-mono text-xs">
-            <Gauge className="h-3.5 w-3.5" />
-            {speed}x
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          {SPEEDS.map((s) => (
-            <DropdownMenuItem key={s} onClick={() => changeSpeed(s)} className="font-mono text-xs">
-              {s}x {s === speed && "✓"}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+    <div className="space-y-3">
+      <div className="flex items-center gap-1.5">
+        <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="mono-label mr-1 text-muted-foreground">Speed</span>
+        {SPEEDS.map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => changeSpeed(s)}
+            className={`h-7 rounded-sm border px-2 font-mono text-[11px] transition-colors ${
+              speed === s
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            {s}x
+          </button>
+        ))}
+      </div>
 
-      {/* A-B Loop */}
-      <div className="flex items-center gap-1.5 border border-border/50 rounded-md px-2 py-1">
+      <div className="flex items-center gap-1.5 rounded-md border border-border/50 px-2 py-1">
         <Repeat className="h-3.5 w-3.5 text-muted-foreground" />
         <Button
           variant={loopA !== null ? "secondary" : "ghost"}

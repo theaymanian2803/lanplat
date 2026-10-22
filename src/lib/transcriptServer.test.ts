@@ -6,8 +6,8 @@ import {
   parseXmlCues,
   pickTrack,
   summarizeTracks,
-} from './_transcript'
-import functionModule from './transcript'
+} from '../../api/transcript'
+import functionModule from '../../api/transcript'
 
 const handler = functionModule.fetch
 

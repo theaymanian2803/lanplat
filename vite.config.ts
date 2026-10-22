@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
-import { fetchTranscript } from "./api/_transcript";
+import { fetchTranscript } from "./api/transcript";
 
 // Vite does not run Vercel functions, so the transcript endpoint is served from the
 // same shared implementation through a dev-only middleware.

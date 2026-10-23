@@ -74,6 +74,60 @@ npm run build
 node C:\Users\PC\Desktop\workflow\deploy.mjs C:\Users\PC\Desktop\lingo
 ```
 
+## Transcript captions (YouTube block)
+
+YouTube rejects caption requests from Vercel's serverless IPs with
+"Sign in to confirm you're not a bot". The same code works under `npm run dev`
+because it runs from your home connection. Production therefore needs an egress
+YouTube trusts. Set **one** of these in Vercel → Settings → Environment Variables
+(Production + Preview):
+
+1. **Hosted API (no machine required)** — sign up at https://supadata.ai and
+   create an API key. The free plan includes 100 transcript requests/month with
+   no card:
+
+   ```
+   SUPADATA_API_KEY=your_key_here
+   ```
+
+   The function tries Supadata before calling YouTube directly.
+
+2. **Proxy** — route the request through a residential HTTP(S) proxy:
+
+   ```
+   TRANSCRIPT_PROXY_URL=http://user:password@proxy-host:port
+   ```
+
+3. **Relay** — only if you keep a machine on and expose it with a tunnel
+   (Cloudflare Tunnel, ngrok, etc.):
+
+   ```
+   npm run transcript:relay
+   ```
+
+   Then set `TRANSCRIPT_RELAY_URL=https://your-tunnel.example.com/transcript`.
+   Optionally set `TRANSCRIPT_RELAY_TOKEN` on the relay machine and append
+   `?token=<same-value>` to the URL.
+
+The relay contract is `GET /transcript?videoId=<id>&lang=<code>` returning the
+same JSON payload as `/api/transcript`. Without one of these, the endpoint
+returns `503` with `reason: "blocked"` and the caption strip explains that the
+server is blocked (instead of the misleading "No captions").
+
+### Verify the Supadata key
+
+1. Locally: add `SUPADATA_API_KEY` to `.env`, then run:
+
+   ```
+   npm run transcript:check
+   ```
+
+   A working key prints `OK Ma8STQg_9Sg (fr-FR): 598 cues`.
+
+2. Production: after redeploying, open
+   `https://languageplatform.unccode.site/api/transcript?videoId=Ma8STQg_9Sg&lang=fr`.
+   A working setup returns `200` with a `cues` array.
+
 ## Gotchas
 
 - **`vercel link` overwrites `.env.local`** — Turso credentials live in `.env`

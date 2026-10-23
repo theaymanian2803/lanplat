@@ -9,6 +9,8 @@
     "postbuild": "node scripts/copy-vercel.mjs",
     "build:dev": "vite build --mode development",
     "books:catalog": "node scripts/build-book-catalog.mjs",
+    "transcript:relay": "node --experimental-strip-types scripts/transcript-relay.mjs",
+    "transcript:check": "node --env-file=.env --experimental-strip-types scripts/check-supadata.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "package": "node scripts/package.mjs",
@@ -67,6 +69,7 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
+    "undici": "^7.30.1",
     "vaul": "^0.9.9",
     "zod": "^3.25.76"
   },

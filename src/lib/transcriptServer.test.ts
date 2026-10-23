@@ -24,6 +24,7 @@ const json = (body: unknown, status = 200) =>
 
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.unstubAllEnvs()
 })
 
 describe('parseJson3', () => {
@@ -188,6 +189,126 @@ describe('transcript function', () => {
         if (url.includes('youtube.com/watch')) return new Response('<html></html>')
         return new Response('', { status: 404 })
       })
+    )
+
+    const res = await call('?videoId=abcdefghijk&lang=da')
+    expect(res.status).toBe(404)
+    await expect(res.json()).resolves.toEqual({
+      error: 'No captions for this video',
+      reason: 'no-captions',
+    })
+  })
+
+  it('returns a blocked reason when YouTube refuses the server IP', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input)
+        if (url.includes('youtubei/v1/player')) {
+          return json({
+            playabilityStatus: {
+              status: 'LOGIN_REQUIRED',
+              reason: "Sign in to confirm you're not a bot",
+            },
+          })
+        }
+        if (url.includes('youtube.com/watch')) return new Response('<html></html>')
+        return new Response('', { status: 404 })
+      })
+    )
+
+    const res = await call('?videoId=abcdefghijk&lang=da')
+    expect(res.status).toBe(503)
+    await expect(res.json()).resolves.toMatchObject({
+      reason: 'blocked',
+    })
+  })
+
+  it('uses the configured relay instead of contacting YouTube', async () => {
+    vi.stubEnv('TRANSCRIPT_RELAY_URL', 'https://relay.example.test/transcript')
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input))
+      expect(url.origin).toBe('https://relay.example.test')
+      expect(url.searchParams.get('videoId')).toBe('abcdefghijk')
+      expect(url.searchParams.get('lang')).toBe('da')
+      return json({
+        videoId: 'abcdefghijk',
+        languageCode: 'da',
+        isGenerated: false,
+        tracks: [{ code: 'da', name: 'Danish', generated: false }],
+        cues: [{ start: 0, dur: 1.5, text: 'hej verden' }],
+      })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await call('?videoId=abcdefghijk&lang=da')
+    expect(res.status).toBe(200)
+    await expect(res.json()).resolves.toMatchObject({
+      videoId: 'abcdefghijk',
+      cues: [{ start: 0, dur: 1.5, text: 'hej verden' }],
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('passes relay failures through without calling YouTube', async () => {
+    vi.stubEnv('TRANSCRIPT_RELAY_URL', 'https://relay.example.test/transcript')
+    const fetchMock = vi.fn(async () =>
+      json({ error: 'No captions for this video', reason: 'no-captions' }, 404)
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await call('?videoId=abcdefghijk&lang=da')
+    expect(res.status).toBe(404)
+    await expect(res.json()).resolves.toEqual({
+      error: 'No captions for this video',
+      reason: 'no-captions',
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('uses Supadata when configured', async () => {
+    vi.stubEnv('SUPADATA_API_KEY', 'test-key')
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = new URL(String(input))
+      expect(url.origin).toBe('https://api.supadata.ai')
+      expect(url.pathname).toBe('/v1/youtube/transcript')
+      expect(url.searchParams.get('videoId')).toBe('abcdefghijk')
+      expect(url.searchParams.get('lang')).toBe('da')
+      expect(init?.headers).toMatchObject({ 'x-api-key': 'test-key' })
+      return json({
+        content: [
+          { text: 'hej verden', offset: 0, duration: 1500 },
+          { text: 'igen', offset: 2000, duration: 500 },
+        ],
+        lang: 'da',
+        availableLangs: ['da', 'en'],
+      })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await call('?videoId=abcdefghijk&lang=da')
+    expect(res.status).toBe(200)
+    await expect(res.json()).resolves.toMatchObject({
+      languageCode: 'da',
+      cues: [
+        { start: 0, dur: 1.5, text: 'hej verden' },
+        { start: 2, dur: 0.5, text: 'igen' },
+      ],
+      tracks: [
+        { code: 'da', name: 'da', generated: false },
+        { code: 'en', name: 'en', generated: false },
+      ],
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('treats a Supadata transcript-unavailable response as no captions', async () => {
+    vi.stubEnv('SUPADATA_API_KEY', 'test-key')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        json({ error: 'transcript-unavailable', message: 'No transcript available' }, 206)
+      )
     )
 
     const res = await call('?videoId=abcdefghijk&lang=da')

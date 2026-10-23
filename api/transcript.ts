@@ -1,3 +1,5 @@
+import { ProxyAgent } from 'undici'
+
 export interface TranscriptCue {
   start: number
   dur: number
@@ -25,7 +27,7 @@ interface RawTrack {
   name?: string
 }
 
-export type TranscriptFailureReason = 'invalid-id' | 'no-captions' | 'upstream'
+export type TranscriptFailureReason = 'invalid-id' | 'no-captions' | 'upstream' | 'blocked'
 
 export type TranscriptResult =
   | { ok: true; data: TranscriptPayload }
@@ -38,18 +40,196 @@ const BROWSER_UA =
 const ANDROID_UA = 'com.google.android.youtube/20.10.38 (Linux; U; Android 11) gzip'
 const ANDROID_VERSION = '20.10.38'
 const REQUEST_TIMEOUT_MS = 12000
+const RELAY_TIMEOUT_MS = 25000
+const SUPADATA_URL = 'https://api.supadata.ai/v1/youtube/transcript'
+const SUPADATA_TIMEOUT_MS = 20000
 
 export function isVideoId(id: string): boolean {
   return /^[A-Za-z0-9_-]{11}$/.test(id)
 }
 
-async function request(url: string, init: RequestInit): Promise<Response> {
+let proxyDispatcher: ProxyAgent | null = null
+let proxyKey = ''
+
+function getProxyDispatcher(): ProxyAgent | null {
+  const proxyUrl = (process.env.TRANSCRIPT_PROXY_URL ?? '').trim()
+  if (!proxyUrl) return null
+  if (!proxyDispatcher || proxyKey !== proxyUrl) {
+    proxyDispatcher = new ProxyAgent(proxyUrl)
+    proxyKey = proxyUrl
+  }
+  return proxyDispatcher
+}
+
+async function request(
+  url: string,
+  init: RequestInit,
+  useProxy = true,
+  timeoutMs = REQUEST_TIMEOUT_MS
+): Promise<Response> {
+  const dispatcher = useProxy ? getProxyDispatcher() : null
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    return await fetch(url, { ...init, signal: controller.signal })
+    const options = dispatcher
+      ? ({ ...init, signal: controller.signal, dispatcher } as RequestInit)
+      : { ...init, signal: controller.signal }
+    return await fetch(url, options)
   } finally {
     clearTimeout(timer)
+  }
+}
+
+async function fetchFromRelay(
+  videoId: string,
+  lang: string
+): Promise<TranscriptResult | null> {
+  const relay = (process.env.TRANSCRIPT_RELAY_URL ?? '').trim()
+  if (!relay) return null
+
+  let endpoint: string
+  try {
+    const url = new URL(relay)
+    url.searchParams.set('videoId', videoId)
+    url.searchParams.set('lang', lang)
+    endpoint = url.toString()
+  } catch {
+    return {
+      ok: false,
+      status: 500,
+      error: 'Transcript relay is misconfigured',
+      reason: 'upstream',
+    }
+  }
+
+  try {
+    const res = await request(
+      endpoint,
+      { headers: { Accept: 'application/json' } },
+      false,
+      RELAY_TIMEOUT_MS
+    )
+    const body = (await res.json().catch(() => null)) as
+      | (TranscriptPayload & { error?: unknown; reason?: unknown })
+      | null
+
+    if (!res.ok) {
+      const reason = body?.reason
+      return {
+        ok: false,
+        status: res.status >= 400 && res.status < 600 ? res.status : 502,
+        error: typeof body?.error === 'string' ? body.error : 'Transcript relay failed',
+        reason:
+          reason === 'invalid-id' || reason === 'no-captions' || reason === 'blocked'
+            ? reason
+            : 'upstream',
+      }
+    }
+
+    if (!body || !Array.isArray(body.cues) || body.cues.length === 0) {
+      return { ok: false, status: 404, error: 'No captions for this video', reason: 'no-captions' }
+    }
+
+    if (!Array.isArray(body.tracks)) body.tracks = []
+
+    return { ok: true, data: body }
+  } catch {
+    return { ok: false, status: 502, error: 'Transcript relay is not reachable', reason: 'upstream' }
+  }
+}
+
+function toSeconds(value: unknown): number {
+  const number = Number(value)
+  return Number.isFinite(number) ? number / 1000 : 0
+}
+
+async function fetchFromSupadata(
+  videoId: string,
+  lang: string
+): Promise<TranscriptResult | null> {
+  const key = (process.env.SUPADATA_API_KEY ?? '').trim()
+  if (!key) return null
+
+  const params = new URLSearchParams({ videoId, lang })
+  try {
+    const res = await request(
+      `${SUPADATA_URL}?${params.toString()}`,
+      { headers: { 'x-api-key': key, Accept: 'application/json' } },
+      false,
+      SUPADATA_TIMEOUT_MS
+    )
+    const body = (await res.json().catch(() => null)) as
+      | {
+          content?: unknown
+          lang?: unknown
+          availableLangs?: unknown
+          error?: unknown
+          message?: unknown
+        }
+      | null
+
+    if (!res.ok) {
+      const code = typeof body?.error === 'string' ? body.error : ''
+      if (
+        res.status === 206 ||
+        code === 'transcript-unavailable' ||
+        code === 'not-found' ||
+        res.status === 404
+      ) {
+        return { ok: false, status: 404, error: 'No captions for this video', reason: 'no-captions' }
+      }
+      if (
+        code === 'unauthorized' ||
+        code === 'forbidden' ||
+        res.status === 401 ||
+        res.status === 403
+      ) {
+        return { ok: false, status: 502, error: 'Supadata API key was rejected', reason: 'upstream' }
+      }
+      if (code === 'limit-exceeded' || res.status === 429) {
+        return { ok: false, status: 503, error: 'Supadata rate limit reached', reason: 'upstream' }
+      }
+      return {
+        ok: false,
+        status: res.status >= 400 && res.status < 600 ? res.status : 502,
+        error: typeof body?.message === 'string' ? body.message : 'Supadata request failed',
+        reason: 'upstream',
+      }
+    }
+
+    const chunks = Array.isArray(body?.content) ? body.content : []
+    const cues: TranscriptCue[] = []
+    for (const item of chunks) {
+      if (!item || typeof item !== 'object') continue
+      const chunk = item as { text?: unknown; offset?: unknown; duration?: unknown }
+      const text = typeof chunk.text === 'string' ? chunk.text.replace(/\s+/g, ' ').trim() : ''
+      if (!text) continue
+      cues.push({ start: toSeconds(chunk.offset), dur: toSeconds(chunk.duration), text })
+    }
+
+    if (!cues.length) {
+      return { ok: false, status: 404, error: 'No captions for this video', reason: 'no-captions' }
+    }
+
+    const languageCode = typeof body?.lang === 'string' ? body.lang : lang
+    const available = Array.isArray(body?.availableLangs)
+      ? body.availableLangs.filter(
+          (code): code is string => typeof code === 'string' && code.trim() !== ''
+        )
+      : []
+    const codes = Array.from(new Set([...available, languageCode]))
+    const tracks: TranscriptTrack[] = codes.map((code) => ({
+      code,
+      name: code,
+      generated: false,
+    }))
+
+    return {
+      ok: true,
+      data: { videoId, languageCode, isGenerated: false, tracks, cues },
+    }
+  } catch {
+    return { ok: false, status: 502, error: 'Supadata is not reachable', reason: 'upstream' }
   }
 }
 
@@ -133,7 +313,25 @@ export function extractCaptionTracksFromHtml(html: string): RawTrack[] {
   }
 }
 
-async function loadTracks(videoId: string): Promise<RawTrack[]> {
+interface TrackLoad {
+  tracks: RawTrack[]
+  blocked: boolean
+}
+
+function isBotBlocked(status: { status?: unknown; reason?: unknown } | undefined): boolean {
+  if (!status) return false
+  const state = typeof status.status === 'string' ? status.status : ''
+  const reason = typeof status.reason === 'string' ? status.reason : ''
+  return state === 'LOGIN_REQUIRED' && /not a bot/i.test(reason)
+}
+
+function looksBlockedPage(html: string): boolean {
+  return /sign in to confirm (?:that )?you(?:'|’)re not a bot/i.test(html)
+}
+
+async function loadTracks(videoId: string): Promise<TrackLoad> {
+  let blocked = false
+
   try {
     const res = await request(PLAYER_URL, {
       method: 'POST',
@@ -163,9 +361,13 @@ async function loadTracks(videoId: string): Promise<RawTrack[]> {
         captions?: {
           playerCaptionsTracklistRenderer?: { captionTracks?: unknown }
         }
+        playabilityStatus?: { status?: unknown; reason?: unknown }
       }
       const tracks = normalizeTracks(data?.captions?.playerCaptionsTracklistRenderer?.captionTracks)
-      if (tracks.length) return tracks
+      if (tracks.length) return { tracks, blocked: false }
+      if (isBotBlocked(data?.playabilityStatus)) blocked = true
+    } else if (res.status === 403 || res.status === 429) {
+      blocked = true
     }
   } catch {
     // Fall through to the watch-page scrape.
@@ -175,11 +377,19 @@ async function loadTracks(videoId: string): Promise<RawTrack[]> {
     const res = await request(`${WATCH_URL}?v=${encodeURIComponent(videoId)}&hl=en`, {
       headers: { 'User-Agent': BROWSER_UA, 'Accept-Language': 'en-US,en;q=0.9' },
     })
-    if (!res.ok) return []
-    return extractCaptionTracksFromHtml(await res.text())
+    if (res.ok) {
+      const html = await res.text()
+      const tracks = extractCaptionTracksFromHtml(html)
+      if (tracks.length) return { tracks, blocked: false }
+      if (looksBlockedPage(html)) blocked = true
+    } else if (res.status === 403 || res.status === 429) {
+      blocked = true
+    }
   } catch {
-    return []
+    // No tracks and no further source.
   }
+
+  return { tracks: [], blocked }
 }
 
 export function pickTrack(tracks: RawTrack[], lang: string): RawTrack | null {
@@ -325,8 +535,23 @@ export async function fetchTranscript(videoId: string, lang: string): Promise<Tr
     return { ok: false, status: 400, error: 'Invalid video id', reason: 'invalid-id' }
   }
 
-  const tracks = await loadTracks(videoId)
+  const relay = await fetchFromRelay(videoId, lang)
+  if (relay) return relay
+
+  const supadata = await fetchFromSupadata(videoId, lang)
+  if (supadata) return supadata
+
+  const { tracks, blocked } = await loadTracks(videoId)
   if (!tracks.length) {
+    if (blocked) {
+      return {
+        ok: false,
+        status: 503,
+        error:
+          'YouTube is blocking caption requests from this server. Set TRANSCRIPT_RELAY_URL or TRANSCRIPT_PROXY_URL.',
+        reason: 'blocked',
+      }
+    }
     return { ok: false, status: 404, error: 'No captions for this video', reason: 'no-captions' }
   }
 

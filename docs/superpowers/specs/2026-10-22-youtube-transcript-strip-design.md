@@ -29,6 +29,12 @@ pattern for this in `api/book-text.ts`.
    an inline message with Retry; the rest of the Study Room is unaffected.
 6. Text-mode items, books, notes, screenshots and the width controls are unchanged.
 
+> **Production note (2026-10-23):** YouTube blocks caption requests from Vercel's
+> datacenter IPs ("Sign in to confirm you're not a bot"). The function prefers
+> `TRANSCRIPT_RELAY_URL`, then `SUPADATA_API_KEY`, and can route YouTube through
+> `TRANSCRIPT_PROXY_URL`; without any of these it reports `reason: "blocked"`
+> instead of pretending the video has no captions. See `DEPLOYMENT.md`.
+
 ## 1. Caption pipeline
 
 ### Endpoint

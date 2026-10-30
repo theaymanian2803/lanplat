@@ -32,16 +32,35 @@ function stubFetch(value: unknown) {
   return fn
 }
 
-const stubSelection = (node: Node, text: string) => {
+const stubRect = (el: Element, overrides: Partial<DOMRect>) =>
+  vi.spyOn(el, 'getBoundingClientRect').mockReturnValue({
+    top: 0,
+    left: 0,
+    bottom: 0,
+    right: 0,
+    width: 0,
+    height: 0,
+    x: 0,
+    y: 0,
+    toJSON: () => ({}),
+    ...overrides,
+  } as DOMRect)
+
+const stubSelection = (
+  node: Node,
+  text: string,
+  rect = { top: 120, bottom: 140, left: 20, width: 90, height: 20 },
+  readerRect = { top: 100, bottom: 700, left: 0, right: 800, width: 800, height: 600 }
+) => {
+  const reader = (node as HTMLElement).closest('.reader-scroll')
+  if (reader) stubRect(reader, readerRect)
   const removeAllRanges = vi.fn()
   window.getSelection = vi.fn().mockReturnValue({
     isCollapsed: false,
     anchorNode: node,
     focusNode: node,
     toString: () => text,
-    getRangeAt: () => ({
-      getBoundingClientRect: () => ({ top: 120, bottom: 140, left: 20, width: 90, height: 20 }),
-    }),
+    getRangeAt: () => ({ getBoundingClientRect: () => rect }),
     removeAllRanges,
   } as unknown as Selection)
   return removeAllRanges
@@ -115,7 +134,7 @@ describe('BookReaderDialog', () => {
     renderDialog()
 
     const paragraph = await screen.findByText('Le fantôme existait.')
-    stubSelection(paragraph, 'fantôme')
+    const removeAllRanges = stubSelection(paragraph, 'fantôme')
     fireEvent.mouseUp(paragraph)
 
     const pill = await screen.findByRole('button', { name: 'Add to vocab' })
@@ -125,6 +144,7 @@ describe('BookReaderDialog', () => {
     await waitFor(() =>
       expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('fantôme')
     )
+    expect(removeAllRanges).toHaveBeenCalled()
   })
 
   it('captures a whole phrase, not a single word', async () => {
@@ -217,6 +237,79 @@ describe('BookReaderDialog', () => {
     await waitFor(() =>
       expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('fantôme existait')
     )
+  })
+
+  it('captures the phrase from a touch release on the pill', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    renderDialog()
+
+    const paragraph = await screen.findByText('Le fantôme existait.')
+    stubSelection(paragraph, 'fantôme')
+    fireEvent.mouseUp(paragraph)
+
+    const pill = await screen.findByRole('button', { name: 'Add to vocab' })
+    fireEvent.touchEnd(pill)
+
+    await waitFor(() =>
+      expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('fantôme')
+    )
+  })
+
+  it('places the pill in the dialog space and inside the visible reader band', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    renderDialog()
+
+    const paragraph = await screen.findByText('Le fantôme existait.')
+    stubRect(screen.getByRole('dialog'), {
+      top: 100,
+      left: 50,
+      bottom: 700,
+      right: 850,
+      width: 800,
+      height: 600,
+    })
+    stubSelection(
+      paragraph,
+      'fantôme',
+      { top: 300, bottom: 320, left: 200, width: 90, height: 20 },
+      { top: 150, left: 60, bottom: 550, right: 760, width: 700, height: 400 }
+    )
+    fireEvent.mouseUp(paragraph)
+
+    const pill = await screen.findByRole('button', { name: 'Add to vocab' })
+    expect(pill).toHaveStyle({ top: '154px', left: '131px' })
+  })
+
+  it('hides the pill when the selected text has scrolled out of the reader', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    renderDialog()
+
+    const paragraph = await screen.findByText('Le fantôme existait.')
+    stubSelection(paragraph, 'fantôme', {
+      top: 800,
+      bottom: 820,
+      left: 20,
+      width: 90,
+      height: 20,
+    })
+    fireEvent.mouseUp(paragraph)
+
+    expect(screen.queryByRole('button', { name: 'Add to vocab' })).toBeNull()
+  })
+
+  it('hides the pill when the page changes', async () => {
+    stubFetch({ ok: true, text: async () => MULTI_CHAPTER_TEXT })
+    renderDialog()
+
+    const paragraph = await screen.findByText('Le fantôme existait.')
+    stubSelection(paragraph, 'fantôme')
+    fireEvent.mouseUp(paragraph)
+    await screen.findByRole('button', { name: 'Add to vocab' })
+
+    fireEvent.click(screen.getByRole('button', { name: /Next/ }))
+
+    expect(await screen.findByText('On ne le croyait pas.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add to vocab' })).toBeNull()
   })
 
   it('paginates chapters with prev and next navigation', async () => {

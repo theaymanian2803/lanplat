@@ -224,11 +224,22 @@ describe('Books', () => {
     renderPage()
     await screen.findByText('Livre 1')
 
-    fireEvent.change(screen.getByLabelText('Search books'), { target: { value: 'candide' } })
+    const search = screen.getByLabelText('Search books')
+    fireEvent.change(search, { target: { value: 'candide' } })
+
+    // The first search render must not claim there are no matches while the shelf loads.
+    expect(screen.queryByText(/No books match/)).toBeNull()
+    expect(screen.getByText('Searching the shelf…')).toBeInTheDocument()
 
     expect(await screen.findByText('Candide, ou l’optimisme')).toBeInTheDocument()
     expect(screen.queryByText('Livre 1')).toBeNull()
+    expect(screen.getByText('1 match for “candide”')).toBeInTheDocument()
     expect(fn.mock.calls.some(([url]) => url === '/books/fr/2.json')).toBe(true)
+
+    // A second keystroke reuses the cached shelf rather than walking the catalogue again.
+    fireEvent.change(search, { target: { value: 'voltaire' } })
+    expect(await screen.findByText('Candide, ou l’optimisme')).toBeInTheDocument()
+    expect(fn.mock.calls.filter(([url]) => url === '/books/fr/1.json')).toHaveLength(2)
   })
 
   it('matches without accents, curly apostrophes, or surname order', async () => {
@@ -308,6 +319,7 @@ describe('Books', () => {
     fireEvent.change(screen.getByLabelText('Search books'), { target: { value: 'candide' } })
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Could not search the shelf.')
+    expect(screen.queryByText(/0 matches/)).toBeNull()
 
     const fn = stubFetch([...twoPageShelf()])
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }))

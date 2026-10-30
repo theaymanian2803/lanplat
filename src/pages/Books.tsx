@@ -131,7 +131,11 @@ const Books = () => {
   const {
     data: shelf = [],
     isLoading: shelfLoading,
-    isError: shelfIsError,
+    isFetching: shelfFetching,
+    isSuccess: shelfSuccess,
+    isPaused: shelfPaused,
+    isLoadingError: shelfLoadError,
+    isRefetchError: shelfRefetchError,
     refetch: refetchShelf,
   } = useQuery({
     queryKey: ['books', language.code, 'all'],
@@ -142,6 +146,16 @@ const Books = () => {
 
   const books = data?.pages.flatMap((page) => page.books) ?? []
   const results = searching ? searchBooks(shelf, trimmedQuery) : books
+
+  // A search is only "finished" when the shelf query succeeded. While it is loading,
+  // paused offline, or failed without data, the count line must not claim zero matches.
+  const searchPending =
+    searching && !shelfSuccess && !shelfLoadError && (shelfLoading || shelfPaused || shelfFetching)
+  const searchCount = searchPending
+    ? 'Searching the shelf…'
+    : shelfLoadError
+      ? 'Could not search the shelf.'
+      : `${results.length} ${results.length === 1 ? 'match' : 'matches'} for “${trimmedQuery}”`
 
   const errorMessage =
     error instanceof Error ? error.message : 'Could not load books right now.'
@@ -195,17 +209,13 @@ const Books = () => {
         </div>
 
         <p className="mono-label mt-4 text-muted-foreground" aria-live="polite">
-          {searching
-            ? shelfLoading
-              ? 'Searching the shelf…'
-              : `${results.length} ${results.length === 1 ? 'match' : 'matches'} for “${trimmedQuery}”`
-            : `${books.length} loaded · five at a time`}
+          {searching ? searchCount : `${books.length} loaded · five at a time`}
         </p>
 
         {searching ? (
-          shelfLoading ? (
+          searchPending ? (
             <ShelfSkeleton />
-          ) : shelfIsError ? (
+          ) : shelfLoadError ? (
             <Card className="mt-8 p-6 text-center">
               <p className="text-sm text-destructive" role="alert">
                 Could not search the shelf.
@@ -219,7 +229,19 @@ const Books = () => {
               <p className="text-sm text-muted-foreground">No books match “{trimmedQuery}”.</p>
             </Card>
           ) : (
-            <BookGrid books={results} onRead={setReaderBook} />
+            <>
+              {shelfRefetchError ? (
+                <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/50 bg-card px-4 py-3">
+                  <p className="text-xs text-muted-foreground" role="alert">
+                    Could not refresh the shelf.
+                  </p>
+                  <Button variant="outline" size="sm" onClick={() => refetchShelf()}>
+                    Retry
+                  </Button>
+                </div>
+              ) : null}
+              <BookGrid books={results} onRead={setReaderBook} />
+            </>
           )
         ) : isLoading ? (
           <ShelfSkeleton />

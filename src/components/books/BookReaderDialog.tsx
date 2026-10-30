@@ -22,6 +22,10 @@ interface BookReaderDialogProps {
 
 type Status = 'loading' | 'ready' | 'error' | 'none'
 
+/** Match `getFloatingButtonPosition`'s defaults so clamping uses the same box as placement. */
+const PILL_WIDTH = 128
+const PILL_HEIGHT = 36
+
 const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) => {
   const [status, setStatus] = useState<Status>('loading')
   const [body, setBody] = useState('')
@@ -39,6 +43,7 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
   const scrollRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const selectionBtnRef = useRef<HTMLButtonElement>(null)
+  const vocabPanelRef = useRef<HTMLDivElement>(null)
 
   const textUrl = getDownloadLinks(book).text
 
@@ -126,12 +131,40 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
       setTextSelection(null)
       return
     }
-    const { top, left } = getFloatingButtonPosition(rect, window.innerWidth)
+    // Keep the pill tied to text the reader can actually see. A selection scrolled
+    // out of the reader, or a range that only touches the padding, gets no pill.
+    const containerRect = container.getBoundingClientRect()
+    const visibleTop = Math.max(rect.top, containerRect.top)
+    const visibleBottom = Math.min(rect.bottom, containerRect.bottom)
+    const visibleLeft = Math.max(rect.left, containerRect.left)
+    const visibleRight = Math.min(rect.right, containerRect.right)
+    if (visibleBottom <= visibleTop || visibleRight <= visibleLeft) {
+      setTextSelection(null)
+      return
+    }
+
+    const { top, left } = getFloatingButtonPosition(
+      {
+        top: visibleTop,
+        bottom: visibleBottom,
+        left: visibleLeft,
+        width: visibleRight - visibleLeft,
+      },
+      window.innerWidth,
+    )
     const contentRect = contentRef.current?.getBoundingClientRect()
+    const offsetTop = contentRect?.top ?? 0
+    const offsetLeft = contentRect?.left ?? 0
+    // Absolute offsets inside DialogContent share the dialog's transformed space, so
+    // the pill also has to stay inside the reader's visible band, not the viewport.
+    const minTop = containerRect.top - offsetTop
+    const maxTop = Math.max(minTop, containerRect.bottom - offsetTop - PILL_HEIGHT)
+    const minLeft = containerRect.left - offsetLeft
+    const maxLeft = Math.max(minLeft, containerRect.right - offsetLeft - PILL_WIDTH)
     const next = {
       text,
-      top: Math.max(8, top - (contentRect?.top ?? 0)),
-      left: Math.max(8, left - (contentRect?.left ?? 0)),
+      top: Math.min(Math.max(top - offsetTop, minTop), maxTop),
+      left: Math.min(Math.max(left - offsetLeft, minLeft), maxLeft),
     }
     setTextSelection((prev) =>
       prev && prev.text === next.text && prev.top === next.top && prev.left === next.left
@@ -174,6 +207,15 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
     return () => document.removeEventListener('pointerdown', dismiss)
   }, [])
 
+  // The pill unmounts on capture, so move the learner's focus into the form they just opened.
+  useEffect(() => {
+    if (!vocabOpen) return
+    const timer = window.setTimeout(() => {
+      vocabPanelRef.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus()
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [vocabOpen, vocabSession])
+
   const authors = book.authors.map((a) => displayAuthorName(a.name)).join(', ')
 
   return (
@@ -182,6 +224,9 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
         ref={contentRef}
         showCloseButton={false}
         className="flex h-[85vh] max-w-6xl flex-col gap-0 p-0">
+        <div role="status" aria-live="polite" className="sr-only">
+          {textSelection ? 'Phrase selected. Press Add to vocab to save it.' : ''}
+        </div>
         {textSelection ? (
           <button
             ref={selectionBtnRef}
@@ -296,7 +341,9 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
             </div>
 
             {vocabOpen ? (
-              <div className="shrink-0 border-t border-border/40 p-4 lg:w-[26rem] lg:border-l lg:border-t-0">
+              <div
+                ref={vocabPanelRef}
+                className="shrink-0 border-t border-border/40 p-4 lg:w-[26rem] lg:border-l lg:border-t-0">
                 <AddWordPanel
                   key={vocabSession}
                   defaultLanguage={language}

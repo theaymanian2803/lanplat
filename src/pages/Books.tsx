@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { useInfiniteQuery } from '@tanstack/react-query'
-import { BookOpen, ExternalLink, Loader2 } from 'lucide-react'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { BookOpen, ExternalLink, Loader2, Search, X } from 'lucide-react'
 
 import BookReaderDialog from '@/components/books/BookReaderDialog'
 import Layout from '@/components/Layout'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -16,9 +17,11 @@ import {
 import {
   BOOK_LANGUAGES,
   displayAuthorName,
+  fetchAllBooks,
   fetchBookPage,
   getCoverUrl,
   getDownloadLinks,
+  searchBooks,
   type Book,
 } from '@/lib/bookCatalog'
 
@@ -78,11 +81,36 @@ const BookCard = ({ book, onRead }: { book: Book; onRead: (book: Book) => void }
   )
 }
 
+const BookGrid = ({ books, onRead }: { books: Book[]; onRead: (book: Book) => void }) => (
+  <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+    {books.map((book) => (
+      <BookCard key={book.id} book={book} onRead={onRead} />
+    ))}
+  </div>
+)
+
+const ShelfSkeleton = () => (
+  <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
+    {Array.from({ length: 5 }).map((_, i) => (
+      <div key={i} className="overflow-hidden rounded-lg border border-border/50 bg-card">
+        <div className="aspect-[3/4] animate-pulse bg-muted" />
+        <div className="space-y-1.5 p-2">
+          <div className="h-2.5 w-4/5 animate-pulse rounded bg-muted" />
+          <div className="h-2 w-2/3 animate-pulse rounded bg-muted" />
+        </div>
+      </div>
+    ))}
+  </div>
+)
+
 const Books = () => {
   const [languageName, setLanguageName] = useState(BOOK_LANGUAGES[0].name)
   const [readerBook, setReaderBook] = useState<Book | null>(null)
+  const [query, setQuery] = useState('')
 
   const language = BOOK_LANGUAGES.find((item) => item.name === languageName) ?? BOOK_LANGUAGES[0]
+  const trimmedQuery = query.trim()
+  const searching = trimmedQuery.length > 0
 
   const {
     data,
@@ -100,7 +128,20 @@ const Books = () => {
     getNextPageParam: (lastPage, allPages) => (lastPage.hasMore ? allPages.length + 1 : undefined),
   })
 
+  const {
+    data: shelf = [],
+    isLoading: shelfLoading,
+    isError: shelfIsError,
+    refetch: refetchShelf,
+  } = useQuery({
+    queryKey: ['books', language.code, 'all'],
+    queryFn: () => fetchAllBooks(language.code),
+    enabled: searching,
+    staleTime: 5 * 60 * 1000,
+  })
+
   const books = data?.pages.flatMap((page) => page.books) ?? []
+  const results = searching ? searchBooks(shelf, trimmedQuery) : books
 
   const errorMessage =
     error instanceof Error ? error.message : 'Could not load books right now.'
@@ -112,11 +153,31 @@ const Books = () => {
           <div>
             <h1 className="text-[30px] font-extrabold leading-tight tracking-[-0.035em]">Books</h1>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-              Public-domain literature from Project Gutenberg. Select a word while you read and it
-              lands in the vault with the book's language.
+              Public-domain literature from Project Gutenberg. Select a phrase while you read and
+              it lands in the vault with the book's language.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative w-full sm:w-64">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                aria-label="Search books"
+                placeholder="Search title or author…"
+                className="h-10 pl-9 pr-9"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+              {query ? (
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+                  onClick={() => setQuery('')}>
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              ) : null}
+            </div>
             <span className="mono-label text-muted-foreground">Shelf</span>
             <Select value={languageName} onValueChange={setLanguageName}>
               <SelectTrigger aria-label="Book language" className="w-40">
@@ -133,22 +194,35 @@ const Books = () => {
           </div>
         </div>
 
-        <p className="mono-label mt-4 text-muted-foreground">
-          {books.length} loaded · five at a time
+        <p className="mono-label mt-4 text-muted-foreground" aria-live="polite">
+          {searching
+            ? shelfLoading
+              ? 'Searching the shelf…'
+              : `${results.length} ${results.length === 1 ? 'match' : 'matches'} for “${trimmedQuery}”`
+            : `${books.length} loaded · five at a time`}
         </p>
 
-        {isLoading ? (
-          <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="overflow-hidden rounded-lg border border-border/50 bg-card">
-                <div className="aspect-[3/4] animate-pulse bg-muted" />
-                <div className="space-y-1.5 p-2">
-                  <div className="h-2.5 w-4/5 animate-pulse rounded bg-muted" />
-                  <div className="h-2 w-2/3 animate-pulse rounded bg-muted" />
-                </div>
-              </div>
-            ))}
-          </div>
+        {searching ? (
+          shelfLoading ? (
+            <ShelfSkeleton />
+          ) : shelfIsError ? (
+            <Card className="mt-8 p-6 text-center">
+              <p className="text-sm text-destructive" role="alert">
+                Could not search the shelf.
+              </p>
+              <Button variant="outline" size="sm" className="mt-3" onClick={() => refetchShelf()}>
+                Retry
+              </Button>
+            </Card>
+          ) : results.length === 0 ? (
+            <Card className="mt-8 p-6 text-center">
+              <p className="text-sm text-muted-foreground">No books match “{trimmedQuery}”.</p>
+            </Card>
+          ) : (
+            <BookGrid books={results} onRead={setReaderBook} />
+          )
+        ) : isLoading ? (
+          <ShelfSkeleton />
         ) : isError ? (
           <Card className="mt-8 p-6 text-center">
             <p className="text-sm text-destructive" role="alert">
@@ -166,11 +240,7 @@ const Books = () => {
           </Card>
         ) : (
           <>
-            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-              {books.map((book) => (
-                <BookCard key={book.id} book={book} onRead={setReaderBook} />
-              ))}
-            </div>
+            <BookGrid books={books} onRead={setReaderBook} />
             {hasNextPage ? (
               <div className="mt-8 flex justify-center">
                 <Button

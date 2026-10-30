@@ -65,6 +65,22 @@ const pickLanguage = async (name: string) => {
   fireEvent.click(await screen.findByRole('option', { name }))
 }
 
+const twoPageShelf = (): Stub[] => [
+  ['/books/fr/1.json', jsonResponse({ books: five('Livre'), hasMore: true })],
+  [
+    '/books/fr/2.json',
+    jsonResponse({
+      books: [
+        book(6, 'Candide, ou l’optimisme', {
+          authors: [{ name: 'Voltaire', birth_year: 1694, death_year: 1778 }],
+        }),
+        book(7, 'Le Fantôme de l’Opéra'),
+      ],
+      hasMore: false,
+    }),
+  ],
+]
+
 describe('Books', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -201,5 +217,102 @@ describe('Books', () => {
       'src',
       'https://www.gutenberg.org/cache/epub/1/pg1.cover.medium.jpg'
     )
+  })
+
+  it('finds a book that has not been loaded yet as the user types', async () => {
+    const fn = stubFetch([...twoPageShelf()])
+    renderPage()
+    await screen.findByText('Livre 1')
+
+    fireEvent.change(screen.getByLabelText('Search books'), { target: { value: 'candide' } })
+
+    expect(await screen.findByText('Candide, ou l’optimisme')).toBeInTheDocument()
+    expect(screen.queryByText('Livre 1')).toBeNull()
+    expect(fn.mock.calls.some(([url]) => url === '/books/fr/2.json')).toBe(true)
+  })
+
+  it('matches without accents, curly apostrophes, or surname order', async () => {
+    stubFetch([...twoPageShelf()])
+    renderPage()
+    await screen.findByText('Livre 1')
+    const search = screen.getByLabelText('Search books')
+
+    fireEvent.change(search, { target: { value: 'fantome' } })
+    expect(await screen.findByText('Le Fantôme de l’Opéra')).toBeInTheDocument()
+
+    fireEvent.change(search, { target: { value: "l'opera" } })
+    expect(await screen.findByText('Le Fantôme de l’Opéra')).toBeInTheDocument()
+
+    fireEvent.change(search, { target: { value: 'gaston' } })
+    expect(await screen.findByText('Le Fantôme de l’Opéra')).toBeInTheDocument()
+    expect(screen.queryByText('Candide, ou l’optimisme')).toBeNull()
+  })
+
+  it('shows an empty result message and hides Load more while searching', async () => {
+    stubFetch([...twoPageShelf()])
+    renderPage()
+    await screen.findByText('Livre 1')
+
+    fireEvent.change(screen.getByLabelText('Search books'), { target: { value: 'zzz' } })
+
+    expect(await screen.findByText('No books match “zzz”.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Load more books' })).toBeNull()
+  })
+
+  it('restores the shelf when the search is cleared', async () => {
+    stubFetch([...twoPageShelf()])
+    renderPage()
+    await screen.findByText('Livre 1')
+
+    fireEvent.change(screen.getByLabelText('Search books'), { target: { value: 'candide' } })
+    await screen.findByText('Candide, ou l’optimisme')
+    fireEvent.click(screen.getByRole('button', { name: 'Clear search' }))
+
+    expect(await screen.findByText('Livre 1')).toBeInTheDocument()
+    expect(screen.queryByText('Candide, ou l’optimisme')).toBeNull()
+  })
+
+  it('keeps the query when the language changes', async () => {
+    stubFetch([
+      ...twoPageShelf(),
+      ['/books/es/1.json', jsonResponse({ books: five('Libro'), hasMore: true })],
+      [
+        '/books/es/2.json',
+        jsonResponse({ books: [book(9, 'Candide en español')], hasMore: false }),
+      ],
+    ])
+    renderPage()
+    await screen.findByText('Livre 1')
+
+    fireEvent.change(screen.getByLabelText('Search books'), { target: { value: 'candide' } })
+    await screen.findByText('Candide, ou l’optimisme')
+    await pickLanguage('Spanish')
+
+    expect(await screen.findByText('Candide en español')).toBeInTheDocument()
+    expect(screen.queryByText('Candide, ou l’optimisme')).toBeNull()
+    expect(screen.queryByText('Livre 1')).toBeNull()
+  })
+
+  it('shows a retry when the shelf search fails and recovers on retry', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(async (url: string) => {
+        if (url === '/books/fr/1.json') return jsonResponse({ books: five('Livre'), hasMore: true })
+        if (url === '/books/fr/2.json') throw new Error('network down')
+        return { ok: false, status: 404, json: async () => ({}), text: async () => '' }
+      })
+    )
+    renderPage()
+    await screen.findByText('Livre 1')
+
+    fireEvent.change(screen.getByLabelText('Search books'), { target: { value: 'candide' } })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not search the shelf.')
+
+    const fn = stubFetch([...twoPageShelf()])
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }))
+
+    expect(await screen.findByText('Candide, ou l’optimisme')).toBeInTheDocument()
+    expect(fn).toHaveBeenCalled()
   })
 })

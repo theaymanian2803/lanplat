@@ -4,9 +4,12 @@ import {
   BOOKS_PAGE_SIZE,
   BOOK_LANGUAGES,
   displayAuthorName,
+  fetchAllBooks,
   fetchBookPage,
   getCoverUrl,
   getDownloadLinks,
+  normalizeForSearch,
+  searchBooks,
   type Book,
 } from '@/lib/bookCatalog'
 
@@ -122,5 +125,67 @@ describe('displayAuthorName', () => {
 
   it('leaves single-part names alone', () => {
     expect(displayAuthorName('Voltaire')).toBe('Voltaire')
+  })
+})
+
+describe('fetchAllBooks', () => {
+  it('walks pages until hasMore is false', async () => {
+    const fn = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ books: [book({ id: 1 })], hasMore: true }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ books: [book({ id: 2 })], hasMore: false }),
+      })
+    vi.stubGlobal('fetch', fn)
+
+    const all = await fetchAllBooks('fr')
+
+    expect(all.map((b) => b.id)).toEqual([1, 2])
+    expect(fn.mock.calls.map(([url]) => url)).toEqual(['/books/fr/1.json', '/books/fr/2.json'])
+  })
+
+  it('stops after the first page when hasMore is false', async () => {
+    const fn = stubFetch({ books: [book()], hasMore: false })
+
+    const all = await fetchAllBooks('es')
+
+    expect(all).toHaveLength(1)
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('normalizeForSearch', () => {
+  it('lowercases and strips accents', () => {
+    expect(normalizeForSearch('Le Fantôme de l’Opéra')).toBe("le fantome de l'opera")
+  })
+})
+
+describe('searchBooks', () => {
+  const shelf = [
+    book({ id: 1, title: 'Le Fantôme de l’Opéra' }),
+    book({
+      id: 2,
+      title: 'Candide, ou l’optimisme',
+      authors: [{ name: 'Voltaire', birth_year: 1694, death_year: 1778 }],
+    }),
+  ]
+
+  it('matches titles without accents or curly apostrophes', () => {
+    expect(searchBooks(shelf, 'fantome').map((b) => b.id)).toEqual([1])
+    expect(searchBooks(shelf, "l'opera").map((b) => b.id)).toEqual([1])
+  })
+
+  it('matches author names in either order', () => {
+    expect(searchBooks(shelf, 'leroux').map((b) => b.id)).toEqual([1])
+    expect(searchBooks(shelf, 'gaston').map((b) => b.id)).toEqual([1])
+  })
+
+  it('returns the whole shelf for a blank query and nothing for a miss', () => {
+    expect(searchBooks(shelf, '   ')).toEqual(shelf)
+    expect(searchBooks(shelf, 'zzz')).toEqual([])
   })
 })

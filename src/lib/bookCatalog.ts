@@ -74,3 +74,40 @@ export function displayAuthorName(name: string): string {
   if (rest.length === 0) return last
   return `${rest.join(' ')} ${last}`
 }
+
+/** A safety stop if a built page ever claims more pages indefinitely. */
+const MAX_CATALOG_PAGES = 100
+
+/** Walks every static catalogue page for one language. Used when searching the whole shelf. */
+export async function fetchAllBooks(code: string): Promise<Book[]> {
+  const books: Book[] = []
+  for (let page = 1; page <= MAX_CATALOG_PAGES; page += 1) {
+    const result = await fetchBookPage(code, page)
+    books.push(...result.books)
+    if (!result.hasMore) break
+  }
+  return books
+}
+
+/** Case- and accent-insensitive text for shelf matching; curly quotes become straight. */
+export function normalizeForSearch(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u2019\u2018\u0060\u00b4]/g, "'")
+    .toLowerCase()
+}
+
+/** Filters a shelf by title or author. A blank query returns the shelf unchanged. */
+export function searchBooks(books: Book[], query: string): Book[] {
+  const needle = normalizeForSearch(query.trim())
+  if (!needle) return books
+  return books.filter((book) => {
+    if (normalizeForSearch(book.title).includes(needle)) return true
+    return book.authors.some(
+      (author) =>
+        normalizeForSearch(displayAuthorName(author.name)).includes(needle) ||
+        normalizeForSearch(author.name).includes(needle),
+    )
+  })
+}

@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import type { ContentBlock, ContentBlockType, TableData } from '@/integrations/turso/types'
+import { newId } from '@/lib/utils'
 
 export const TEXT_COLORS = [
   { label: 'Default', value: 'inherit' },
@@ -48,7 +49,7 @@ export function createBlock(
   text: string,
   color = 'inherit',
 ): ContentBlock {
-  return { id: crypto.randomUUID(), type, text, color }
+  return { id: newId(), type, text, color }
 }
 
 export function serializeBlocks(blocks: ContentBlock[]): string {
@@ -57,7 +58,7 @@ export function serializeBlocks(blocks: ContentBlock[]): string {
 
 export function createTableBlock(headers: string[], rows: string[][]): ContentBlock {
   return {
-    id: crypto.randomUUID(),
+    id: newId(),
     type: 'table',
     text: '',
     color: 'inherit',

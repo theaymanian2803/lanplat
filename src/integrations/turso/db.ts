@@ -1,5 +1,6 @@
 import { getTursoClient } from './client'
 import { buildLessonTree, type NestedLesson } from '@/lib/lessonTree'
+import { newId } from '@/lib/utils'
 import {
   cacheGet,
   cacheSet,
@@ -169,7 +170,6 @@ ALTER TABLE parts_new RENAME TO parts;
   )
 }
 
-const newId = () => crypto.randomUUID()
 const now = () => new Date().toISOString()
 
 export const videosDb = {

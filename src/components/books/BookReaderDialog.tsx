@@ -134,10 +134,12 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
     // Keep the pill tied to text the reader can actually see. A selection scrolled
     // out of the reader, or a range that only touches the padding, gets no pill.
     const containerRect = container.getBoundingClientRect()
+    const rangeRight = rect.left + rect.width
+    const rangeBottom = rect.top + rect.height
     const visibleTop = Math.max(rect.top, containerRect.top)
-    const visibleBottom = Math.min(rect.bottom, containerRect.bottom)
+    const visibleBottom = Math.min(rangeBottom, containerRect.bottom)
     const visibleLeft = Math.max(rect.left, containerRect.left)
-    const visibleRight = Math.min(rect.right, containerRect.right)
+    const visibleRight = Math.min(rangeRight, containerRect.right)
     if (visibleBottom <= visibleTop || visibleRight <= visibleLeft) {
       setTextSelection(null)
       return

@@ -53,6 +53,11 @@ const AddWordPanel = ({
   const [wordLang, setWordLang] = useState(defaultLanguage)
   const [translationLanguage, setTranslationLanguage] = useState('English')
   const [chatOpen, setChatOpen] = useState(false)
+  const chatRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (chatOpen) chatRef.current?.scrollIntoView({ block: 'nearest' })
+  }, [chatOpen])
 
   const { translating, markUserEdit, error } = useAutoTranslate(
     word,
@@ -121,10 +126,10 @@ const AddWordPanel = ({
 
   return (
     <aside
-    className={`w-full ${widthClassName} shrink-0 bg-card rounded-xl border border-primary/20 shadow-2xl p-5 h-fit animate-in fade-in ${
+    className={`flex max-h-[calc(100dvh-5rem)] w-full ${widthClassName} shrink-0 flex-col overflow-hidden bg-card rounded-xl border border-primary/20 shadow-2xl p-5 animate-in fade-in ${
       position === 'right' ? 'slide-in-from-right-4' : 'slide-in-from-left-4'
     } duration-300`}>
-      <div className="flex items-start justify-between gap-2 mb-4">
+      <div className="flex items-start justify-between gap-2 mb-4 shrink-0">
         <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
           <BookMarked className="h-4 w-4 text-primary" />
           Add Vocabulary Word
@@ -137,6 +142,7 @@ const AddWordPanel = ({
           <X className="h-4 w-4" />
         </Button>
       </div>
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1">
       <div className="space-y-2">
         <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
           Word
@@ -168,7 +174,7 @@ const AddWordPanel = ({
           </button>
         </div>
       </div>
-      <div className="space-y-2 mt-3">
+      <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
           <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
             Translation
@@ -224,7 +230,7 @@ const AddWordPanel = ({
           <p className="text-xs text-destructive mt-1">{error} - type the translation manually.</p>
         )}
       </div>
-      <div className="space-y-2 mt-3">
+      <div className="space-y-2">
         <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
           Language
         </Label>
@@ -241,7 +247,7 @@ const AddWordPanel = ({
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-2 mt-3">
+      <div className="space-y-2">
         <div className="flex items-center justify-between gap-2">
           <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
             Context Note (optional)
@@ -267,19 +273,22 @@ const AddWordPanel = ({
           className="bg-muted/30 focus-visible:ring-primary/30"
         />
         {chatOpen ? (
-          <TutorChat
-            context={{
-              word: word.trim() || undefined,
-              language: wordLang,
-              answerLanguage: translationLanguage,
-              note: contextNote.trim() || undefined,
-            }}
-            onClose={() => setChatOpen(false)}
-            className="mt-1 max-h-80"
-          />
+          <div ref={chatRef}>
+            <TutorChat
+              context={{
+                word: word.trim() || undefined,
+                language: wordLang,
+                answerLanguage: translationLanguage,
+                note: contextNote.trim() || undefined,
+              }}
+              onClose={() => setChatOpen(false)}
+              className="mt-1 max-h-80"
+            />
+          </div>
         ) : null}
       </div>
-      <div className="flex gap-2 mt-4">
+      </div>
+      <div className="flex gap-2 mt-4 pt-3 border-t border-border/40 shrink-0">
         <Button
           variant="ghost"
           onClick={handleClear}

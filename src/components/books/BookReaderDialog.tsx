@@ -312,10 +312,10 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
             </p>
           </div>
         ) : (
-          <div className="flex flex-1 flex-col gap-4 overflow-hidden lg:flex-row">
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden lg:flex-row">
             <div
               ref={scrollRef}
-              className="reader-scroll min-w-0 flex-1 overflow-y-auto px-6 py-8 lg:px-10"
+              className="reader-scroll min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8 lg:px-10"
               onMouseUp={readTextSelection}
               onScroll={() => {
                 if (textSelection) readTextSelection()
@@ -345,13 +345,13 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
             {vocabOpen ? (
               <div
                 ref={vocabPanelRef}
-                className="shrink-0 border-t border-border/40 p-4 lg:w-[26rem] lg:border-l lg:border-t-0">
+                className="flex h-[60%] min-h-0 shrink-0 flex-col overflow-hidden border-t border-border/40 p-3 lg:h-full lg:max-h-none lg:w-[26rem] lg:border-l lg:border-t-0 lg:p-4">
                 <AddWordPanel
                   key={vocabSession}
                   defaultLanguage={language}
                   position="right"
                   initialWord={pendingWord}
-                  widthClassName="lg:w-full"
+                  widthClassName="h-full lg:w-full"
                   onClose={() => setVocabOpen(false)}
                 />
               </div>

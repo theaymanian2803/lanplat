@@ -58,6 +58,7 @@ describe("langCode", () => {
     expect(langCode("English")).toBe("en");
     expect(langCode("French")).toBe("fr");
     expect(langCode("Swedish")).toBe("sv");
+    expect(langCode("Arabic")).toBe("ar");
   });
 
   it("defaults to auto for unknown languages", () => {

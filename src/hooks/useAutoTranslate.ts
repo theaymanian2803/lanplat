@@ -3,6 +3,8 @@ import { translateWord } from "@/lib/translate";
 
 interface UseAutoTranslateOptions {
   delay?: number;
+  /** Language to translate into. Defaults to English. */
+  to?: string;
 }
 
 export function useAutoTranslate(
@@ -10,19 +12,25 @@ export function useAutoTranslate(
   language: string,
   translation: string,
   setTranslation: (t: string) => void,
-  { delay = 600 }: UseAutoTranslateOptions = {}
+  { delay = 600, to = "English" }: UseAutoTranslateOptions = {}
 ) {
   const [translating, setTranslating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const translationRef = useRef(translation);
   translationRef.current = translation;
   const userEditedRef = useRef(false);
+  const lastTargetRef = useRef(to);
 
   const markUserEdit = useCallback(() => {
     userEditedRef.current = true;
   }, []);
 
   useEffect(() => {
+    // Switching the target language is an explicit request for a fresh translation,
+    // so it overrides a manual edit and resets the manual-edit latch.
+    const targetChanged = lastTargetRef.current !== to;
+    lastTargetRef.current = to;
+
     if (!word.trim()) {
       setTranslating(false);
       setError(null);
@@ -30,7 +38,7 @@ export function useAutoTranslate(
       if (translationRef.current) setTranslation("");
       return;
     }
-    if (language === "English") {
+    if (language === to) {
       setTranslating(false);
       setError(null);
       return;
@@ -40,10 +48,13 @@ export function useAutoTranslate(
     const handle = setTimeout(() => {
       setTranslating(true);
       setError(null);
-      translateWord(word.trim(), language)
+      translateWord(word.trim(), language, to)
         .then((t) => {
           if (cancelled) return;
-          if (!translationRef.current.trim() || !userEditedRef.current) setTranslation(t);
+          if (targetChanged || !translationRef.current.trim() || !userEditedRef.current) {
+            setTranslation(t);
+            userEditedRef.current = false;
+          }
         })
         .catch(() => {
           if (!cancelled) setError("Auto-translate is unavailable right now");
@@ -59,7 +70,7 @@ export function useAutoTranslate(
       setTranslating(false);
       setError(null);
     };
-  }, [word, language, setTranslation, delay]);
+  }, [word, language, setTranslation, delay, to]);
 
   return { translating, markUserEdit, error };
 }

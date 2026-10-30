@@ -17,6 +17,12 @@ import { useAutoTranslate } from '@/hooks/useAutoTranslate'
 import { speakWord } from '@/lib/tts'
 import type { PanelPosition } from '@/components/NoteEditor'
 
+/** Translation targets offered by the form. English stays the default. */
+const TRANSLATION_TARGETS = [
+  { short: 'EN', value: 'English' },
+  { short: 'AR', value: 'Arabic' },
+] as const
+
 interface AddWordPanelProps {
   defaultLanguage: string
   onClose: () => void
@@ -44,8 +50,15 @@ const AddWordPanel = ({
   const [translation, setTranslation] = useState('')
   const [contextNote, setContextNote] = useState(initialContext ?? '')
   const [wordLang, setWordLang] = useState(defaultLanguage)
+  const [translationLanguage, setTranslationLanguage] = useState('English')
 
-  const { translating, markUserEdit, error } = useAutoTranslate(word, wordLang, translation, setTranslation)
+  const { translating, markUserEdit, error } = useAutoTranslate(
+    word,
+    wordLang,
+    translation,
+    setTranslation,
+    { to: translationLanguage },
+  )
 
   const { data: languages = [] } = useQuery({
     queryKey: ['languages'],
@@ -154,12 +167,40 @@ const AddWordPanel = ({
         </div>
       </div>
       <div className="space-y-2 mt-3">
-        <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-          Translation
-        </Label>
+        <div className="flex items-center justify-between gap-2">
+          <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+            Translation
+          </Label>
+          <div
+            role="group"
+            aria-label="Translation language"
+            className="flex items-center gap-0.5 rounded-md border border-border/60 p-0.5">
+            {TRANSLATION_TARGETS.map((target) => (
+              <button
+                key={target.value}
+                type="button"
+                title={`Translate to ${target.value}`}
+                aria-label={`Translate to ${target.value}`}
+                aria-pressed={translationLanguage === target.value}
+                onClick={() => {
+                  if (target.value === translationLanguage) return
+                  setTranslationLanguage(target.value)
+                  setTranslation('')
+                }}
+                className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition-colors ${
+                  translationLanguage === target.value
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}>
+                {target.short}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="relative">
           <AutoGrowTextarea
-            placeholder="e.g. dog"
+            placeholder={translationLanguage === 'Arabic' ? 'e.g. كلب' : 'e.g. dog'}
+            dir={translationLanguage === 'Arabic' ? 'rtl' : 'ltr'}
             value={translation}
             onChange={(e) => {
               markUserEdit()

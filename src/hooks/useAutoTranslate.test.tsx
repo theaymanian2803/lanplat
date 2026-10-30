@@ -163,4 +163,44 @@ describe("useAutoTranslate", () => {
     expect(fetchFn).not.toHaveBeenCalled();
     expect(setTranslation).not.toHaveBeenCalled();
   });
+
+  it("translates into the requested target language", async () => {
+    const fn = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => [[["كلب", "hund", null, null, 10]], null, "da"],
+    });
+    vi.stubGlobal("fetch", fn);
+    const setTranslation = vi.fn();
+
+    renderHook(() =>
+      useAutoTranslate("hund", "Danish", "", setTranslation, { delay: 0, to: "Arabic" })
+    );
+
+    await waitFor(() => expect(setTranslation).toHaveBeenCalledWith("كلب"));
+    expect(String(fn.mock.calls[0][0])).toContain("tl=ar");
+  });
+
+  it("re-translates when the target changes, even after a manual edit", async () => {
+    const fn = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => googleResponse })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => [[["كلب", "hund", null, null, 10]], null, "da"],
+      });
+    vi.stubGlobal("fetch", fn);
+    const setTranslation = vi.fn();
+
+    const { rerender, result } = renderHook(
+      ({ target }: { target: string }) =>
+        useAutoTranslate("hund", "Danish", "", setTranslation, { delay: 0, to: target }),
+      { initialProps: { target: "English" } }
+    );
+    await waitFor(() => expect(setTranslation).toHaveBeenCalledWith("dog"));
+
+    result.current.markUserEdit();
+    rerender({ target: "Arabic" });
+
+    await waitFor(() => expect(setTranslation).toHaveBeenCalledWith("كلب"));
+  });
 });

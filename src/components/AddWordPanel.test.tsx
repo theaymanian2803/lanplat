@@ -111,4 +111,32 @@ describe('AddWordPanel', () => {
     renderPanel('Hund')
     expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('hund')
   })
+
+  it('defaults to translating into English', () => {
+    renderPanel('hund')
+
+    expect(screen.getByRole('button', { name: 'Translate to English' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+    expect(screen.getByRole('button', { name: 'Translate to Arabic' })).toHaveAttribute(
+      'aria-pressed',
+      'false'
+    )
+  })
+
+  it('switches the translation field to Arabic and clears the old translation', () => {
+    renderPanel('hund')
+    fireEvent.change(screen.getByPlaceholderText('e.g. dog'), { target: { value: 'dog' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Translate to Arabic' }))
+
+    const arabic = screen.getByPlaceholderText('e.g. كلب')
+    expect(arabic).toHaveAttribute('dir', 'rtl')
+    expect(arabic).toHaveValue('')
+    expect(screen.getByRole('button', { name: 'Translate to Arabic' })).toHaveAttribute(
+      'aria-pressed',
+      'true'
+    )
+  })
 })

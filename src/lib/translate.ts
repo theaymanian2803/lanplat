@@ -1,4 +1,5 @@
 const LANG_CODES: Record<string, string> = {
+  Arabic: "ar",
   Danish: "da",
   Spanish: "es",
   Japanese: "ja",

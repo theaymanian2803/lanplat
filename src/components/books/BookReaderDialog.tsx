@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react'
+import { BookMarked, ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react'
 
 import AddWordPanel from '@/components/AddWordPanel'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { displayAuthorName, getDownloadLinks, type Book } from '@/lib/bookCatalog'
 import { extractBookBody, fetchBookText, isChapterHeading, splitIntoChapters } from '@/lib/bookReader'
+import { getFloatingButtonPosition } from '@/lib/textSelection'
 
 interface BookReaderDialogProps {
   book: Book
@@ -30,7 +31,14 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
   const [pendingWord, setPendingWord] = useState('')
   const [vocabSession, setVocabSession] = useState(0)
   const [vocabOpen, setVocabOpen] = useState(false)
+  const [textSelection, setTextSelection] = useState<{
+    text: string
+    top: number
+    left: number
+  } | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
+  const selectionBtnRef = useRef<HTMLButtonElement>(null)
 
   const textUrl = getDownloadLinks(book).text
 
@@ -74,6 +82,7 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
       else el.scrollTop = 0
     }
     setVocabOpen(false)
+    setTextSelection(null)
   }, [page])
 
   useEffect(() => {
@@ -87,49 +96,109 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
     return () => window.removeEventListener('keydown', onKey)
   }, [page, sectionCount])
 
-  // Double-clicking a word or dragging over a phrase leaves a selection in the reader;
-  // hand it straight to the Add Word form, exactly like the study room.
-  const openVocabForSelection = useCallback(() => {
-    const sel = window.getSelection()
-    if (!sel || sel.isCollapsed) return
+  // A settled selection shows a floating "Add to vocab" pill. The form only opens
+  // when the learner presses it, so a phrase can be dragged out without being cut off.
+  const readTextSelection = useCallback(() => {
     const container = scrollRef.current
-    if (!container || !sel.anchorNode || !container.contains(sel.anchorNode)) return
-    const text = sel.toString().trim()
-    if (!text) return
-    setPendingWord(text)
+    const sel = window.getSelection()
+    if (!container || !sel || sel.isCollapsed) {
+      setTextSelection(null)
+      return
+    }
+    const anchor = sel.anchorNode
+    const focus = sel.focusNode
+    if (!anchor || !focus || !container.contains(anchor) || !container.contains(focus)) {
+      setTextSelection(null)
+      return
+    }
+    const text = sel.toString().replace(/\s+/g, ' ').trim()
+    if (!text) {
+      setTextSelection(null)
+      return
+    }
+    let rect: DOMRect | null = null
+    try {
+      rect = sel.getRangeAt(0).getBoundingClientRect()
+    } catch {
+      rect = null
+    }
+    if (!rect || (rect.width === 0 && rect.height === 0)) {
+      setTextSelection(null)
+      return
+    }
+    const { top, left } = getFloatingButtonPosition(rect, window.innerWidth)
+    const contentRect = contentRef.current?.getBoundingClientRect()
+    const next = {
+      text,
+      top: Math.max(8, top - (contentRect?.top ?? 0)),
+      left: Math.max(8, left - (contentRect?.left ?? 0)),
+    }
+    setTextSelection((prev) =>
+      prev && prev.text === next.text && prev.top === next.top && prev.left === next.left
+        ? prev
+        : next,
+    )
+  }, [])
+
+  const openVocabForSelection = useCallback(() => {
+    if (!textSelection) return
+    setPendingWord(textSelection.text)
     setVocabSession((s) => s + 1)
     setVocabOpen(true)
+    setTextSelection(null)
     window.getSelection()?.removeAllRanges()
-  }, [])
+  }, [textSelection])
 
   // On touch devices a long-press selection never fires mouseup (the browser
   // cancels the pointer), so watch selectionchange instead and debounce it.
   useEffect(() => {
     let timer: number | undefined
     const onSelectionChange = () => {
-      const sel = window.getSelection()
-      if (!sel || sel.isCollapsed) return
-      const container = scrollRef.current
-      if (!container || !sel.anchorNode || !container.contains(sel.anchorNode)) return
-      const text = sel.toString().trim()
-      if (!text) return
       if (timer) window.clearTimeout(timer)
-      timer = window.setTimeout(openVocabForSelection, 250)
+      timer = window.setTimeout(readTextSelection, 200)
     }
     document.addEventListener('selectionchange', onSelectionChange)
     return () => {
       document.removeEventListener('selectionchange', onSelectionChange)
       if (timer) window.clearTimeout(timer)
     }
-  }, [openVocabForSelection])
+  }, [readTextSelection])
+
+  useEffect(() => {
+    const dismiss = (e: PointerEvent) => {
+      const target = e.target as Node
+      if (selectionBtnRef.current?.contains(target)) return
+      if (scrollRef.current && !scrollRef.current.contains(target)) setTextSelection(null)
+    }
+    document.addEventListener('pointerdown', dismiss)
+    return () => document.removeEventListener('pointerdown', dismiss)
+  }, [])
 
   const authors = book.authors.map((a) => displayAuthorName(a.name)).join(', ')
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
+        ref={contentRef}
         showCloseButton={false}
         className="flex h-[85vh] max-w-6xl flex-col gap-0 p-0">
+        {textSelection ? (
+          <button
+            ref={selectionBtnRef}
+            type="button"
+            className="absolute z-[60] flex touch-manipulation items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
+            style={{ top: textSelection.top, left: textSelection.left }}
+            onPointerDown={(e) => e.preventDefault()}
+            onMouseDown={(e) => e.preventDefault()}
+            onTouchEnd={(e) => {
+              e.preventDefault()
+              openVocabForSelection()
+            }}
+            onClick={openVocabForSelection}>
+            <BookMarked className="h-3.5 w-3.5" />
+            Add to vocab
+          </button>
+        ) : null}
         <DialogHeader className="border-b border-border/40 px-6 py-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
@@ -200,7 +269,10 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
             <div
               ref={scrollRef}
               className="reader-scroll min-w-0 flex-1 overflow-y-auto px-6 py-8 lg:px-10"
-              onMouseUp={openVocabForSelection}>
+              onMouseUp={readTextSelection}
+              onScroll={() => {
+                if (textSelection) readTextSelection()
+              }}>
               <div className="mx-auto max-w-prose font-serif text-[15px] leading-7 text-foreground/90">
                 {current.title ? (
                   <p className="mb-8 mt-2 text-center text-lg font-semibold tracking-wide">

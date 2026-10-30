@@ -32,6 +32,21 @@ function stubFetch(value: unknown) {
   return fn
 }
 
+const stubSelection = (node: Node, text: string) => {
+  const removeAllRanges = vi.fn()
+  window.getSelection = vi.fn().mockReturnValue({
+    isCollapsed: false,
+    anchorNode: node,
+    focusNode: node,
+    toString: () => text,
+    getRangeAt: () => ({
+      getBoundingClientRect: () => ({ top: 120, bottom: 140, left: 20, width: 90, height: 20 }),
+    }),
+    removeAllRanges,
+  } as unknown as Selection)
+  return removeAllRanges
+}
+
 const renderDialog = (
   overrides: Partial<Book> = {},
   onClose = vi.fn(),
@@ -95,22 +110,35 @@ describe('BookReaderDialog', () => {
     ).toBeInTheDocument()
   })
 
-  it('opens the vocab form with the selected word when text is selected', async () => {
+  it('shows Add to vocab for a selection and opens the form when it is pressed', async () => {
     stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
     renderDialog()
 
     const paragraph = await screen.findByText('Le fantôme existait.')
-    window.getSelection = vi.fn().mockReturnValue({
-      isCollapsed: false,
-      anchorNode: paragraph,
-      toString: () => 'fantôme',
-      removeAllRanges: vi.fn(),
-    } as unknown as Selection)
-
+    stubSelection(paragraph, 'fantôme')
     fireEvent.mouseUp(paragraph)
+
+    const pill = await screen.findByRole('button', { name: 'Add to vocab' })
+    expect(screen.queryByPlaceholderText('e.g. hund')).toBeNull()
+    fireEvent.click(pill)
 
     await waitFor(() =>
       expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('fantôme')
+    )
+  })
+
+  it('captures a whole phrase, not a single word', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    renderDialog()
+
+    const paragraph = await screen.findByText('Le fantôme existait.')
+    stubSelection(paragraph, 'Le   fantôme existait.')
+    fireEvent.mouseUp(paragraph)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Add to vocab' }))
+
+    await waitFor(() =>
+      expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('le fantôme existait.')
     )
   })
 
@@ -119,36 +147,75 @@ describe('BookReaderDialog', () => {
     renderDialog({}, vi.fn(), 'Spanish')
 
     const paragraph = await screen.findByText('Le fantôme existait.')
-    window.getSelection = vi.fn().mockReturnValue({
-      isCollapsed: false,
-      anchorNode: paragraph,
-      toString: () => 'fantôme',
-      removeAllRanges: vi.fn(),
-    } as unknown as Selection)
-
+    stubSelection(paragraph, 'fantôme')
     fireEvent.mouseUp(paragraph)
+    fireEvent.click(await screen.findByRole('button', { name: 'Add to vocab' }))
 
     await waitFor(() =>
       expect(screen.getByRole('combobox')).toHaveTextContent('Spanish')
     )
   })
 
-  it('opens the vocab form from a touch-style selectionchange', async () => {
+  it('shows the pill from a touch-style selectionchange without mouseup', async () => {
     stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
     renderDialog()
 
     const paragraph = await screen.findByText('Le fantôme existait.')
-    window.getSelection = vi.fn().mockReturnValue({
-      isCollapsed: false,
-      anchorNode: paragraph,
-      toString: () => 'fantôme',
-      removeAllRanges: vi.fn(),
-    } as unknown as Selection)
-
+    stubSelection(paragraph, 'fantôme')
     fireEvent(document, new Event('selectionchange'))
+
+    const pill = await screen.findByRole('button', { name: 'Add to vocab' })
+    fireEvent.click(pill)
 
     await waitFor(() =>
       expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('fantôme')
+    )
+  })
+
+  it('hides the pill when the selection collapses', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    renderDialog()
+
+    const paragraph = await screen.findByText('Le fantôme existait.')
+    stubSelection(paragraph, 'fantôme')
+    fireEvent.mouseUp(paragraph)
+    await screen.findByRole('button', { name: 'Add to vocab' })
+
+    window.getSelection = vi.fn().mockReturnValue({ isCollapsed: true } as unknown as Selection)
+    fireEvent(document, new Event('selectionchange'))
+
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Add to vocab' })).toBeNull()
+    )
+  })
+
+  it('ignores a selection that ends outside the reader', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    renderDialog()
+
+    const paragraph = await screen.findByText('Le fantôme existait.')
+    stubSelection(paragraph, 'fantôme')
+    const selection = window.getSelection() as unknown as { focusNode: Node }
+    selection.focusNode = document.body
+    fireEvent.mouseUp(paragraph)
+
+    expect(screen.queryByRole('button', { name: 'Add to vocab' })).toBeNull()
+  })
+
+  it('captures the phrase when the pill is pressed without collapsing the selection', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    renderDialog()
+
+    const paragraph = await screen.findByText('Le fantôme existait.')
+    stubSelection(paragraph, 'fantôme existait')
+    fireEvent.mouseUp(paragraph)
+
+    const pill = await screen.findByRole('button', { name: 'Add to vocab' })
+    fireEvent.pointerDown(pill)
+    fireEvent.click(pill)
+
+    await waitFor(() =>
+      expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('fantôme existait')
     )
   })
 

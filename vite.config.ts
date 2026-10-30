@@ -1,9 +1,10 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 import { fetchTranscript } from "./api/transcript";
+import chat from "./api/chat";
 
 // Vite does not run Vercel functions, so the transcript endpoint is served from the
 // same shared implementation through a dev-only middleware.
@@ -27,8 +28,39 @@ const transcriptDevApi = (): Plugin => ({
   },
 });
 
+// Vite does not run Vercel functions, so the AI chat endpoint is mounted from the
+// same shared handler through a dev-only middleware.
+const chatDevApi = (): Plugin => ({
+  name: "chat-dev-api",
+  configureServer(server) {
+    server.middlewares.use("/api/chat", async (req, res) => {
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) {
+        chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+      }
+      const isBodyless = req.method === "GET" || req.method === "HEAD";
+      const response = await chat.fetch(
+        new Request("http://localhost/api/chat", {
+          method: req.method ?? "GET",
+          headers: { "content-type": req.headers["content-type"] ?? "application/json" },
+          body: isBodyless ? undefined : Buffer.concat(chunks),
+        }),
+      );
+      res.statusCode = response.status;
+      res.setHeader("Content-Type", response.headers.get("content-type") ?? "application/json");
+      res.end(await response.text());
+    });
+  },
+});
+
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+  // Server-only secrets (no VITE_ prefix) still need to reach the dev middleware.
+  const env = loadEnv(mode, process.cwd(), "");
+  process.env.OPENROUTER_API_KEY ??= env.OPENROUTER_API_KEY;
+  process.env.OPENROUTER_MODEL ??= env.OPENROUTER_MODEL;
+
+  return {
   server: {
     host: "::",
     port: 8080,
@@ -60,6 +92,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     transcriptDevApi(),
+    chatDevApi(),
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
@@ -98,4 +131,5 @@ export default defineConfig(({ mode }) => ({
     },
     dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime", "@tanstack/react-query", "@tanstack/query-core"],
   },
-}));
+  };
+});

@@ -139,4 +139,14 @@ describe('AddWordPanel', () => {
       'true'
     )
   })
+
+  it('opens the AI tutor chat for the word', () => {
+    renderPanel('hund')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ask AI about this word' }))
+
+    expect(screen.getByText('AI Tutor')).toBeInTheDocument()
+    expect(screen.getByLabelText('Message the AI tutor')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Explain this word' })).toBeInTheDocument()
+  })
 })

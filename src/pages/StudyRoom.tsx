@@ -1,5 +1,6 @@
 import AddWordPanel from '@/components/AddWordPanel'
 import AddLessonContentPanel from '@/components/AddLessonContentPanel'
+import TutorChatBubble from '@/components/ai/TutorChatBubble'
 import Layout from '@/components/Layout'
 import NoteEditor from '@/components/NoteEditor'
 import TranscriptStrip from '@/components/TranscriptStrip'
@@ -1174,6 +1175,16 @@ const StudyRoom = () => {
         </div>
         </>
       )}
+
+      {!noteOpen && !addWordOpen && !addLessonOpen ? (
+        <TutorChatBubble
+          context={{
+            language: video?.language,
+            title: video?.title,
+            transcript: isText && video?.content ? video.content : undefined,
+          }}
+        />
+      ) : null}
 
       </Layout>
   )

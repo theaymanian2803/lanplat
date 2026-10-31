@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import BookReaderDialog from '@/components/books/BookReaderDialog'
@@ -190,6 +190,38 @@ describe('BookReaderDialog', () => {
     await waitFor(() =>
       expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('fantôme')
     )
+  })
+
+  it('puts the selection button in a bottom bar on coarse-pointer devices', async () => {
+    const originalMatchMedia = window.matchMedia
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('pointer: coarse'),
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    })) as unknown as typeof window.matchMedia
+
+    try {
+      stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+      renderDialog()
+
+      const paragraph = await screen.findByText('Le fantôme existait.')
+      stubSelection(paragraph, 'fantôme')
+      fireEvent.mouseUp(paragraph)
+
+      const bar = await screen.findByTestId('reader-selection-bar')
+      fireEvent.click(within(bar).getByRole('button', { name: 'Add to vocab' }))
+
+      await waitFor(() =>
+        expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('fantôme')
+      )
+    } finally {
+      window.matchMedia = originalMatchMedia
+    }
   })
 
   it('hides the pill when the selection collapses', async () => {

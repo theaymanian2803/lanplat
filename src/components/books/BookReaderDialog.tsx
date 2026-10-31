@@ -12,6 +12,7 @@ import {
 import { displayAuthorName, getDownloadLinks, type Book } from '@/lib/bookCatalog'
 import { extractBookBody, fetchBookText, isChapterHeading, splitIntoChapters } from '@/lib/bookReader'
 import { getFloatingButtonPosition } from '@/lib/textSelection'
+import { useCoarsePointer } from '@/hooks/useCoarsePointer'
 
 interface BookReaderDialogProps {
   book: Book
@@ -37,9 +38,10 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
   const [vocabOpen, setVocabOpen] = useState(false)
   const [textSelection, setTextSelection] = useState<{
     text: string
-    top: number
-    left: number
+    top?: number
+    left?: number
   } | null>(null)
+  const coarsePointer = useCoarsePointer()
   const scrollRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const selectionBtnRef = useRef<HTMLButtonElement>(null)
@@ -145,6 +147,14 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
       return
     }
 
+    // On touch devices the native selection menu sits on top of the selection.
+    // The button is pinned to the bottom of the dialog there, so it needs no
+    // coordinates at all.
+    if (coarsePointer) {
+      setTextSelection((prev) => (prev && prev.text === text ? prev : { text }))
+      return
+    }
+
     const { top, left } = getFloatingButtonPosition(
       {
         top: visibleTop,
@@ -173,7 +183,7 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
         ? prev
         : next,
     )
-  }, [])
+  }, [coarsePointer])
 
   const openVocabForSelection = useCallback(() => {
     if (!textSelection) return
@@ -230,21 +240,44 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
           {textSelection ? 'Phrase selected. Press Add to vocab to save it.' : ''}
         </div>
         {textSelection ? (
-          <button
-            ref={selectionBtnRef}
-            type="button"
-            className="absolute z-[60] flex touch-manipulation items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
-            style={{ top: textSelection.top, left: textSelection.left }}
-            onPointerDown={(e) => e.preventDefault()}
-            onMouseDown={(e) => e.preventDefault()}
-            onTouchEnd={(e) => {
-              e.preventDefault()
-              openVocabForSelection()
-            }}
-            onClick={openVocabForSelection}>
-            <BookMarked className="h-3.5 w-3.5" />
-            Add to vocab
-          </button>
+          coarsePointer ? (
+            <div
+              data-testid="reader-selection-bar"
+              className="absolute inset-x-0 bottom-0 z-[60] flex justify-center rounded-b-lg border-t border-border/40 bg-card/95 px-4 pt-3 backdrop-blur"
+              style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+              onPointerDown={(e) => e.stopPropagation()}>
+              <button
+                ref={selectionBtnRef}
+                type="button"
+                className="flex touch-manipulation items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
+                onPointerDown={(e) => e.preventDefault()}
+                onMouseDown={(e) => e.preventDefault()}
+                onTouchEnd={(e) => {
+                  e.preventDefault()
+                  openVocabForSelection()
+                }}
+                onClick={openVocabForSelection}>
+                <BookMarked className="h-4 w-4" />
+                Add to vocab
+              </button>
+            </div>
+          ) : (
+            <button
+              ref={selectionBtnRef}
+              type="button"
+              className="absolute z-[60] flex touch-manipulation items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
+              style={{ top: textSelection.top, left: textSelection.left }}
+              onPointerDown={(e) => e.preventDefault()}
+              onMouseDown={(e) => e.preventDefault()}
+              onTouchEnd={(e) => {
+                e.preventDefault()
+                openVocabForSelection()
+              }}
+              onClick={openVocabForSelection}>
+              <BookMarked className="h-3.5 w-3.5" />
+              Add to vocab
+            </button>
+          )
         ) : null}
         <DialogHeader className="border-b border-border/40 px-6 py-4">
           <div className="flex items-start justify-between gap-4">

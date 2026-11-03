@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type TouchEvent } from 'react'
 import { BookMarked, ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react'
 
 import AddWordPanel from '@/components/AddWordPanel'
@@ -11,7 +11,12 @@ import {
 } from '@/components/ui/dialog'
 import { displayAuthorName, getDownloadLinks, type Book } from '@/lib/bookCatalog'
 import { extractBookBody, fetchBookText, isChapterHeading, splitIntoChapters } from '@/lib/bookReader'
-import { getFloatingButtonPosition } from '@/lib/textSelection'
+import {
+  getFloatingButtonPosition,
+  getLineStartButtonPosition,
+  getWordRangeAtPoint,
+  mergeWordRanges,
+} from '@/lib/textSelection'
 import { useCoarsePointer } from '@/hooks/useCoarsePointer'
 
 interface BookReaderDialogProps {
@@ -22,6 +27,23 @@ interface BookReaderDialogProps {
 }
 
 type Status = 'loading' | 'ready' | 'error' | 'none'
+
+interface TouchRect {
+  top: number
+  bottom: number
+  left: number
+  width: number
+  height: number
+}
+
+interface TouchSelection {
+  text: string
+  anchor: Range
+  rects: TouchRect[]
+  isPhrase: boolean
+  pillTop: number
+  pillLeft: number
+}
 
 /** Match `getFloatingButtonPosition`'s defaults so clamping uses the same box as placement. */
 const PILL_WIDTH = 128
@@ -41,6 +63,8 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
     top?: number
     left?: number
   } | null>(null)
+  const [touchSelection, setTouchSelection] = useState<TouchSelection | null>(null)
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const coarsePointer = useCoarsePointer()
   const scrollRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -90,6 +114,7 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
     }
     setVocabOpen(false)
     setTextSelection(null)
+    setTouchSelection(null)
   }, [page])
 
   useEffect(() => {
@@ -106,6 +131,7 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
   // A settled selection shows a floating "Add to vocab" pill. The form only opens
   // when the learner presses it, so a phrase can be dragged out without being cut off.
   const readTextSelection = useCallback(() => {
+    if (coarsePointer) return
     const container = scrollRef.current
     const sel = window.getSelection()
     if (!container || !sel || sel.isCollapsed) {
@@ -147,14 +173,6 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
       return
     }
 
-    // On touch devices the native selection menu sits on top of the selection.
-    // The button is pinned to the bottom of the dialog there, so it needs no
-    // coordinates at all.
-    if (coarsePointer) {
-      setTextSelection((prev) => (prev && prev.text === text ? prev : { text }))
-      return
-    }
-
     const { top, left } = getFloatingButtonPosition(
       {
         top: visibleTop,
@@ -185,14 +203,102 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
     )
   }, [coarsePointer])
 
+  // Touch devices never create a native selection: the browser's copy menu would
+  // cover the reader. A tap selects the word under the finger, and a second tap
+  // extends that word to a phrase.
+  const handleTouchStart = useCallback((e: TouchEvent<HTMLDivElement>) => {
+    const touch = e.touches[0]
+    touchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null
+  }, [])
+
+  const handleTouchEnd = useCallback(
+    (e: TouchEvent<HTMLDivElement>) => {
+      if (!coarsePointer) return
+      const container = scrollRef.current
+      const content = contentRef.current
+      const start = touchStartRef.current
+      touchStartRef.current = null
+      const touch = e.changedTouches[0]
+      if (!container || !content || !start || !touch) return
+      if (Math.hypot(touch.clientX - start.x, touch.clientY - start.y) > 10) return
+
+      const word = getWordRangeAtPoint(container, touch.clientX, touch.clientY)
+      if (!word) {
+        setTouchSelection(null)
+        return
+      }
+
+      let nextRange: Range
+      let isPhrase = false
+      if (!touchSelection || touchSelection.isPhrase) {
+        nextRange = word.range
+      } else {
+        nextRange = mergeWordRanges(touchSelection.anchor, word.range)
+        isPhrase = true
+      }
+
+      const text = nextRange.toString().replace(/\s+/g, ' ').trim()
+      if (!text) {
+        setTouchSelection(null)
+        return
+      }
+
+      const contentRect = content.getBoundingClientRect()
+      const containerRect = container.getBoundingClientRect()
+      const clientRects =
+        typeof nextRange.getClientRects === 'function'
+          ? Array.from(nextRange.getClientRects())
+          : []
+      const rects = clientRects
+        .filter((r) => r.width > 0 && r.height > 0)
+        .map((r) => ({
+          top: r.top - contentRect.top,
+          bottom: r.bottom - contentRect.top,
+          left: r.left - contentRect.left,
+          width: r.width,
+          height: r.height,
+        }))
+      if (rects.length === 0) {
+        const fallback = word.range.getBoundingClientRect()
+        rects.push({
+          top: fallback.top - contentRect.top,
+          bottom: fallback.bottom - contentRect.top,
+          left: fallback.left - contentRect.left,
+          width: fallback.width,
+          height: fallback.height,
+        })
+      }
+
+      const pill = getLineStartButtonPosition(rects, {
+        top: containerRect.top - contentRect.top,
+        left: containerRect.left - contentRect.left,
+        width: containerRect.width,
+        height: containerRect.height,
+      })
+
+      setTouchSelection({
+        text,
+        anchor: isPhrase ? touchSelection!.anchor : word.range.cloneRange(),
+        rects,
+        isPhrase,
+        pillTop: pill.top,
+        pillLeft: pill.left,
+      })
+      window.getSelection()?.removeAllRanges()
+    },
+    [coarsePointer, touchSelection],
+  )
+
   const openVocabForSelection = useCallback(() => {
-    if (!textSelection) return
-    setPendingWord(textSelection.text)
+    const text = coarsePointer ? touchSelection?.text : textSelection?.text
+    if (!text) return
+    setPendingWord(text)
     setVocabSession((s) => s + 1)
     setVocabOpen(true)
     setTextSelection(null)
+    setTouchSelection(null)
     window.getSelection()?.removeAllRanges()
-  }, [textSelection])
+  }, [coarsePointer, textSelection, touchSelection])
 
   // On touch devices a long-press selection never fires mouseup (the browser
   // cancels the pointer), so watch selectionchange instead and debounce it.
@@ -213,7 +319,10 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
     const dismiss = (e: PointerEvent) => {
       const target = e.target as Node
       if (selectionBtnRef.current?.contains(target)) return
-      if (scrollRef.current && !scrollRef.current.contains(target)) setTextSelection(null)
+      if (scrollRef.current && !scrollRef.current.contains(target)) {
+        setTextSelection(null)
+        setTouchSelection(null)
+      }
     }
     document.addEventListener('pointerdown', dismiss)
     return () => document.removeEventListener('pointerdown', dismiss)
@@ -237,36 +346,31 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
         showCloseButton={false}
         className="flex h-[85vh] max-w-6xl flex-col gap-0 p-0">
         <div role="status" aria-live="polite" className="sr-only">
-          {textSelection ? 'Phrase selected. Press Add to vocab to save it.' : ''}
+          {touchSelection || textSelection
+            ? 'Phrase selected. Press Add to vocab to save it.'
+            : ''}
         </div>
-        {textSelection ? (
-          coarsePointer ? (
-            <div
-              data-testid="reader-selection-bar"
-              className="absolute inset-x-0 bottom-0 z-[60] flex justify-center rounded-b-lg border-t border-border/40 bg-card/95 px-4 pt-3 backdrop-blur"
-              style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
-              onPointerDown={(e) => e.stopPropagation()}>
-              <button
-                ref={selectionBtnRef}
-                type="button"
-                className="flex touch-manipulation items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
-                onPointerDown={(e) => e.preventDefault()}
-                onMouseDown={(e) => e.preventDefault()}
-                onTouchEnd={(e) => {
-                  e.preventDefault()
-                  openVocabForSelection()
+        {coarsePointer && touchSelection ? (
+          <>
+            {touchSelection.rects.map((rect, i) => (
+              <div
+                key={i}
+                aria-hidden
+                className="pointer-events-none absolute z-[55] rounded-sm bg-primary/20"
+                style={{
+                  top: rect.top,
+                  left: rect.left,
+                  width: rect.width,
+                  height: rect.height,
                 }}
-                onClick={openVocabForSelection}>
-                <BookMarked className="h-4 w-4" />
-                Add to vocab
-              </button>
-            </div>
-          ) : (
+              />
+            ))}
             <button
               ref={selectionBtnRef}
               type="button"
-              className="absolute z-[60] flex touch-manipulation items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
-              style={{ top: textSelection.top, left: textSelection.left }}
+              data-testid="reader-touch-pill"
+              className="absolute z-[60] flex touch-manipulation items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
+              style={{ top: touchSelection.pillTop, left: touchSelection.pillLeft }}
               onPointerDown={(e) => e.preventDefault()}
               onMouseDown={(e) => e.preventDefault()}
               onTouchEnd={(e) => {
@@ -274,10 +378,26 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
                 openVocabForSelection()
               }}
               onClick={openVocabForSelection}>
-              <BookMarked className="h-3.5 w-3.5" />
+              <BookMarked className="h-4 w-4" />
               Add to vocab
             </button>
-          )
+          </>
+        ) : !coarsePointer && textSelection ? (
+          <button
+            ref={selectionBtnRef}
+            type="button"
+            className="absolute z-[60] flex touch-manipulation items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
+            style={{ top: textSelection.top, left: textSelection.left }}
+            onPointerDown={(e) => e.preventDefault()}
+            onMouseDown={(e) => e.preventDefault()}
+            onTouchEnd={(e) => {
+              e.preventDefault()
+              openVocabForSelection()
+            }}
+            onClick={openVocabForSelection}>
+            <BookMarked className="h-3.5 w-3.5" />
+            Add to vocab
+          </button>
         ) : null}
         <DialogHeader className="border-b border-border/40 px-6 py-4">
           <div className="flex items-start justify-between gap-4">
@@ -348,10 +468,18 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden lg:flex-row">
             <div
               ref={scrollRef}
-              className="reader-scroll min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8 lg:px-10"
+              className={`reader-scroll min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8 lg:px-10 ${
+                coarsePointer ? 'select-none [-webkit-touch-callout:none]' : ''
+              }`}
               onMouseUp={readTextSelection}
               onScroll={() => {
-                if (textSelection) readTextSelection()
+                if (coarsePointer) setTouchSelection(null)
+                else if (textSelection) readTextSelection()
+              }}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+              onContextMenu={(e) => {
+                if (coarsePointer) e.preventDefault()
               }}>
               <div className="mx-auto max-w-prose font-serif text-[15px] leading-7 text-foreground/90">
                 {current.title ? (

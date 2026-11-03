@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import BookReaderDialog from '@/components/books/BookReaderDialog'
@@ -66,6 +66,51 @@ const stubSelection = (
   return removeAllRanges
 }
 
+const makeCoarsePointer = () => {
+  const original = window.matchMedia
+  window.matchMedia = ((query: string) => ({
+    matches: query.includes('pointer: coarse'),
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  })) as unknown as typeof window.matchMedia
+  return () => {
+    window.matchMedia = original
+  }
+}
+
+const stubCaretAt = (node: Node, offsets: number[]) => {
+  let call = 0
+  Object.defineProperty(document, 'caretRangeFromPoint', {
+    configurable: true,
+    value: () => {
+      const range = document.createRange()
+      range.setStart(node, offsets[Math.min(call++, offsets.length - 1)])
+      range.collapse(true)
+      return range
+    },
+  })
+}
+
+const stubLineRects = (
+  rects: Array<{ top: number; bottom: number; left: number; width: number; height: number }>
+) => {
+  Object.defineProperty(Range.prototype, 'getClientRects', {
+    configurable: true,
+    value: () => rects,
+  })
+}
+
+const tap = (target: Element, x = 20, y = 120) => {
+  const point = { clientX: x, clientY: y, identifier: 1 }
+  fireEvent.touchStart(target, { touches: [point], changedTouches: [point] })
+  fireEvent.touchEnd(target, { touches: [point], changedTouches: [point] })
+}
+
 const renderDialog = (
   overrides: Partial<Book> = {},
   onClose = vi.fn(),
@@ -86,6 +131,8 @@ describe('BookReaderDialog', () => {
 
   afterEach(() => {
     vi.unstubAllGlobals()
+    delete (document as unknown as Record<string, unknown>).caretRangeFromPoint
+    delete (Range.prototype as unknown as Record<string, unknown>).getClientRects
   })
 
   it('fetches the book text through the proxy and renders the body', async () => {
@@ -192,35 +239,156 @@ describe('BookReaderDialog', () => {
     )
   })
 
-  it('puts the selection button in a bottom bar on coarse-pointer devices', async () => {
-    const originalMatchMedia = window.matchMedia
-    window.matchMedia = ((query: string) => ({
-      matches: query.includes('pointer: coarse'),
-      media: query,
-      onchange: null,
-      addListener: () => {},
-      removeListener: () => {},
-      addEventListener: () => {},
-      removeEventListener: () => {},
-      dispatchEvent: () => false,
-    })) as unknown as typeof window.matchMedia
-
+  it('selects a word on a tap without a native selection and shows the pill at the line start', async () => {
+    const restore = makeCoarsePointer()
     try {
       stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
       renderDialog()
 
       const paragraph = await screen.findByText('Le fantôme existait.')
-      stubSelection(paragraph, 'fantôme')
-      fireEvent.mouseUp(paragraph)
+      stubCaretAt(paragraph.firstChild as Node, [3])
+      stubLineRects([{ top: 300, bottom: 320, left: 140, width: 90, height: 20 }])
+      stubRect(screen.getByRole('dialog'), {
+        top: 100,
+        left: 50,
+        bottom: 700,
+        right: 850,
+        width: 800,
+        height: 600,
+      })
+      stubRect(paragraph.closest('.reader-scroll') as Element, {
+        top: 150,
+        left: 60,
+        bottom: 650,
+        right: 760,
+        width: 700,
+        height: 500,
+      })
 
-      const bar = await screen.findByTestId('reader-selection-bar')
-      fireEvent.click(within(bar).getByRole('button', { name: 'Add to vocab' }))
+      tap(paragraph)
+
+      const pill = await screen.findByRole('button', { name: 'Add to vocab' })
+      expect(pill.style.left).toBe('90px')
+      fireEvent.click(pill)
 
       await waitFor(() =>
         expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('fantôme')
       )
     } finally {
-      window.matchMedia = originalMatchMedia
+      restore()
+    }
+  })
+
+  it('extends a tap selection to a phrase', async () => {
+    const restore = makeCoarsePointer()
+    try {
+      stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+      renderDialog()
+
+      const paragraph = await screen.findByText('Le fantôme existait.')
+      stubCaretAt(paragraph.firstChild as Node, [1, 8])
+      stubLineRects([{ top: 300, bottom: 320, left: 140, width: 90, height: 20 }])
+      stubRect(paragraph.closest('.reader-scroll') as Element, {
+        top: 150,
+        left: 60,
+        bottom: 650,
+        right: 760,
+        width: 700,
+        height: 500,
+      })
+
+      tap(paragraph, 20, 120)
+      tap(paragraph, 80, 120)
+
+      fireEvent.click(await screen.findByRole('button', { name: 'Add to vocab' }))
+      await waitFor(() =>
+        expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('le fantôme')
+      )
+    } finally {
+      restore()
+    }
+  })
+
+  it('starts a new selection on the third tap', async () => {
+    const restore = makeCoarsePointer()
+    try {
+      stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+      renderDialog()
+
+      const paragraph = await screen.findByText('Le fantôme existait.')
+      stubCaretAt(paragraph.firstChild as Node, [1, 8, 13])
+      stubLineRects([{ top: 300, bottom: 320, left: 140, width: 90, height: 20 }])
+      stubRect(paragraph.closest('.reader-scroll') as Element, {
+        top: 150,
+        left: 60,
+        bottom: 650,
+        right: 760,
+        width: 700,
+        height: 500,
+      })
+
+      tap(paragraph, 20, 120)
+      tap(paragraph, 80, 120)
+      tap(paragraph, 140, 120)
+
+      fireEvent.click(await screen.findByRole('button', { name: 'Add to vocab' }))
+      await waitFor(() =>
+        expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('existait')
+      )
+    } finally {
+      restore()
+    }
+  })
+
+  it('ignores a touch that moves far enough to be a scroll', async () => {
+    const restore = makeCoarsePointer()
+    try {
+      stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+      renderDialog()
+
+      const paragraph = await screen.findByText('Le fantôme existait.')
+      stubCaretAt(paragraph.firstChild as Node, [3])
+      fireEvent.touchStart(paragraph, {
+        touches: [{ clientX: 20, clientY: 120 }],
+        changedTouches: [{ clientX: 20, clientY: 120 }],
+      })
+      fireEvent.touchEnd(paragraph, {
+        touches: [{ clientX: 20, clientY: 180 }],
+        changedTouches: [{ clientX: 20, clientY: 180 }],
+      })
+
+      expect(screen.queryByRole('button', { name: 'Add to vocab' })).toBeNull()
+    } finally {
+      restore()
+    }
+  })
+
+  it('clears the touch selection when the reader scrolls or the page changes', async () => {
+    const restore = makeCoarsePointer()
+    try {
+      stubFetch({ ok: true, text: async () => MULTI_CHAPTER_TEXT })
+      renderDialog()
+
+      const paragraph = await screen.findByText('Le fantôme existait.')
+      stubCaretAt(paragraph.firstChild as Node, [3])
+      stubLineRects([{ top: 300, bottom: 320, left: 140, width: 90, height: 20 }])
+      tap(paragraph)
+      await screen.findByRole('button', { name: 'Add to vocab' })
+
+      fireEvent.scroll(paragraph.closest('.reader-scroll') as Element)
+      await waitFor(() =>
+        expect(screen.queryByRole('button', { name: 'Add to vocab' })).toBeNull()
+      )
+
+      stubCaretAt(paragraph.firstChild as Node, [3])
+      tap(paragraph)
+      await screen.findByRole('button', { name: 'Add to vocab' })
+      fireEvent.click(screen.getByRole('button', { name: /Next/ }))
+
+      expect(await screen.findByText('On ne le croyait pas.')).toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Add to vocab' })).toBeNull()
+    } finally {
+      restore()
     }
   })
 

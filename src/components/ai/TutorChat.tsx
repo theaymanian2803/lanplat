@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Loader2, Send, Sparkles, X } from 'lucide-react'
+import { Check, Loader2, Plus, Send, Sparkles, X } from 'lucide-react'
 
 import { AutoGrowTextarea } from '@/components/ui/auto-grow-textarea'
 import { Button } from '@/components/ui/button'
@@ -9,6 +9,8 @@ interface TutorChatProps {
   context: TutorContext
   onClose?: () => void
   className?: string
+  /** Called with an assistant answer when the learner chooses to keep it. */
+  onAddToContext?: (text: string) => void
 }
 
 function suggestionsFor(context: TutorContext): string[] {
@@ -18,11 +20,12 @@ function suggestionsFor(context: TutorContext): string[] {
   return ['What should I focus on?', 'Give me a practice sentence', 'Correct my sentence']
 }
 
-const TutorChat = ({ context, onClose, className }: TutorChatProps) => {
+const TutorChat = ({ context, onClose, className, onAddToContext }: TutorChatProps) => {
   const [messages, setMessages] = useState<TutorTurn[]>([])
   const [input, setInput] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [addedAnswers, setAddedAnswers] = useState<Set<number>>(() => new Set())
   const scrollRef = useRef<HTMLDivElement>(null)
   const abortRef = useRef<AbortController | null>(null)
 
@@ -91,12 +94,30 @@ const TutorChat = ({ context, onClose, className }: TutorChatProps) => {
         {messages.map((message, index) => (
           <div
             key={index}
-            className={`max-w-[90%] whitespace-pre-wrap rounded-lg px-2.5 py-1.5 text-xs leading-relaxed ${
+            className={`max-w-[90%] rounded-lg px-2.5 py-1.5 text-xs leading-relaxed ${
               message.role === 'user'
                 ? 'ml-auto bg-primary text-primary-foreground'
                 : 'bg-muted text-foreground'
             }`}>
-            {message.content}
+            <p className="whitespace-pre-wrap">{message.content}</p>
+            {message.role === 'assistant' && onAddToContext ? (
+              <button
+                type="button"
+                aria-label="Add this answer to the context note"
+                disabled={addedAnswers.has(index)}
+                onClick={() => {
+                  onAddToContext(message.content)
+                  setAddedAnswers((prev) => new Set(prev).add(index))
+                }}
+                className="mt-1.5 flex items-center gap-1 rounded border border-border/60 px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-60">
+                {addedAnswers.has(index) ? (
+                  <Check className="h-3 w-3" />
+                ) : (
+                  <Plus className="h-3 w-3" />
+                )}
+                {addedAnswers.has(index) ? 'Added' : 'Add to context'}
+              </button>
+            ) : null}
           </div>
         ))}
         {pending ? (

@@ -124,6 +124,14 @@ const AddWordPanel = ({
     inputRef.current?.focus()
   }
 
+  const appendToContext = (text: string) => {
+    setContextNote((prev) => {
+      const trimmed = prev.trim()
+      return trimmed ? `${trimmed}\n\n${text}` : text
+    })
+    toast.success('Added to context')
+  }
+
   return (
     <aside
     className={`flex max-h-[calc(100dvh-5rem)] w-full ${widthClassName} shrink-0 flex-col overflow-hidden bg-card rounded-xl border border-primary/20 shadow-2xl p-5 animate-in fade-in ${
@@ -282,6 +290,7 @@ const AddWordPanel = ({
                 note: contextNote.trim() || undefined,
               }}
               onClose={() => setChatOpen(false)}
+              onAddToContext={appendToContext}
               className="mt-1 max-h-80"
             />
           </div>

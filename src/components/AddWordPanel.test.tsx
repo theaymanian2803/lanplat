@@ -15,6 +15,10 @@ vi.mock('@/hooks/useAutoTranslate', () => ({
 
 vi.mock('@/lib/tts', () => ({ speakWord: vi.fn().mockResolvedValue(undefined) }))
 
+vi.mock('@/lib/aiChat', () => ({
+  askTutor: vi.fn().mockResolvedValue('A long explanation.'),
+}))
+
 function renderPanel(initialWord?: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const onClose = vi.fn()
@@ -148,5 +152,21 @@ describe('AddWordPanel', () => {
     expect(screen.getByText('AI Tutor')).toBeInTheDocument()
     expect(screen.getByLabelText('Message the AI tutor')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Explain this word' })).toBeInTheDocument()
+  })
+
+  it('appends an AI answer to the existing context note', async () => {
+    renderPanel('hund')
+    fireEvent.change(screen.getByPlaceholderText('Where you encountered this word'), {
+      target: { value: 'chapter 1' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ask AI about this word' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Explain this word' }))
+    await screen.findByText('A long explanation.')
+    fireEvent.click(screen.getByRole('button', { name: 'Add this answer to the context note' }))
+
+    expect(screen.getByPlaceholderText('Where you encountered this word')).toHaveValue(
+      'chapter 1\n\nA long explanation.'
+    )
   })
 })

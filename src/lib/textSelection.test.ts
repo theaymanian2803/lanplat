@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   getFloatingButtonPosition,
+  getLineStartButtonPosition,
   getWordAtOffset,
   getWordRangeAtPoint,
   isDoubleTap,
+  mergeWordRanges,
 } from '@/lib/textSelection'
 
 describe('getWordAtOffset', () => {
@@ -77,6 +79,89 @@ describe('getFloatingButtonPosition', () => {
     expect(
       getFloatingButtonPosition({ top: 100, bottom: 120, left: 0, width: 10 }, 300).left,
     ).toBe(8)
+  })
+})
+
+describe('mergeWordRanges', () => {
+  const setup = (text: string) => {
+    const container = document.createElement('div')
+    container.textContent = text
+    document.body.appendChild(container)
+    return container
+  }
+
+  const rangeFor = (node: Node, start: number, end: number) => {
+    const range = document.createRange()
+    range.setStart(node, start)
+    range.setEnd(node, end)
+    return range
+  }
+
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('covers both words in document order', () => {
+    const container = setup('Hunden løber hurtigt')
+    const node = container.firstChild as Text
+    const merged = mergeWordRanges(rangeFor(node, 0, 6), rangeFor(node, 7, 12))
+
+    expect(merged.toString()).toBe('Hunden løber')
+  })
+
+  it('works when the second word comes before the anchor', () => {
+    const container = setup('Hunden løber hurtigt')
+    const node = container.firstChild as Text
+    const merged = mergeWordRanges(rangeFor(node, 7, 12), rangeFor(node, 0, 6))
+
+    expect(merged.toString()).toBe('Hunden løber')
+  })
+
+  it('merges words that live in different paragraphs', () => {
+    const container = document.createElement('div')
+    const first = document.createElement('p')
+    first.textContent = 'Le fantôme'
+    const second = document.createElement('p')
+    second.textContent = 'existait ici'
+    container.append(first, second)
+    document.body.appendChild(container)
+
+    const merged = mergeWordRanges(
+      rangeFor(first.firstChild as Text, 0, 2),
+      rangeFor(second.firstChild as Text, 0, 8),
+    )
+
+    expect(merged.toString()).toContain('Le fantôme')
+    expect(merged.toString()).toContain('existait')
+  })
+})
+
+describe('getLineStartButtonPosition', () => {
+  const bounds = { top: 100, left: 50, width: 700, height: 400 }
+
+  it('sits below the last line and aligns to the first line start', () => {
+    const rects = [
+      { top: 150, bottom: 170, left: 120 },
+      { top: 180, bottom: 200, left: 90 },
+    ]
+
+    expect(getLineStartButtonPosition(rects, bounds)).toEqual({ top: 208, left: 120 })
+  })
+
+  it('moves above the first line when there is no room below', () => {
+    const rects = [{ top: 460, bottom: 480, left: 120 }]
+
+    expect(getLineStartButtonPosition(rects, bounds)).toEqual({ top: 416, left: 120 })
+  })
+
+  it('clamps the button inside the reader band', () => {
+    const rects = [{ top: 150, bottom: 170, left: 5 }]
+
+    expect(getLineStartButtonPosition(rects, bounds)).toEqual({ top: 178, left: 58 })
+  })
+
+  it('falls back to the top-left corner when there are no line rects', () => {
+    expect(getLineStartButtonPosition([], bounds)).toEqual({ top: 108, left: 58 })
   })
 })
 

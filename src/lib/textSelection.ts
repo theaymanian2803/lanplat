@@ -50,6 +50,51 @@ export function getFloatingButtonPosition(
   return { top, left }
 }
 
+export interface LineRect {
+  top: number
+  bottom: number
+  left: number
+}
+
+export interface Band {
+  top: number
+  left: number
+  width: number
+  height: number
+}
+
+export function mergeWordRanges(anchor: Range, other: Range): Range {
+  const doc = anchor.startContainer.ownerDocument ?? other.startContainer.ownerDocument
+  const merged = doc.createRange()
+  const anchorFirst = anchor.compareBoundaryPoints(Range.START_TO_START, other) <= 0
+  const start = anchorFirst ? anchor : other
+  const end = anchorFirst ? other : anchor
+  merged.setStart(start.startContainer, start.startOffset)
+  merged.setEnd(end.endContainer, end.endOffset)
+  return merged
+}
+
+export function getLineStartButtonPosition(
+  rects: LineRect[],
+  bounds: Band,
+  size = { width: 128, height: 36 },
+): { top: number; left: number } {
+  const padding = 8
+  const minLeft = bounds.left + padding
+  const maxLeft = Math.max(minLeft, bounds.left + bounds.width - size.width - padding)
+  if (rects.length === 0) return { top: bounds.top + padding, left: minLeft }
+
+  const first = rects[0]
+  const last = rects[rects.length - 1]
+  const left = Math.min(Math.max(first.left, minLeft), maxLeft)
+  const below = last.bottom + padding
+  const above = first.top - size.height - padding
+  const maxTop = Math.max(bounds.top + padding, bounds.top + bounds.height - size.height - padding)
+  const top = below + size.height <= bounds.top + bounds.height - padding ? below : above
+
+  return { top: Math.min(Math.max(top, bounds.top + padding), maxTop), left }
+}
+
 type CaretDocument = Document & {
   caretRangeFromPoint?: (x: number, y: number) => Range | null
   caretPositionFromPoint?: (x: number, y: number) => { offsetNode: Node; offset: number } | null

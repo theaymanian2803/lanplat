@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import {
   getFloatingButtonPosition,
   getLineStartButtonPosition,
+  getRangeText,
   getWordAtOffset,
   getWordRangeAtPoint,
   isDoubleTap,
@@ -131,8 +132,39 @@ describe('mergeWordRanges', () => {
       rangeFor(second.firstChild as Text, 0, 8),
     )
 
-    expect(merged.toString()).toContain('Le fantôme')
-    expect(merged.toString()).toContain('existait')
+    expect(getRangeText(merged)).toBe('Le fantôme existait')
+  })
+})
+
+describe('getRangeText', () => {
+  afterEach(() => {
+    document.body.innerHTML = ''
+  })
+
+  it('returns the exact phrase inside one line', () => {
+    const container = document.createElement('p')
+    container.textContent = 'Hunden løber hurtigt'
+    document.body.appendChild(container)
+    const range = document.createRange()
+    range.setStart(container.firstChild as Text, 0)
+    range.setEnd(container.firstChild as Text, 12)
+
+    expect(getRangeText(range)).toBe('Hunden løber')
+  })
+
+  it('adds a separator between sibling paragraphs', () => {
+    const container = document.createElement('div')
+    const first = document.createElement('p')
+    first.textContent = 'Le fantôme'
+    const second = document.createElement('p')
+    second.textContent = 'existait ici'
+    container.append(first, second)
+    document.body.appendChild(container)
+    const range = document.createRange()
+    range.setStart(first.firstChild as Text, 0)
+    range.setEnd(second.firstChild as Text, 8)
+
+    expect(getRangeText(range)).toBe('Le fantôme existait')
   })
 })
 

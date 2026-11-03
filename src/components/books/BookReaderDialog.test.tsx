@@ -26,6 +26,9 @@ const SAMPLE_TEXT =
 const MULTI_CHAPTER_TEXT =
   '*** START OF THE PROJECT GUTENBERG EBOOK ***\n\nCHAPITRE PREMIER\n\nLe fantôme existait.\n\nCHAPITRE II\n\nOn ne le croyait pas.\n\n*** END OF THE PROJECT GUTENBERG EBOOK ***'
 
+const WRAPPED_TEXT =
+  '*** START OF THE PROJECT GUTENBERG EBOOK ***\n\nLe fantôme\n\nexistait ici.\n\n*** END OF THE PROJECT GUTENBERG EBOOK ***'
+
 function stubFetch(value: unknown) {
   const fn = vi.fn().mockResolvedValue(value)
   vi.stubGlobal('fetch', fn)
@@ -96,6 +99,20 @@ const stubCaretAt = (node: Node, offsets: number[]) => {
   })
 }
 
+const stubCaretSequence = (items: Array<{ node: Node; offset: number }>) => {
+  let call = 0
+  Object.defineProperty(document, 'caretRangeFromPoint', {
+    configurable: true,
+    value: () => {
+      const item = items[Math.min(call++, items.length - 1)]
+      const range = document.createRange()
+      range.setStart(item.node, item.offset)
+      range.collapse(true)
+      return range
+    },
+  })
+}
+
 const stubLineRects = (
   rects: Array<{ top: number; bottom: number; left: number; width: number; height: number }>
 ) => {
@@ -105,7 +122,7 @@ const stubLineRects = (
   })
 }
 
-const tap = (target: Element, x = 20, y = 120) => {
+const tap = (target: Element, x = 150, y = 310) => {
   const point = { clientX: x, clientY: y, identifier: 1 }
   fireEvent.touchStart(target, { touches: [point], changedTouches: [point] })
   fireEvent.touchEnd(target, { touches: [point], changedTouches: [point] })
@@ -297,8 +314,8 @@ describe('BookReaderDialog', () => {
         height: 500,
       })
 
-      tap(paragraph, 20, 120)
-      tap(paragraph, 80, 120)
+      tap(paragraph, 150, 310)
+      tap(paragraph, 170, 310)
 
       fireEvent.click(await screen.findByRole('button', { name: 'Add to vocab' }))
       await waitFor(() =>
@@ -327,9 +344,9 @@ describe('BookReaderDialog', () => {
         height: 500,
       })
 
-      tap(paragraph, 20, 120)
-      tap(paragraph, 80, 120)
-      tap(paragraph, 140, 120)
+      tap(paragraph, 150, 310)
+      tap(paragraph, 170, 310)
+      tap(paragraph, 190, 310)
 
       fireEvent.click(await screen.findByRole('button', { name: 'Add to vocab' }))
       await waitFor(() =>
@@ -349,15 +366,75 @@ describe('BookReaderDialog', () => {
       const paragraph = await screen.findByText('Le fantôme existait.')
       stubCaretAt(paragraph.firstChild as Node, [3])
       fireEvent.touchStart(paragraph, {
-        touches: [{ clientX: 20, clientY: 120 }],
-        changedTouches: [{ clientX: 20, clientY: 120 }],
+        touches: [{ clientX: 150, clientY: 310 }],
+        changedTouches: [{ clientX: 150, clientY: 310 }],
       })
       fireEvent.touchEnd(paragraph, {
-        touches: [{ clientX: 20, clientY: 180 }],
-        changedTouches: [{ clientX: 20, clientY: 180 }],
+        touches: [{ clientX: 150, clientY: 370 }],
+        changedTouches: [{ clientX: 150, clientY: 370 }],
       })
 
       expect(screen.queryByRole('button', { name: 'Add to vocab' })).toBeNull()
+    } finally {
+      restore()
+    }
+  })
+
+  it('does not select a word when the tap lands in the reader padding', async () => {
+    const restore = makeCoarsePointer()
+    try {
+      stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+      renderDialog()
+
+      const paragraph = await screen.findByText('Le fantôme existait.')
+      stubCaretAt(paragraph.firstChild as Node, [3])
+      stubLineRects([{ top: 300, bottom: 320, left: 140, width: 90, height: 20 }])
+
+      tap(paragraph, 20, 120)
+
+      expect(screen.queryByRole('button', { name: 'Add to vocab' })).toBeNull()
+    } finally {
+      restore()
+    }
+  })
+
+  it('keeps a space when a phrase spans two rendered lines', async () => {
+    const restore = makeCoarsePointer()
+    try {
+      stubFetch({ ok: true, text: async () => WRAPPED_TEXT })
+      renderDialog()
+
+      const first = await screen.findByText('Le fantôme')
+      const second = await screen.findByText('existait ici.')
+      stubCaretSequence([
+        { node: first.firstChild as Node, offset: 1 },
+        { node: second.firstChild as Node, offset: 3 },
+      ])
+      stubLineRects([{ top: 300, bottom: 320, left: 140, width: 90, height: 20 }])
+      stubRect(screen.getByRole('dialog'), {
+        top: 100,
+        left: 50,
+        bottom: 700,
+        right: 850,
+        width: 800,
+        height: 600,
+      })
+      stubRect(first.closest('.reader-scroll') as Element, {
+        top: 150,
+        left: 60,
+        bottom: 650,
+        right: 760,
+        width: 700,
+        height: 500,
+      })
+
+      tap(first, 150, 310)
+      tap(second, 170, 310)
+
+      fireEvent.click(await screen.findByRole('button', { name: 'Add to vocab' }))
+      await waitFor(() =>
+        expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('le fantôme existait')
+      )
     } finally {
       restore()
     }

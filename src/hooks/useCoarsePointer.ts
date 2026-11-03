@@ -4,12 +4,12 @@ const COARSE_POINTER_QUERY = '(pointer: coarse)'
 
 function detectCoarsePointer(): boolean {
   if (typeof window === 'undefined') return false
-  try {
-    if (typeof window.matchMedia === 'function' && window.matchMedia(COARSE_POINTER_QUERY).matches) {
-      return true
+  if (typeof window.matchMedia === 'function') {
+    try {
+      return window.matchMedia(COARSE_POINTER_QUERY).matches
+    } catch {
+      // Some embedded webviews throw on unsupported media features; fall back below.
     }
-  } catch {
-    // Some embedded webviews throw on unsupported media features.
   }
   return typeof navigator !== 'undefined' && (navigator.maxTouchPoints ?? 0) > 0
 }

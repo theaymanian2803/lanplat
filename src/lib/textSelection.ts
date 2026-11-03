@@ -11,6 +11,45 @@ export interface WordBounds {
 
 const WORD_CHAR = /[\p{L}\p{N}'\u2019-]/u
 
+const BLOCK_SELECTOR = 'p, div, li, h1, h2, h3, h4, h5, h6, blockquote, section, article'
+
+function textNodesInRange(range: Range): Text[] {
+  const root = range.commonAncestorContainer
+  const walkRoot = root.nodeType === Node.TEXT_NODE ? root.parentNode : root
+  if (!walkRoot) return []
+  const walker = walkRoot.ownerDocument?.createTreeWalker(walkRoot, NodeFilter.SHOW_TEXT)
+  if (!walker) return []
+  const nodes: Text[] = []
+  let node = walker.nextNode()
+  while (node) {
+    if (range.intersectsNode(node)) nodes.push(node as Text)
+    node = walker.nextNode()
+  }
+  return nodes
+}
+
+/**
+ * Range.toString() concatenates sibling block elements without separators, and the
+ * reader renders every source line as its own <p>. Join text across block boundaries
+ * with a space so a phrase spanning two lines does not become one glued word.
+ */
+export function getRangeText(range: Range): string {
+  const nodes = textNodesInRange(range)
+  if (nodes.length === 0) return ''
+  let result = ''
+  let previousBlock: Element | null = null
+  for (const node of nodes) {
+    const start = node === range.startContainer ? range.startOffset : 0
+    const end = node === range.endContainer ? range.endOffset : node.length
+    if (end <= start) continue
+    const block = node.parentElement?.closest(BLOCK_SELECTOR) ?? null
+    if (result && block !== previousBlock) result += ' '
+    result += node.textContent?.slice(start, end) ?? ''
+    previousBlock = block
+  }
+  return result.replace(/\s+/g, ' ').trim()
+}
+
 export function getWordAtOffset(text: string, offset: number): WordBounds | null {
   if (!text) return null
   const clamped = Math.max(0, Math.min(offset, text.length))

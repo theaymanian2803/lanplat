@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AddWordPanel from '@/components/AddWordPanel'
+import { askTutor } from '@/lib/aiChat'
 import { vocabularyDb } from '@/integrations/turso/db'
 
 vi.mock('@/integrations/turso/db', () => ({
@@ -167,6 +168,32 @@ describe('AddWordPanel', () => {
 
     expect(screen.getByPlaceholderText('Where you encountered this word')).toHaveValue(
       'chapter 1\n\nA long explanation.'
+    )
+  })
+
+  it('appends a second AI answer with one blank line between them', async () => {
+    vi.mocked(askTutor)
+      .mockResolvedValueOnce('First answer.')
+      .mockResolvedValueOnce('Second answer.')
+    renderPanel('hund')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ask AI about this word' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Explain this word' }))
+    await screen.findByText('First answer.')
+    fireEvent.click(screen.getByRole('button', { name: 'Add this answer to the context note' }))
+
+    const input = screen.getByLabelText('Message the AI tutor')
+    fireEvent.change(input, { target: { value: 'Another question' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    await screen.findByText('Second answer.')
+
+    const addButtons = screen.getAllByRole('button', {
+      name: 'Add this answer to the context note',
+    })
+    fireEvent.click(addButtons[addButtons.length - 1])
+
+    expect(screen.getByPlaceholderText('Where you encountered this word')).toHaveValue(
+      'First answer.\n\nSecond answer.'
     )
   })
 })

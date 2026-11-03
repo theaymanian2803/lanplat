@@ -126,8 +126,8 @@ const AddWordPanel = ({
 
   const appendToContext = (text: string) => {
     setContextNote((prev) => {
-      const trimmed = prev.trim()
-      return trimmed ? `${trimmed}\n\n${text}` : text
+      if (!prev.trim()) return text
+      return `${prev.replace(/\s+$/, '')}\n\n${text}`
     })
     toast.success('Added to context')
   }

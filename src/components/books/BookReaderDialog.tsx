@@ -14,6 +14,7 @@ import { extractBookBody, fetchBookText, isChapterHeading, splitIntoChapters } f
 import {
   getFloatingButtonPosition,
   getLineStartButtonPosition,
+  getRangeText,
   getWordRangeAtPoint,
   mergeWordRanges,
 } from '@/lib/textSelection'
@@ -228,6 +229,24 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
         return
       }
 
+      // caretRangeFromPoint snaps to the nearest text, so a tap in the padding or
+      // a gutter would otherwise select a word the learner never touched.
+      const wordRects =
+        typeof word.range.getClientRects === 'function'
+          ? Array.from(word.range.getClientRects())
+          : []
+      const wordRect = wordRects.find((r) => r.width > 0 && r.height > 0)
+      const box = wordRect ?? word.range.getBoundingClientRect()
+      const insideWord =
+        touch.clientX >= box.left - 2 &&
+        touch.clientX <= box.left + box.width + 2 &&
+        touch.clientY >= box.top - 2 &&
+        touch.clientY <= box.top + box.height + 2
+      if (!insideWord) {
+        setTouchSelection(null)
+        return
+      }
+
       let nextRange: Range
       let isPhrase = false
       if (!touchSelection || touchSelection.isPhrase) {
@@ -237,7 +256,7 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
         isPhrase = true
       }
 
-      const text = nextRange.toString().replace(/\s+/g, ' ').trim()
+      const text = getRangeText(nextRange)
       if (!text) {
         setTouchSelection(null)
         return
@@ -269,12 +288,16 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
         })
       }
 
-      const pill = getLineStartButtonPosition(rects, {
-        top: containerRect.top - contentRect.top,
-        left: containerRect.left - contentRect.left,
-        width: containerRect.width,
-        height: containerRect.height,
-      })
+      const pill = getLineStartButtonPosition(
+        rects,
+        {
+          top: containerRect.top - contentRect.top,
+          left: containerRect.left - contentRect.left,
+          width: containerRect.width,
+          height: containerRect.height,
+        },
+        { width: 140, height: 40 },
+      )
 
       setTouchSelection({
         text,
@@ -469,7 +492,7 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
             <div
               ref={scrollRef}
               className={`reader-scroll min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8 lg:px-10 ${
-                coarsePointer ? 'select-none [-webkit-touch-callout:none]' : ''
+                coarsePointer ? 'select-none touch-manipulation [-webkit-touch-callout:none]' : ''
               }`}
               onMouseUp={readTextSelection}
               onScroll={() => {

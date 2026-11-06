@@ -24,8 +24,10 @@ pattern for this in `api/book-text.ts`.
 3. Selecting a word (drag or double-tap) inside a cue shows a floating **Add to vocab**
    button next to the selection. Pressing it opens the existing Add Word form with the word
    in the Word field and `"<cue text>" — <timestamp>` in the Context Note.
-4. Saving the word closes the form and resumes playback only if the video was playing when the
-   cue was clicked. Closing the form without saving leaves the video paused.
+4. Saving the word keeps the form open, clears its fields and resumes playback only if the
+   video was playing when the cue was clicked. The transcript keeps following the player and
+   another word can be picked without reopening the form. Closing the form leaves the video
+   paused.
 5. Captions come from a self-hosted Vercel proxy (no vendor, no API key). Failures degrade to
    an inline message with Retry; the rest of the Study Room is unaffected.
 6. Text-mode items, books, notes, screenshots and the width controls are unchanged.
@@ -131,7 +133,8 @@ cached. A stale cache version is discarded by the existing `CACHE_VERSION` mecha
 
 - `pauseForCapture()` — records whether the player was playing, then pauses.
 - `pauseAtForCapture(seconds)` — same, then seeks.
-- `handleWordSaved()` — closes the panel and resumes when `wasPlayingRef` is set.
+- `handleWordSaved()` — keeps the panel open, bumps `savedToken` so the transcript drops its
+  frozen cue, and resumes when `wasPlayingRef` is set.
 
 `wasPlayingRef` clears whenever the player reports playing, and when the form closes without a
 save, so a later manual pause cannot trigger an unexpected resume.

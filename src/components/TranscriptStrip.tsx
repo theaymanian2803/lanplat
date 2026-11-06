@@ -35,6 +35,8 @@ interface TranscriptStripProps {
   language: string
   playerRef: React.MutableRefObject<YouTubePlayer | null>
   captureOpen: boolean
+  /** Increments after a word is saved so the strip resumes following the player. */
+  savedToken?: number
   onPause: () => void
   onSeekPause: (seconds: number) => void
   onWord: (word: string, context: string) => void
@@ -46,6 +48,7 @@ const TranscriptStrip = ({
   language,
   playerRef,
   captureOpen,
+  savedToken = 0,
   onPause,
   onSeekPause,
   onWord,
@@ -80,7 +83,9 @@ const TranscriptStrip = ({
   const [seconds, setSeconds] = useState(0)
 
   useEffect(() => {
-    if (!enabled || captureOpen) return
+    // Keep ticking even while the vocab form is open; the form now stays open
+    // after a save, so pausing the tick here would leave the strip stuck.
+    if (!enabled) return
     const tick = () => {
       const value = playerRef.current?.getCurrentTime?.()
       if (typeof value === 'number') setSeconds(value)
@@ -88,7 +93,7 @@ const TranscriptStrip = ({
     tick()
     const id = window.setInterval(tick, 250)
     return () => window.clearInterval(id)
-  }, [captureOpen, enabled, playerRef])
+  }, [enabled, playerRef])
 
   const activeIndex = useMemo(() => findActiveCueIndex(cues, seconds), [cues, seconds])
 
@@ -149,8 +154,17 @@ const TranscriptStrip = ({
     }
   }, [])
 
+  // A saved word ends the capture for that cue. Slacken the frozen highlight so
+  // the strip follows the player again while the form stays open.
+  useEffect(() => {
+    if (!savedToken) return
+    setFrozen(null)
+    setPendingSelection(null)
+    setFollow(true)
+    clearSelectionTimer()
+  }, [clearSelectionTimer, savedToken])
+
   const readSelection = useCallback(() => {
-    if (captureOpen) return
     const list = listRef.current
     if (!list) return
     const selection = window.getSelection()
@@ -188,7 +202,7 @@ const TranscriptStrip = ({
       )
       setPendingSelection({ word, context, top, left })
     }, 300)
-  }, [captureOpen, clearSelectionTimer, cueIndexFor, cues, onPause])
+  }, [clearSelectionTimer, cueIndexFor, cues, onPause])
 
   useEffect(() => () => clearSelectionTimer(), [clearSelectionTimer])
 
@@ -231,7 +245,6 @@ const TranscriptStrip = ({
 
   const handleCueClick = useCallback(
     (index: number) => {
-      if (captureOpen) return
       const selection = window.getSelection()
       if (selection && !selection.isCollapsed && selection.toString().trim()) return
       const cue = cues[index]
@@ -239,7 +252,7 @@ const TranscriptStrip = ({
       onSeekPause(cue.start)
       setFrozen(index)
     },
-    [captureOpen, cues, onSeekPause],
+    [cues, onSeekPause],
   )
 
   const handleTouchStart = useCallback((event: React.TouchEvent<HTMLDivElement>) => {
@@ -249,7 +262,6 @@ const TranscriptStrip = ({
 
   const handleTouchEnd = useCallback(
     (event: React.TouchEvent<HTMLDivElement>) => {
-      if (captureOpen) return
       const list = listRef.current
       const start = touchStartRef.current
       touchStartRef.current = null
@@ -279,7 +291,7 @@ const TranscriptStrip = ({
       )
       setPendingSelection({ word: word.text, context: cueContext(cue), top, left })
     },
-    [captureOpen, cueIndexFor, cues, onPause],
+    [cueIndexFor, cues, onPause],
   )
 
   const rows = useMemo(

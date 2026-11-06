@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import TranscriptStrip from '@/components/TranscriptStrip'
@@ -29,17 +29,25 @@ const payload: TranscriptPayload = {
   cues: [{ start: 0, dur: 1.5, text: 'hej verden' }],
 }
 
-function renderStrip(videoId = 'abcdefghijk') {
+interface StripOptions {
+  captureOpen?: boolean
+  savedToken?: number
+  playerRef?: React.MutableRefObject<YouTubePlayer | null>
+}
+
+function renderStrip(videoId = 'abcdefghijk', options: StripOptions = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  const playerRef = { current: null } as React.MutableRefObject<YouTubePlayer | null>
+  const playerRef =
+    options.playerRef ?? ({ current: null } as React.MutableRefObject<YouTubePlayer | null>)
   const onWord = vi.fn()
-  const tree = (id: string) => (
+  const tree = (id: string, next: StripOptions = {}) => (
     <QueryClientProvider client={client}>
       <TranscriptStrip
         videoId={id}
         language="Danish"
         playerRef={playerRef}
-        captureOpen={false}
+        captureOpen={next.captureOpen ?? options.captureOpen ?? false}
+        savedToken={next.savedToken ?? options.savedToken ?? 0}
         onPause={vi.fn()}
         onSeekPause={vi.fn()}
         onWord={onWord}
@@ -48,7 +56,28 @@ function renderStrip(videoId = 'abcdefghijk') {
     </QueryClientProvider>
   )
   const view = render(tree(videoId))
-  return { ...view, onWord, showVideo: (id: string) => view.rerender(tree(id)) }
+  return {
+    ...view,
+    onWord,
+    showVideo: (id: string, next?: StripOptions) => view.rerender(tree(id, next)),
+    showOptions: (next: StripOptions) => view.rerender(tree(videoId, next)),
+  }
+}
+
+function mockTouchWord(cueText: HTMLElement, word = 'hej') {
+  vi.mocked(getWordRangeAtPoint).mockReturnValue({
+    text: word,
+    range: {
+      startContainer: cueText.firstChild as Text,
+      getBoundingClientRect: () => ({
+        top: 20,
+        bottom: 40,
+        left: 20,
+        width: 60,
+        height: 20,
+      }),
+    } as unknown as Range,
+  })
 }
 
 describe('TranscriptStrip', () => {
@@ -97,20 +126,7 @@ describe('TranscriptStrip', () => {
     const { onWord } = renderStrip()
     fireEvent.click(screen.getByRole('switch'))
     const cueText = await screen.findByText('hej verden')
-
-    vi.mocked(getWordRangeAtPoint).mockReturnValue({
-      text: 'hej',
-      range: {
-        startContainer: cueText.firstChild as Text,
-        getBoundingClientRect: () => ({
-          top: 20,
-          bottom: 40,
-          left: 20,
-          width: 60,
-          height: 20,
-        }),
-      } as unknown as Range,
-    })
+    mockTouchWord(cueText)
     const list = cueText.closest('[data-cue-index]')?.parentElement as HTMLElement
     const tap = () => {
       fireEvent.touchStart(list, { touches: [{ clientX: 30, clientY: 30 }] })
@@ -123,5 +139,41 @@ describe('TranscriptStrip', () => {
     expect(onWord).not.toHaveBeenCalled()
     fireEvent.click(await screen.findByRole('button', { name: /add to vocab/i }))
     expect(onWord).toHaveBeenCalledWith('hej', expect.stringContaining('hej verden'))
+  })
+
+  it('keeps following the player while the vocab form is open', async () => {
+    vi.mocked(loadTranscript).mockResolvedValue({
+      ...payload,
+      cues: [
+        { start: 0, dur: 1, text: 'første' },
+        { start: 5, dur: 1, text: 'anden' },
+      ],
+    })
+    const playerRef = {
+      current: { getCurrentTime: () => 6 } as unknown as YouTubePlayer,
+    }
+    renderStrip('abcdefghijk', { captureOpen: true, playerRef })
+    fireEvent.click(screen.getByRole('switch'))
+    const second = (await screen.findByText('anden')).closest('[data-cue-index]')
+
+    await waitFor(() => expect(second).toHaveAttribute('aria-current', 'true'))
+  })
+
+  it('can select another word while the form is open', async () => {
+    const { onWord } = renderStrip('abcdefghijk', { captureOpen: true })
+    fireEvent.click(screen.getByRole('switch'))
+    const cueText = await screen.findByText('hej verden')
+    mockTouchWord(cueText, 'verden')
+    const list = cueText.closest('[data-cue-index]')?.parentElement as HTMLElement
+    const tap = () => {
+      fireEvent.touchStart(list, { touches: [{ clientX: 30, clientY: 30 }] })
+      fireEvent.touchEnd(list, { changedTouches: [{ clientX: 30, clientY: 30 }] })
+    }
+
+    tap()
+    tap()
+
+    fireEvent.click(await screen.findByRole('button', { name: /add to vocab/i }))
+    expect(onWord).toHaveBeenCalledWith('verden', expect.stringContaining('hej verden'))
   })
 })

@@ -43,6 +43,7 @@ const StudyRoom = () => {
 
   const [addWordOpen, setAddWordOpen] = useState(false)
   const [addWordSession, setAddWordSession] = useState(0)
+  const [wordSavedToken, setWordSavedToken] = useState(0)
   const [pendingWord, setPendingWord] = useState('')
   const [pendingContext, setPendingContext] = useState('')
   const wasPlayingRef = useRef(false)
@@ -368,9 +369,12 @@ const StudyRoom = () => {
     wasPlayingRef.current = false
   }, [])
 
+  // Saving keeps the form open so several words can be added in one pass. The
+  // panel clears its own fields; here we only end the transcript capture and
+  // resume playback when it was running before the word was picked.
   const handleWordSaved = useCallback(() => {
-    setAddWordOpen(false)
     setTextSelection(null)
+    setWordSavedToken((token) => token + 1)
     if (wasPlayingRef.current) {
       wasPlayingRef.current = false
       playerRef.current?.playVideo?.()
@@ -907,6 +911,7 @@ const StudyRoom = () => {
               language={video.language}
               playerRef={playerRef}
               captureOpen={addWordOpen}
+              savedToken={wordSavedToken}
               onPause={pauseForCapture}
               onSeekPause={pauseAtForCapture}
               onWord={captureWordFromTranscript}

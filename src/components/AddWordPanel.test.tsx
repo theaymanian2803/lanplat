@@ -23,18 +23,25 @@ vi.mock('@/lib/aiChat', () => ({
 function renderPanel(initialWord?: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const onClose = vi.fn()
+  const onSaved = vi.fn()
   const tree = (word?: string) => (
     <QueryClientProvider client={client}>
-      <AddWordPanel defaultLanguage="Danish" onClose={onClose} initialWord={word} />
+      <AddWordPanel
+        defaultLanguage="Danish"
+        onClose={onClose}
+        onSaved={onSaved}
+        initialWord={word}
+      />
     </QueryClientProvider>
   )
   const view = render(tree(initialWord))
-  return { ...view, onClose, showWord: (word?: string) => view.rerender(tree(word)) }
+  return { ...view, onClose, onSaved, showWord: (word?: string) => view.rerender(tree(word)) }
 }
 
 describe('AddWordPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(vocabularyDb.insert).mockResolvedValue(undefined)
   })
 
   it('replaces the previous word when a new word is selected', () => {
@@ -98,6 +105,22 @@ describe('AddWordPanel', () => {
     fireEvent.keyDown(wordInput, { key: 'Enter' })
 
     await waitFor(() => expect(insert).toHaveBeenCalledTimes(1))
+  })
+
+  it('clears its fields after saving and stays open for the next word', async () => {
+    const { onSaved } = renderPanel('hund')
+    fireEvent.change(screen.getByPlaceholderText('e.g. dog'), { target: { value: 'dog' } })
+    fireEvent.change(screen.getByPlaceholderText('Where you encountered this word'), {
+      target: { value: 'chapter 1' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Save Word' }))
+
+    await waitFor(() => expect(onSaved).toHaveBeenCalledTimes(1))
+    expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('')
+    expect(screen.getByPlaceholderText('e.g. dog')).toHaveValue('')
+    expect(screen.getByPlaceholderText('Where you encountered this word')).toHaveValue('')
+    expect(screen.getByText('Add Vocabulary Word')).toBeInTheDocument()
   })
 
   it('lowercases the word and translation as the user types', () => {

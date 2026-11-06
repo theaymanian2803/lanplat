@@ -180,7 +180,7 @@ describe('transcript function', () => {
     })
   })
 
-  it('returns 404 when neither source exposes captions', async () => {
+  it('returns 404 when YouTube confirms there are no captions', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: RequestInfo | URL) => {
@@ -266,11 +266,77 @@ describe('transcript function', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
-  it('uses Supadata when configured', async () => {
+  const youtubeBlocked = (input: RequestInfo | URL) => {
+    const url = new URL(String(input))
+    if (url.pathname === '/youtubei/v1/player') {
+      return json({
+        playabilityStatus: {
+          status: 'LOGIN_REQUIRED',
+          reason: "Sign in to confirm you're not a bot",
+        },
+      })
+    }
+    if (url.pathname === '/watch') return new Response('<html></html>')
+    return null
+  }
+
+  const supadataCalled = (input: RequestInfo | URL) =>
+    new URL(String(input)).origin === 'https://api.supadata.ai'
+
+  it('uses free YouTube captions without calling Supadata', async () => {
+    vi.stubEnv('SUPADATA_API_KEY', 'test-key')
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input))
+      if (url.pathname === '/youtubei/v1/player') {
+        return json({
+          captions: {
+            playerCaptionsTracklistRenderer: {
+              captionTracks: [
+                {
+                  baseUrl: 'https://www.youtube.com/api/timedtext?v=abcdefghijk&lang=da',
+                  languageCode: 'da',
+                  kind: 'asr',
+                  name: { simpleText: 'Danish (auto)' },
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url.pathname.endsWith('/api/timedtext')) {
+        return json({ events: [{ tStartMs: 0, dDurationMs: 1500, segs: [{ utf8: 'hej' }] }] })
+      }
+      return new Response('', { status: 404 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await call('?videoId=abcdefghijk&lang=da')
+    expect(res.status).toBe(200)
+    expect(fetchMock.mock.calls.some(([input]) => supadataCalled(input))).toBe(false)
+  })
+
+  it('does not spend Supadata on a video YouTube confirms has no captions', async () => {
+    vi.stubEnv('SUPADATA_API_KEY', 'test-key')
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = new URL(String(input))
+      if (url.pathname === '/youtubei/v1/player') return json({})
+      if (url.pathname === '/watch') return new Response('<html></html>')
+      return new Response('', { status: 404 })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await call('?videoId=abcdefghijk&lang=da')
+    expect(res.status).toBe(404)
+    expect(fetchMock.mock.calls.some(([input]) => supadataCalled(input))).toBe(false)
+  })
+
+  it('falls back to Supadata when YouTube blocks the server', async () => {
     vi.stubEnv('SUPADATA_API_KEY', 'test-key')
     const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const blocked = youtubeBlocked(input)
+      if (blocked) return blocked
+
       const url = new URL(String(input))
-      expect(url.origin).toBe('https://api.supadata.ai')
       expect(url.pathname).toBe('/v1/youtube/transcript')
       expect(url.searchParams.get('videoId')).toBe('abcdefghijk')
       expect(url.searchParams.get('lang')).toBe('da')
@@ -299,16 +365,17 @@ describe('transcript function', () => {
         { code: 'en', name: 'en', generated: false },
       ],
     })
-    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
   it('treats a Supadata transcript-unavailable response as no captions', async () => {
     vi.stubEnv('SUPADATA_API_KEY', 'test-key')
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        json({ error: 'transcript-unavailable', message: 'No transcript available' }, 206)
-      )
+      vi.fn(async (input: RequestInfo | URL) => {
+        const blocked = youtubeBlocked(input)
+        if (blocked) return blocked
+        return json({ error: 'transcript-unavailable', message: 'No transcript available' }, 206)
+      })
     )
 
     const res = await call('?videoId=abcdefghijk&lang=da')

@@ -31,7 +31,13 @@ updates the custom domain.
    `VITE_TURSO_DATABASE_URL` and `VITE_TURSO_AUTH_TOKEN` (values from the local
    `.env`) for Production + Preview + Development. `.env` is gitignored, so
    without this the deployed build has no database credentials.
-3. Push once to trigger the first build, then verify `/books` works.
+3. **Add the AI tutor key** — Settings → Environment Variables →
+   `OPENROUTER_API_KEY` (the `sk-or-v1…` value from the local `.env.local`)
+   for Production + Preview. Optionally add `OPENROUTER_MODEL` (defaults to
+   `deepseek/deepseek-v3.2`). `.env.local` is gitignored, so the deployed
+   `/api/chat` function cannot see it; without this key the tutor answers
+   `503 AI chat is not configured` while it still works under `npm run dev`.
+4. Push once to trigger the first build, then verify `/books` works.
 
 ## CLI fallback (if Git integration is unavailable)
 
@@ -90,7 +96,10 @@ YouTube trusts. Set **one** of these in Vercel → Settings → Environment Vari
    SUPADATA_API_KEY=your_key_here
    ```
 
-   The function tries Supadata before calling YouTube directly.
+   The function tries the free YouTube path first and only spends a Supadata
+   request when YouTube blocks the server IP or the caption read fails. When
+   YouTube answers cleanly that the video has no captions, Supadata is not
+   called.
 
 2. **Proxy** — route the request through a residential HTTP(S) proxy:
 
@@ -128,11 +137,43 @@ server is blocked (instead of the misleading "No captions").
    `https://languageplatform.unccode.site/api/transcript?videoId=Ma8STQg_9Sg&lang=fr`.
    A working setup returns `200` with a `cues` array.
 
+## AI tutor chat (OpenRouter)
+
+The tutor in the book reader and study room calls `/api/chat`, which reads
+`OPENROUTER_API_KEY` from the server environment at request time. That key
+lives in `.env.local` locally (gitignored), so **production needs its own copy**
+in Vercel → Settings → Environment Variables (Production + Preview). Add
+`OPENROUTER_MODEL` only if you want to change the default
+`deepseek/deepseek-v3.2`.
+
+After changing env vars you must **redeploy** — existing deployments keep the
+environment they were built with.
+
+Verify without spending credit:
+
+```
+https://languageplatform.unccode.site/api/chat
+```
+
+- `{"configured":true}` — the key is visible to the function.
+- `{"configured":false}` — the variable is missing from this environment; add
+  it and redeploy.
+- HTML starting with `<!doctype html>` — the request hit the SPA rewrite, so
+  the `api/chat` function is not deployed in that build.
+
+The tutor itself then reports the upstream error (bad key, no credit, rate
+limit) instead of the generic "not configured" message.
+
 ## Gotchas
 
 - **`vercel link` overwrites `.env.local`** — Turso credentials live in `.env`
   (`VITE_TURSO_DATABASE_URL`, `VITE_TURSO_AUTH_TOKEN`), which Vite falls back
   to, so the build still bakes them. Do NOT delete `.env`.
+- **Never put test files in `api/`** — Vercel compiles every `.ts` in `api/` as a
+  serverless function (with `node16` resolution), so `api/foo.test.ts` becomes a
+  broken `/api/foo.test` endpoint and fails the function type-check on
+  extensionless imports. Keep them in `tests/api/` instead (see
+  `vitest.config.ts`).
 - **Git builds need the env vars in the dashboard** — `.env` never leaves the
   machine; without the two `VITE_TURSO_*` variables in Settings → Environment
   Variables, the deployed app loses its database.

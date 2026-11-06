@@ -1,8 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
+import { cacheClear, cacheSet } from './offlineCache'
 import {
   cueContext,
   findActiveCueIndex,
+  hasCachedTranscript,
   toCaptionCode,
   type TranscriptCue,
 } from './youtubeTranscript'
@@ -46,5 +48,24 @@ describe('cueContext', () => {
     expect(cueContext({ start: 84, dur: 2, text: 'jeg forstår det ikke' })).toBe(
       'jeg forstår det ikke — 1:24'
     )
+  })
+})
+
+describe('hasCachedTranscript', () => {
+  afterEach(() => cacheClear('transcript:abcdefghijk:da'))
+
+  it('reports whether this browser already holds the payload', () => {
+    expect(hasCachedTranscript('abcdefghijk', 'da')).toBe(false)
+
+    cacheSet('transcript:abcdefghijk:da', {
+      videoId: 'abcdefghijk',
+      languageCode: 'da',
+      isGenerated: false,
+      tracks: [],
+      cues: [{ start: 0, dur: 1, text: 'hej' }],
+    })
+
+    expect(hasCachedTranscript('abcdefghijk', 'da')).toBe(true)
+    expect(hasCachedTranscript('abcdefghijk', 'en')).toBe(false)
   })
 })

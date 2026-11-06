@@ -21,8 +21,9 @@ pattern for this in `api/book-text.ts`.
    speed / A-B control row. Speed and A-B move into a `...` popover in the strip header.
 2. Clicking a cue pauses the video and seeks to that cue. The cue stays highlighted while the
    vocabulary form is open.
-3. Selecting a word (drag or double-tap) inside a cue opens the existing Add Word form with
-   the word in the Word field and `"<cue text>" — <timestamp>` in the Context Note.
+3. Selecting a word (drag or double-tap) inside a cue shows a floating **Add to vocab**
+   button next to the selection. Pressing it opens the existing Add Word form with the word
+   in the Word field and `"<cue text>" — <timestamp>` in the Context Note.
 4. Saving the word closes the form and resumes playback only if the video was playing when the
    cue was clicked. Closing the form without saving leaves the video paused.
 5. Captions come from a self-hosted Vercel proxy (no vendor, no API key). Failures degrade to
@@ -34,6 +35,12 @@ pattern for this in `api/book-text.ts`.
 > `TRANSCRIPT_RELAY_URL`, then `SUPADATA_API_KEY`, and can route YouTube through
 > `TRANSCRIPT_PROXY_URL`; without any of these it reports `reason: "blocked"`
 > instead of pretending the video has no captions. See `DEPLOYMENT.md`.
+>
+> **Budget note (2026-11-06):** Supadata is metered, so the strip is off by
+> default and only requests a transcript when its switch is turned on. The
+> server now tries the free YouTube path before Supadata and spends a Supadata
+> request only when YouTube is blocked or its caption read fails. A clean
+> "no captions" answer from YouTube does not fall through to Supadata.
 
 ## 1. Caption pipeline
 
@@ -106,9 +113,10 @@ cached. A stale cache version is discarded by the existing `CACHE_VERSION` mecha
 - Clicking a row calls `onSeekPause(cue.start)` and freezes that row. Keyboard Enter/Space does
   the same. The freeze clears when the vocabulary form closes.
 - Drag selection is read from `selectionchange` with a 300 ms settle; touch double-tap uses
-  `getWordRangeAtPoint`. Both pause via `onPause`, freeze the containing cue, clear the
-  selection and call `onWord` directly, so the vocabulary form opens without an intermediate
-  button. The context is `cueContext(cue)`.
+  `getWordRangeAtPoint`. Both pause via `onPause`, freeze the containing cue and show a
+  floating **Add to vocab** button anchored to the selection. The native selection stays put
+  while a phrase is adjusted; pressing the button clears the selection and calls `onWord`, so
+  the vocabulary form opens only on an explicit action. The context is `cueContext(cue)`.
 - States: three skeleton lines while loading; `No captions for this video.` for an empty
   result; the error message plus a Retry button for a failed fetch.
 

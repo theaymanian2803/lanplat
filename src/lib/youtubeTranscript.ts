@@ -41,6 +41,11 @@ export function toCaptionCode(language: string): string {
 
 const cacheKey = (videoId: string, code: string) => `transcript:${videoId}:${code}`
 
+/** True when this browser already holds the payload, so loading costs no request. */
+export function hasCachedTranscript(videoId: string, code: string): boolean {
+  return cacheGet<TranscriptPayload>(cacheKey(videoId, code)) !== null
+}
+
 export async function loadTranscript(
   videoId: string,
   code: string,

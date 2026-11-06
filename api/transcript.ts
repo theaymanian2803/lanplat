@@ -530,17 +530,8 @@ async function fetchCues(baseUrl: string): Promise<TranscriptCue[]> {
   return []
 }
 
-export async function fetchTranscript(videoId: string, lang: string): Promise<TranscriptResult> {
-  if (!isVideoId(videoId)) {
-    return { ok: false, status: 400, error: 'Invalid video id', reason: 'invalid-id' }
-  }
-
-  const relay = await fetchFromRelay(videoId, lang)
-  if (relay) return relay
-
-  const supadata = await fetchFromSupadata(videoId, lang)
-  if (supadata) return supadata
-
+/** Free path: read captions straight from YouTube, with no metered provider. */
+async function fetchFromYouTube(videoId: string, lang: string): Promise<TranscriptResult> {
   const { tracks, blocked } = await loadTracks(videoId)
   if (!tracks.length) {
     if (blocked) {
@@ -548,7 +539,7 @@ export async function fetchTranscript(videoId: string, lang: string): Promise<Tr
         ok: false,
         status: 503,
         error:
-          'YouTube is blocking caption requests from this server. Set TRANSCRIPT_RELAY_URL or TRANSCRIPT_PROXY_URL.',
+          'YouTube is blocking caption requests from this server. Set SUPADATA_API_KEY, TRANSCRIPT_RELAY_URL or TRANSCRIPT_PROXY_URL.',
         reason: 'blocked',
       }
     }
@@ -577,6 +568,32 @@ export async function fetchTranscript(videoId: string, lang: string): Promise<Tr
   }
 }
 
+export async function fetchTranscript(videoId: string, lang: string): Promise<TranscriptResult> {
+  if (!isVideoId(videoId)) {
+    return { ok: false, status: 400, error: 'Invalid video id', reason: 'invalid-id' }
+  }
+
+  const relay = await fetchFromRelay(videoId, lang)
+  if (relay) return relay
+
+  const direct = await fetchFromYouTube(videoId, lang)
+  if (direct.ok === true) return direct
+
+  // Spend a metered Supadata request only when the free path was blocked or
+  // broke mid-read. A clean "no captions" answer means the video has none, so
+  // Supadata would charge for the same empty result. `=== false` narrows the
+  // union even when strictNullChecks is disabled.
+  if (
+    direct.ok === false &&
+    (direct.reason === 'blocked' || direct.reason === 'upstream')
+  ) {
+    const supadata = await fetchFromSupadata(videoId, lang)
+    if (supadata) return supadata
+  }
+
+  return direct
+}
+
 export const maxDuration = 60
 
 export default {
@@ -587,7 +604,8 @@ export default {
 
     const result = await fetchTranscript(videoId, lang)
 
-    if (!result.ok) {
+    // `=== false` narrows the union even when strictNullChecks is disabled.
+    if (result.ok === false) {
       return Response.json(
         { error: result.error, reason: result.reason },
         { status: result.status }

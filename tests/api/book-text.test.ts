@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import functionModule from './book-text'
+import functionModule from '../../api/book-text'
 
 const handler = functionModule.fetch
 

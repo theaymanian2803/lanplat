@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { buildSystemPrompt, chatWithTutor, parseTutorRequest } from './chat'
+import { buildSystemPrompt, chatWithTutor, parseTutorRequest } from '../../api/chat'
 
 const turn = (role: 'user' | 'assistant', content: string) => ({ role, content })
 

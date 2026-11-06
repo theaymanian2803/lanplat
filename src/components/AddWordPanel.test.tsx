@@ -107,6 +107,21 @@ describe('AddWordPanel', () => {
     await waitFor(() => expect(insert).toHaveBeenCalledTimes(1))
   })
 
+  it('shows the supplied video controls at the top of the form', () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <AddWordPanel
+          defaultLanguage="Danish"
+          onClose={vi.fn()}
+          videoControls={<button type="button">Play video</button>}
+        />
+      </QueryClientProvider>
+    )
+
+    expect(screen.getByRole('button', { name: 'Play video' })).toBeInTheDocument()
+  })
+
   it('clears its fields after saving and stays open for the next word', async () => {
     const { onSaved } = renderPanel('hund')
     fireEvent.change(screen.getByPlaceholderText('e.g. dog'), { target: { value: 'dog' } })

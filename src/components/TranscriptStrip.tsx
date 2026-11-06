@@ -41,6 +41,8 @@ interface TranscriptStripProps {
   onSeekPause: (seconds: number) => void
   onWord: (word: string, context: string) => void
   controls: React.ReactNode
+  /** Always-visible play / seek controls, since the native YouTube chrome is hidden. */
+  transportControls?: React.ReactNode
 }
 
 const TranscriptStrip = ({
@@ -53,6 +55,7 @@ const TranscriptStrip = ({
   onSeekPause,
   onWord,
   controls,
+  transportControls,
 }: TranscriptStripProps) => {
   const [code, setCode] = useState(() => toCaptionCode(language))
 
@@ -356,6 +359,10 @@ const TranscriptStrip = ({
               {enabled ? 'on' : cached ? 'off · cached' : 'off · 1 request'}
             </span>
           </div>
+
+          {transportControls ? (
+            <div className="flex items-center gap-1">{transportControls}</div>
+          ) : null}
 
           {data && data.tracks.length > 1 && (
             <Select value={shownCode} onValueChange={setCode}>

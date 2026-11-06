@@ -33,6 +33,7 @@ interface StripOptions {
   captureOpen?: boolean
   savedToken?: number
   playerRef?: React.MutableRefObject<YouTubePlayer | null>
+  transportControls?: React.ReactNode
 }
 
 function renderStrip(videoId = 'abcdefghijk', options: StripOptions = {}) {
@@ -52,6 +53,7 @@ function renderStrip(videoId = 'abcdefghijk', options: StripOptions = {}) {
         onSeekPause={vi.fn()}
         onWord={onWord}
         controls={<div />}
+        transportControls={next.transportControls ?? options.transportControls}
       />
     </QueryClientProvider>
   )
@@ -84,6 +86,15 @@ describe('TranscriptStrip', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(loadTranscript).mockResolvedValue(payload)
+  })
+
+  it('shows transport controls in the header even while the transcript is off', () => {
+    renderStrip('abcdefghijk', {
+      transportControls: <button type="button">Play video</button>,
+    })
+
+    expect(screen.getByRole('button', { name: 'Play video' })).toBeInTheDocument()
+    expect(screen.getByRole('switch')).not.toBeChecked()
   })
 
   it('does not request a transcript until it is switched on', async () => {

@@ -11,7 +11,7 @@ import {
 import { languagesDb, vocabularyDb } from '@/integrations/turso/db'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BookMarked, Loader2, MessageCircle, Volume2, X } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { useAutoTranslate } from '@/hooks/useAutoTranslate'
 import { speakWord } from '@/lib/tts'
@@ -31,6 +31,8 @@ interface AddWordPanelProps {
   initialWord?: string
   initialContext?: string
   onSaved?: () => void
+  /** Optional video transport row shown above the fields. */
+  videoControls?: ReactNode
   /** Tailwind width class for the panel on large screens. */
   widthClassName?: string
 }
@@ -42,6 +44,7 @@ const AddWordPanel = ({
   initialWord,
   initialContext,
   onSaved,
+  videoControls,
   widthClassName = 'lg:w-80',
 }: AddWordPanelProps) => {
   const queryClient = useQueryClient()
@@ -150,6 +153,7 @@ const AddWordPanel = ({
           <X className="h-4 w-4" />
         </Button>
       </div>
+      {videoControls ? <div className="mb-3 shrink-0">{videoControls}</div> : null}
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain pr-1">
       <div className="space-y-2">
         <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">

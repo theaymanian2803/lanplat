@@ -5,6 +5,7 @@ import Layout from '@/components/Layout'
 import NoteEditor from '@/components/NoteEditor'
 import TranscriptStrip from '@/components/TranscriptStrip'
 import VideoControls from '@/components/VideoControls'
+import VideoTransport from '@/components/VideoTransport'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NoteList, ScreenshotList } from '@/components/StudyRoomLists'
@@ -305,7 +306,9 @@ const StudyRoom = () => {
     playerRef.current = new window.YT.Player(mount, {
       videoId,
       host: 'https://www.youtube-nocookie.com',
-      playerVars: { modestbranding: 1, rel: 0, playsinline: 1 },
+      // Hide YouTube's chrome: its hover overlay dims the picture. The app
+      // supplies its own transport controls in the transcript strip and form.
+      playerVars: { controls: 0, modestbranding: 1, rel: 0, playsinline: 1 },
       onReady: () => setPlayerError(null),
       onError: (e: any) => setPlayerError(e?.data ?? -1),
       onStateChange: (e: any) => {
@@ -639,6 +642,20 @@ const StudyRoom = () => {
       </Layout>
     )
 
+  // Same transport inside the vocab form, so the learner can keep controlling
+  // the video while the panel is open.
+  const wordVideoControls = !isText ? (
+    <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-2 py-1">
+      <span className="mono-label text-muted-foreground">Video</span>
+      <VideoTransport
+        isPlaying={isPlaying}
+        onPlayPause={togglePlay}
+        onRewind={rewind}
+        onForward={skipForward}
+      />
+    </div>
+  ) : undefined
+
   return (
     <Layout>
       <div className="relative mx-auto w-full max-w-[1700px] space-y-4">
@@ -676,6 +693,7 @@ const StudyRoom = () => {
               position={panelSide}
               initialWord={pendingWord}
               initialContext={pendingContext}
+              videoControls={wordVideoControls}
             />
           )}
           {panelSide === 'left' && addLessonOpen && (
@@ -915,6 +933,14 @@ const StudyRoom = () => {
               onPause={pauseForCapture}
               onSeekPause={pauseAtForCapture}
               onWord={captureWordFromTranscript}
+              transportControls={
+                <VideoTransport
+                  isPlaying={isPlaying}
+                  onPlayPause={togglePlay}
+                  onRewind={rewind}
+                  onForward={skipForward}
+                />
+              }
               controls={
                 <VideoControls
                   playerRef={playerRef}

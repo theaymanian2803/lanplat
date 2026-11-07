@@ -10,4 +10,10 @@ export interface YouTubePlayer {
   playVideo?: () => void
   seekTo?: (seconds: number, allowSeekAhead?: boolean) => void
   setPlaybackRate?: (rate: number) => void
+  // Captions module. YouTube only exposes these after `loadModule('captions')`
+  // and fires `onApiChange` once the module (and its tracklist) is ready.
+  loadModule?: (module: string) => void
+  unloadModule?: (module: string) => void
+  getOption?: (module: string, option: string) => unknown
+  setOption?: (module: string, option: string, value: unknown) => void
 }

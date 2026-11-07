@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NoteList, ScreenshotList } from '@/components/StudyRoomLists'
 import { notesDb, screenshotsDb, videosDb } from '@/integrations/turso/db'
 import { extractVideoId } from '@/lib/youtube'
+import { applyCaptionTrack, disableCaptions, enableCaptions } from '@/lib/youtubeCaptions'
+import { toCaptionCode } from '@/lib/youtubeTranscript'
 import { compressImageToDataUrl } from '@/lib/imageCompression'
 import { TextSpeaker, splitSentences } from '@/lib/tts'
 import { getFloatingButtonPosition, getWordRangeAtPoint, isDoubleTap, type TextTap } from '@/lib/textSelection'
@@ -209,6 +211,12 @@ const StudyRoom = () => {
   const [strokeColor, setStrokeColor] = useState(DRAW_COLORS[0])
   const [isEraser, setIsEraser] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+
+  // The video's own captions are independent of the transcript strip below the
+  // player. The ref lets the player's `onApiChange` callback read the latest
+  // toggle state without rebuilding the player.
+  const [captionsOn, setCaptionsOn] = useState(false)
+  const captionsOnRef = useRef(false)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const strokesRef = useRef<Array<{ color: string; eraser: boolean; points: Array<[number, number]> }>>([])
   const drawingRef = useRef({ active: false, lastX: 0, lastY: 0 })
@@ -246,6 +254,14 @@ const StudyRoom = () => {
   const videoId = video && video.youtube_url ? extractVideoId(video.youtube_url) : null
 
   const isText = video?.media_type === 'text'
+
+  const captionCode = useMemo(() => toCaptionCode(video?.language ?? ''), [video?.language])
+
+  // A different video starts with captions off, matching the transcript strip.
+  useEffect(() => {
+    captionsOnRef.current = false
+    setCaptionsOn(false)
+  }, [videoId])
 
   // Listen-to-text mode (sentence by sentence)
   const [playingIndex, setPlayingIndex] = useState<number | null>(null)
@@ -308,15 +324,27 @@ const StudyRoom = () => {
       host: 'https://www.youtube-nocookie.com',
       // Hide YouTube's chrome: its hover overlay dims the picture. The app
       // supplies its own transport controls in the transcript strip and form.
-      playerVars: { controls: 0, modestbranding: 1, rel: 0, playsinline: 1 },
+      playerVars: {
+        controls: 0,
+        modestbranding: 1,
+        rel: 0,
+        playsinline: 1,
+        cc_load_policy: 0,
+        cc_lang_pref: captionCode,
+      },
       onReady: () => setPlayerError(null),
       onError: (e: any) => setPlayerError(e?.data ?? -1),
       onStateChange: (e: any) => {
         if (e?.data === 1) setPlayerError(null)
         setIsPlaying(e?.data === 1)
       },
+      // Fired once the captions module is loaded and its tracklist is readable.
+      onApiChange: () => {
+        if (!captionsOnRef.current) return
+        applyCaptionTrack(playerRef.current, captionCode)
+      },
     })
-  }, [apiReady, videoId, retryToken])
+  }, [apiReady, videoId, retryToken, captionCode])
 
   useEffect(() => {
     return () => {
@@ -628,6 +656,21 @@ const StudyRoom = () => {
     seekTo(Math.max(0, getCurrentPlayerTime() - 10))
   }, [getCurrentPlayerTime, seekTo])
 
+  // CC toggles the captions drawn by the YouTube iframe itself, not the
+  // transcript list below the player.
+  const toggleCaptions = useCallback(() => {
+    const player = playerRef.current
+    if (!player) return
+    const next = !captionsOnRef.current
+    if (next) {
+      if (!enableCaptions(player, captionCode)) return
+    } else {
+      disableCaptions(player)
+    }
+    captionsOnRef.current = next
+    setCaptionsOn(next)
+  }, [captionCode])
+
   // Width Controls
   const increaseOuterWidth = useCallback(
     () => setOuterWidth((w) => (w === 0 ? 80 : Math.min(98, w + 5))),
@@ -652,6 +695,8 @@ const StudyRoom = () => {
         onPlayPause={togglePlay}
         onRewind={rewind}
         onForward={skipForward}
+        captionsOn={captionsOn}
+        onToggleCaptions={toggleCaptions}
       />
     </div>
   ) : undefined
@@ -939,6 +984,8 @@ const StudyRoom = () => {
                   onPlayPause={togglePlay}
                   onRewind={rewind}
                   onForward={skipForward}
+                  captionsOn={captionsOn}
+                  onToggleCaptions={toggleCaptions}
                 />
               }
               controls={
@@ -1015,6 +1062,7 @@ const StudyRoom = () => {
             position={panelSide}
             initialWord={pendingWord}
             initialContext={pendingContext}
+            videoControls={wordVideoControls}
           />
         )}
         {panelSide === 'right' && addLessonOpen && (

@@ -31,9 +31,10 @@ pattern for this in `api/book-text.ts`.
 5. Captions come from a self-hosted Vercel proxy (no vendor, no API key). Failures degrade to
    an inline message with Retry; the rest of the Study Room is unaffected.
 6. Text-mode items, books, notes, screenshots and the width controls are unchanged.
-7. YouTube's native chrome is hidden (`controls: 0`) because its hover overlay tints the
-   picture. A compact −10 s / play-pause / +10 s row lives in the transcript header and at the
-   top of the vocab form, so playback stays controllable without the overlay.
+7. YouTube's native chrome stays on (scrubber, volume, quality, fullscreen and its own CC
+   button). The app also supplies a compact −10 s / play-pause / +10 s / CC row in the
+   transcript header and at the top of the vocab form, so playback stays controllable
+   without reaching for the iframe overlay.
 
 > **Production note (2026-10-23):** YouTube blocks caption requests from Vercel's
 > datacenter IPs ("Sign in to confirm you're not a bot"). The function prefers

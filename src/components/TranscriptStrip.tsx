@@ -41,7 +41,7 @@ interface TranscriptStripProps {
   onSeekPause: (seconds: number) => void
   onWord: (word: string, context: string) => void
   controls: React.ReactNode
-  /** Always-visible play / seek controls, since the native YouTube chrome is hidden. */
+  /** Always-visible play / seek / CC controls, alongside the native YouTube chrome. */
   transportControls?: React.ReactNode
 }
 

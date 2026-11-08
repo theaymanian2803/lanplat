@@ -11,7 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { NoteList, ScreenshotList } from '@/components/StudyRoomLists'
 import { notesDb, screenshotsDb, videosDb } from '@/integrations/turso/db'
 import { extractVideoId } from '@/lib/youtube'
-import { applyCaptionTrack, disableCaptions, enableCaptions } from '@/lib/youtubeCaptions'
+import {
+  applyCaptionTrack,
+  disableCaptions,
+  enableCaptions,
+  readActiveCaptionTrack,
+} from '@/lib/youtubeCaptions'
+import { buildPlayerVars } from '@/lib/youtubePlayer'
 import { toCaptionCode } from '@/lib/youtubeTranscript'
 import { compressImageToDataUrl } from '@/lib/imageCompression'
 import { TextSpeaker, splitSentences } from '@/lib/tts'
@@ -322,17 +328,18 @@ const StudyRoom = () => {
     playerRef.current = new window.YT.Player(mount, {
       videoId,
       host: 'https://www.youtube-nocookie.com',
-      // Hide YouTube's chrome: its hover overlay dims the picture. The app
-      // supplies its own transport controls in the transcript strip and form.
-      playerVars: {
-        controls: 0,
-        modestbranding: 1,
-        rel: 0,
-        playsinline: 1,
-        cc_load_policy: 0,
-        cc_lang_pref: captionCode,
+      // Keep YouTube's native chrome: scrubber, volume, quality, fullscreen and the
+      // CC button. The app's own transport row is an addition, not a replacement.
+      playerVars: buildPlayerVars(captionCode),
+      onReady: () => {
+        setPlayerError(null)
+        // A viewer who already enabled captions on YouTube may start with a track
+        // active, so mirror that on the in-app CC button.
+        if (readActiveCaptionTrack(playerRef.current)) {
+          captionsOnRef.current = true
+          setCaptionsOn(true)
+        }
       },
-      onReady: () => setPlayerError(null),
       onError: (e: any) => setPlayerError(e?.data ?? -1),
       onStateChange: (e: any) => {
         if (e?.data === 1) setPlayerError(null)
@@ -657,18 +664,24 @@ const StudyRoom = () => {
   }, [getCurrentPlayerTime, seekTo])
 
   // CC toggles the captions drawn by the YouTube iframe itself, not the
-  // transcript list below the player.
+  // transcript list below the player. The ref is updated before the async
+  // `onApiChange` callback runs so it can re-apply the track once ready.
   const toggleCaptions = useCallback(() => {
     const player = playerRef.current
     if (!player) return
     const next = !captionsOnRef.current
     if (next) {
-      if (!enableCaptions(player, captionCode)) return
-    } else {
-      disableCaptions(player)
+      captionsOnRef.current = true
+      setCaptionsOn(true)
+      if (!enableCaptions(player, captionCode)) {
+        captionsOnRef.current = false
+        setCaptionsOn(false)
+      }
+      return
     }
-    captionsOnRef.current = next
-    setCaptionsOn(next)
+    disableCaptions(player)
+    captionsOnRef.current = false
+    setCaptionsOn(false)
   }, [captionCode])
 
   // Width Controls

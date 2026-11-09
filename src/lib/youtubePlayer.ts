@@ -5,6 +5,7 @@ import { toCaptionCode } from '@/lib/youtubeTranscript'
  * place means the controls and the transcript strip share a typed handle instead of `any`.
  */
 export interface YouTubePlayer {
+  destroy?: () => void
   getCurrentTime?: () => number
   getPlayerState?: () => number
   getPlaybackRate?: () => number
@@ -26,6 +27,29 @@ export interface PlayerVars {
   rel: number
   playsinline: number
   cc_lang_pref?: string
+}
+
+/** The subset of the player event payload the Study Room reads. */
+export interface YouTubePlayerEvent {
+  data?: number
+}
+
+export interface YouTubePlayerOptions {
+  videoId: string
+  host?: string
+  playerVars?: PlayerVars
+  onReady?: () => void
+  onError?: (event: YouTubePlayerEvent) => void
+  onStateChange?: (event: YouTubePlayerEvent) => void
+  onApiChange?: () => void
+}
+
+/** The piece of the global `YT` namespace used to construct a player. */
+export interface YouTubeNamespace {
+  Player: new (
+    element: HTMLElement | string,
+    options: YouTubePlayerOptions,
+  ) => YouTubePlayer
 }
 
 /**

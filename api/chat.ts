@@ -20,6 +20,7 @@ export interface TutorTurn {
 export interface TutorRequest {
   messages: TutorTurn[]
   word?: string
+  translation?: string
   language?: string
   answerLanguage?: string
   note?: string
@@ -58,17 +59,24 @@ export function parseTutorRequest(body: unknown): TutorRequest | null {
   }
 
   const word = clean(raw.word, 500)
+  const translation = clean(raw.translation, 1000)
   const language = clean(raw.language, 60)
   const answerLanguage = clean(raw.answerLanguage, 60)
   const note = clean(raw.note, 2000)
   const transcript = clean(raw.transcript, 6000)
   const title = clean(raw.title, 300)
-  total += (word?.length ?? 0) + (note?.length ?? 0) + (transcript?.length ?? 0) + (title?.length ?? 0)
+  total +=
+    (word?.length ?? 0) +
+    (translation?.length ?? 0) +
+    (note?.length ?? 0) +
+    (transcript?.length ?? 0) +
+    (title?.length ?? 0)
   if (total > MAX_CONTEXT_CHARS) return null
 
   return {
     messages,
     word,
+    translation,
     language,
     answerLanguage,
     note,
@@ -90,6 +98,9 @@ export function buildSystemPrompt(input: TutorRequest): string {
   ]
   if (input.language) lines.push(`The learner is studying ${input.language}.`)
   if (input.word) lines.push(`The word or phrase in focus is: "${input.word}".`)
+  if (input.translation) {
+    lines.push(`The learner's own translation of it is: "${input.translation}".`)
+  }
   if (input.title) lines.push(`The current material is: "${input.title}".`)
   if (input.note) lines.push(`The learner's own note about it: "${input.note}".`)
   if (input.transcript) {

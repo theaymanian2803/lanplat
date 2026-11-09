@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { memo, useCallback, useState } from "react";
+import { openAiTutor } from "@/lib/aiTutor";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -19,6 +20,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Settings2,
+  Sparkles,
   Zap,
 } from "lucide-react";
 
@@ -177,6 +179,17 @@ const Navbar = ({ onOpenSettings, onSignOut, lessonsOpen, onToggleLessons }: Nav
         type="button"
         onClick={() => {
           onNavigate?.();
+          openAiTutor();
+        }}
+        className="flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-left text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+      >
+        <Sparkles className="h-4 w-4" strokeWidth={1.6} />
+        Ask AI
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          onNavigate?.();
           onOpenSettings();
         }}
         className="flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-left text-sm text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground"
@@ -205,6 +218,15 @@ const Navbar = ({ onOpenSettings, onSignOut, lessonsOpen, onToggleLessons }: Nav
           LingoVault
         </Link>
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-9 w-9 text-primary"
+            aria-label="Ask AI"
+            onClick={openAiTutor}
+          >
+            <Sparkles className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -255,7 +277,20 @@ const Navbar = ({ onOpenSettings, onSignOut, lessonsOpen, onToggleLessons }: Nav
             )}
           </Button>
         </div>
-        {collapsed ? null : (
+        {collapsed ? (
+          <div className="mt-4 flex flex-col items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-primary hover:bg-primary/10"
+              aria-label="Ask AI"
+              title="Ask AI"
+              onClick={openAiTutor}
+            >
+              <Sparkles className="h-4 w-4" strokeWidth={1.6} />
+            </Button>
+          </div>
+        ) : (
           <div className="mt-7 flex-1 overflow-y-auto">{groupsMarkup()}</div>
         )}
         {collapsed ? null : footer()}

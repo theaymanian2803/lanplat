@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
-export interface AutoGrowTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+export type AutoGrowTextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement>
 
 const AutoGrowTextarea = React.forwardRef<HTMLTextAreaElement, AutoGrowTextareaProps>(
   ({ className, onChange, ...props }, ref) => {

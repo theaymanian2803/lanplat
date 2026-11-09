@@ -6,6 +6,8 @@ export interface TutorTurn {
 export interface TutorContext {
   /** The word or phrase the conversation is about, if any. */
   word?: string
+  /** The learner's translation of the word, when the form has one. */
+  translation?: string
   /** Language the learner is studying, e.g. "French". */
   language?: string
   /** Language the tutor should answer in, e.g. "English" or "Arabic". */

@@ -1,14 +1,23 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { vocabularyDb } from "@/integrations/turso/db";
+import { languagesDb, vocabularyDb } from "@/integrations/turso/db";
 import { getLangDotClass } from "@/lib/langColors";
+import { getTargetLanguage } from "@/lib/targetLanguage";
+import { openAiTutor, useRegisterAiTutor } from "@/lib/aiTutor";
 import { computeSrs, type SrsGrade } from "@/lib/srs";
 import { openDictionary } from "@/lib/dictionary";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, RotateCcw, CheckCircle2, Eye } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { BookOpen, RotateCcw, CheckCircle2, Eye, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
@@ -25,11 +34,37 @@ const FlashcardQuiz = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [completed, setCompleted] = useState(0);
+  const [language, setLanguage] = useState(() => getTargetLanguage() ?? "all");
 
-  const { data: dueWords = [], isLoading } = useQuery({
+  const { data: dueCards = [], isLoading } = useQuery({
     queryKey: ["vocabulary-due"],
     queryFn: () => vocabularyDb.listDue(new Date().toISOString()),
   });
+
+  const { data: languages = [] } = useQuery({
+    queryKey: ["languages"],
+    queryFn: languagesDb.list,
+  });
+
+  const dueWords = useMemo(
+    () => (language === "all" ? dueCards : dueCards.filter((word) => word.language === language)),
+    [dueCards, language]
+  );
+
+  const languageOptions = useMemo(() => {
+    const options = new Set<string>(languages);
+    const stored = getTargetLanguage();
+    if (stored) options.add(stored);
+    dueCards.forEach((word) => options.add(word.language));
+    return Array.from(options).sort((a, b) => a.localeCompare(b));
+  }, [languages, dueCards]);
+
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    setCurrentIndex(0);
+    setRevealed(false);
+    setCompleted(0);
+  };
 
   const gradeWord = useMutation({
     mutationFn: async ({ id, level, grade }: { id: string; level: number; grade: SrsGrade }) => {
@@ -80,6 +115,19 @@ const FlashcardQuiz = () => {
   const card = dueWords[currentIndex];
   const allDone = !isLoading && (dueWords.length === 0 || currentIndex >= dueWords.length);
 
+  useRegisterAiTutor(
+    {
+      context: {
+        word: card?.word,
+        translation: card?.translation,
+        language: card?.language,
+        note: card?.context_note ?? undefined,
+        title: "Flashcard Quiz",
+      },
+    },
+    !!card
+  );
+
   return (
     <Layout>
       <div className="mx-auto w-full max-w-3xl space-y-4" tabIndex={0} onKeyDown={handleKeyDown}>
@@ -92,7 +140,23 @@ const FlashcardQuiz = () => {
               Only what is due. Grade the recall and the interval moves.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Select value={language} onValueChange={handleLanguageChange}>
+              <SelectTrigger aria-label="Test language" className="w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All languages</SelectItem>
+                {languageOptions.map((name) => (
+                  <SelectItem key={name} value={name} className="gap-2">
+                    <span className="flex items-center gap-2">
+                      <span className={`h-2 w-2 rounded-full ${getLangDotClass(name)}`} />
+                      {name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {dueWords.length > 0 && (
               <span className="mono-label text-muted-foreground">
                 {Math.min(currentIndex + 1, dueWords.length)} / {dueWords.length}
@@ -114,7 +178,9 @@ const FlashcardQuiz = () => {
               <p className="text-muted-foreground text-sm text-center max-w-sm">
                 {completed > 0
                   ? `You reviewed ${completed} word${completed !== 1 ? "s" : ""} this session.`
-                  : "No vocabulary words are due for review right now."}
+                  : language === "all"
+                    ? "No vocabulary words are due for review right now."
+                    : `No ${language} words are due for review right now.`}
               </p>
               <div className="flex gap-2 mt-2">
                 <Button variant="outline" size="sm" className="text-sm font-medium gap-2" onClick={() => navigate("/vocab")}>
@@ -191,8 +257,8 @@ const FlashcardQuiz = () => {
               </div>
             )}
 
-            {/* Dictionary link */}
-            <div className="flex justify-center">
+            {/* Dictionary and AI shortcuts */}
+            <div className="flex flex-wrap justify-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
@@ -201,6 +267,15 @@ const FlashcardQuiz = () => {
               >
                 <BookOpen className="h-3 w-3" />
                 Look up in dictionary
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground gap-1.5 font-mono"
+                onClick={openAiTutor}
+              >
+                <Sparkles className="h-3 w-3" />
+                Ask AI
               </Button>
             </div>
 

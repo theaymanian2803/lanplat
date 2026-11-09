@@ -172,7 +172,7 @@ describe('Books', () => {
     expect(fn).toHaveBeenCalled()
   })
 
-  it('opens the reader in place when Read is clicked', async () => {
+  it('opens the reader in place when a book card is clicked', async () => {
     stubFetch([
       ['/books/fr/1.json', jsonResponse({ books: five('Livre'), hasMore: false })],
       [

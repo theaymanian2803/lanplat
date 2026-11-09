@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
 import BookReaderDialog from '@/components/books/BookReaderDialog'
+import AiTutorPanel from '@/components/ai/AiTutorPanel'
+import { resetAiTutor } from '@/lib/aiTutor'
 import type { Book } from '@/lib/bookCatalog'
 
 vi.mock('@/integrations/turso/db', () => ({
@@ -144,6 +146,7 @@ const renderDialog = (
 describe('BookReaderDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetAiTutor()
   })
 
   afterEach(() => {
@@ -320,6 +323,67 @@ describe('BookReaderDialog', () => {
       fireEvent.click(await screen.findByRole('button', { name: 'Add to vocab' }))
       await waitFor(() =>
         expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('le fantôme')
+      )
+    } finally {
+      restore()
+    }
+  })
+
+  it('selects a multi-word range by holding a word and dragging', async () => {
+    const restore = makeCoarsePointer()
+    try {
+      stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+      renderDialog()
+
+      const paragraph = await screen.findByText('Le fantôme existait.')
+      stubCaretSequence([
+        { node: paragraph.firstChild as Node, offset: 1 },
+        { node: paragraph.firstChild as Node, offset: 15 },
+      ])
+      stubLineRects([
+        { top: 300, bottom: 320, left: 140, width: 150, height: 20 },
+        { top: 320, bottom: 340, left: 140, width: 90, height: 20 },
+      ])
+      const reader = paragraph.closest('.reader-scroll') as Element
+      stubRect(screen.getByRole('dialog'), {
+        top: 100,
+        left: 50,
+        bottom: 700,
+        right: 850,
+        width: 800,
+        height: 600,
+      })
+      stubRect(reader, {
+        top: 150,
+        left: 60,
+        bottom: 650,
+        right: 760,
+        width: 700,
+        height: 500,
+      })
+
+      fireEvent.touchStart(paragraph, {
+        touches: [{ clientX: 150, clientY: 310, identifier: 1 }],
+        changedTouches: [{ clientX: 150, clientY: 310, identifier: 1 }],
+      })
+
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 400))
+      })
+
+      fireEvent.touchMove(reader, {
+        touches: [{ clientX: 220, clientY: 330, identifier: 1 }],
+        changedTouches: [{ clientX: 220, clientY: 330, identifier: 1 }],
+      })
+      fireEvent.touchEnd(reader, {
+        touches: [],
+        changedTouches: [{ clientX: 220, clientY: 330, identifier: 1 }],
+      })
+
+      fireEvent.click(await screen.findByRole('button', { name: 'Add to vocab' }))
+
+      await waitFor(() =>
+        expect(screen.getByPlaceholderText('e.g. hund')).toHaveValue('le fantôme existait')
       )
     } finally {
       restore()
@@ -617,6 +681,22 @@ describe('BookReaderDialog', () => {
     expect(screen.getAllByRole('button', { name: /close/i })).toHaveLength(1)
   })
 
+  it('opens the global Ask AI panel with the book context', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    render(
+      <QueryClientProvider client={client}>
+        <BookReaderDialog book={book} language="French" onClose={vi.fn()} />
+        <AiTutorPanel />
+      </QueryClientProvider>
+    )
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask AI about this book' }))
+
+    expect(await screen.findByRole('heading', { name: 'Ask AI' })).toBeInTheDocument()
+    expect(await screen.findByText(/About Le Fantôme de l’Opéra/)).toBeInTheDocument()
+  })
+
   it('closes the reader from its close button', async () => {
     stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
     const onClose = vi.fn()
@@ -625,6 +705,20 @@ describe('BookReaderDialog', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Close reader' }))
 
     expect(onClose).toHaveBeenCalled()
+  })
+
+  it('stays open when clicking outside or pressing Escape', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    const onClose = vi.fn()
+    renderDialog({}, onClose)
+
+    await screen.findByText('Le fantôme existait.')
+
+    fireEvent.keyDown(document, { key: 'Escape' })
+    fireEvent.pointerDown(document.body)
+    fireEvent.click(document.body)
+
+    await waitFor(() => expect(onClose).not.toHaveBeenCalled())
   })
 
   it('advances pages with the right arrow key', async () => {

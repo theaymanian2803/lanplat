@@ -9,6 +9,7 @@ describe('parseTutorRequest', () => {
     const parsed = parseTutorRequest({
       messages: [turn('user', 'What does bonjour mean?')],
       word: 'bonjour',
+      translation: 'hello',
       language: 'French',
       answerLanguage: 'Arabic',
       note: 'chapter 1',
@@ -19,6 +20,7 @@ describe('parseTutorRequest', () => {
     expect(parsed).not.toBeNull()
     expect(parsed?.messages).toHaveLength(1)
     expect(parsed?.word).toBe('bonjour')
+    expect(parsed?.translation).toBe('hello')
     expect(parsed?.answerLanguage).toBe('Arabic')
   })
 
@@ -41,6 +43,7 @@ describe('buildSystemPrompt', () => {
     const prompt = buildSystemPrompt({
       messages: [turn('user', 'explain')],
       word: 'bonjour',
+      translation: 'hello',
       language: 'French',
       answerLanguage: 'Arabic',
       title: 'Le Petit Prince',
@@ -50,6 +53,7 @@ describe('buildSystemPrompt', () => {
     expect(prompt).toContain('Answer in Arabic.')
     expect(prompt).toContain('studying French')
     expect(prompt).toContain('"bonjour"')
+    expect(prompt).toContain('"hello"')
     expect(prompt).toContain('Le Petit Prince')
     expect(prompt).toContain('Bonjour, dit-il.')
   })

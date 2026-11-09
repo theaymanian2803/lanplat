@@ -10,12 +10,12 @@ import {
 } from '@/components/ui/select'
 import { languagesDb, vocabularyDb } from '@/integrations/turso/db'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookMarked, Loader2, MessageCircle, Volume2, X } from 'lucide-react'
+import { BookMarked, Loader2, Sparkles, Volume2, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { useAutoTranslate } from '@/hooks/useAutoTranslate'
 import { speakWord } from '@/lib/tts'
-import TutorChat from '@/components/ai/TutorChat'
+import { openAiTutor, useRegisterAiTutor } from '@/lib/aiTutor'
 import type { PanelPosition } from '@/components/NoteEditor'
 
 /** Translation targets offered by the form. English stays the default. */
@@ -55,12 +55,6 @@ const AddWordPanel = ({
   const [contextNote, setContextNote] = useState(initialContext ?? '')
   const [wordLang, setWordLang] = useState(defaultLanguage)
   const [translationLanguage, setTranslationLanguage] = useState('English')
-  const [chatOpen, setChatOpen] = useState(false)
-  const chatRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (chatOpen) chatRef.current?.scrollIntoView({ block: 'nearest' })
-  }, [chatOpen])
 
   const { translating, markUserEdit, error } = useAutoTranslate(
     word,
@@ -134,6 +128,19 @@ const AddWordPanel = ({
     })
     toast.success('Added to context')
   }
+
+  // While this form is open it is the most specific Ask AI context, so the
+  // panel reads the word, target language, and note the learner is editing.
+  useRegisterAiTutor({
+    context: {
+      word,
+      translation,
+      language: wordLang,
+      answerLanguage: translationLanguage,
+      note: contextNote,
+    },
+    onAddToContext: appendToContext,
+  })
 
   return (
     <aside
@@ -267,14 +274,9 @@ const AddWordPanel = ({
           <button
             type="button"
             aria-label="Ask AI about this word"
-            aria-expanded={chatOpen}
-            onClick={() => setChatOpen((value) => !value)}
-            className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors ${
-              chatOpen
-                ? 'border-primary/50 bg-primary/10 text-primary'
-                : 'border-border/60 text-muted-foreground hover:text-foreground'
-            }`}>
-            <MessageCircle className="h-3 w-3" />
+            onClick={openAiTutor}
+            className="flex items-center gap-1 rounded-full border border-border/60 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
+            <Sparkles className="h-3 w-3" />
             Ask AI
           </button>
         </div>
@@ -284,21 +286,6 @@ const AddWordPanel = ({
           onChange={(e) => setContextNote(e.target.value)}
           className="bg-muted/30 focus-visible:ring-primary/30"
         />
-        {chatOpen ? (
-          <div ref={chatRef}>
-            <TutorChat
-              context={{
-                word: word.trim() || undefined,
-                language: wordLang,
-                answerLanguage: translationLanguage,
-                note: contextNote.trim() || undefined,
-              }}
-              onClose={() => setChatOpen(false)}
-              onAddToContext={appendToContext}
-              className="mt-1 max-h-80"
-            />
-          </div>
-        ) : null}
       </div>
       </div>
       <div className="flex gap-2 mt-4 pt-3 border-t border-border/40 shrink-0">

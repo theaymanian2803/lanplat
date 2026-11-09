@@ -63,7 +63,7 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
 
   const { data: videos = [] } = useQuery({
     queryKey: ['videos'],
-    queryFn: videosDb.list,
+    queryFn: () => videosDb.list(),
   })
 
   const { data: languages = [] } = useQuery({

@@ -16,9 +16,10 @@ vi.mock('@/integrations/turso/db', () => ({
 }))
 
 const googleResponse = [[['hej', 'hi', null, null, 10]], null, 'en', null, null, null, null, []]
+const arabicResponse = [[['كلب', 'dog', null, null, 10]], null, 'en', null, null, null, null, []]
 
-const stubFetch = () => {
-  const fn = vi.fn().mockResolvedValue({ ok: true, json: async () => googleResponse })
+const stubFetch = (response: unknown = googleResponse) => {
+  const fn = vi.fn().mockResolvedValue({ ok: true, json: async () => response })
   vi.stubGlobal('fetch', fn)
   return fn
 }
@@ -39,6 +40,11 @@ const typeInput = (text: string) =>
 
 const chooseTarget = async (name: string) => {
   fireEvent.click(screen.getByRole('combobox', { name: 'Target language' }))
+  fireEvent.click(await screen.findByRole('option', { name: new RegExp(name) }))
+}
+
+const chooseSource = async (name: string) => {
+  fireEvent.click(screen.getByRole('combobox', { name: 'Source language' }))
   fireEvent.click(await screen.findByRole('option', { name: new RegExp(name) }))
 }
 
@@ -95,6 +101,48 @@ describe('Translate', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
+  it('accepts Arabic as a stored default target', () => {
+    localStorage.setItem('lingovault_target_language', 'Arabic')
+    renderPage()
+
+    expect(screen.getByRole('combobox', { name: 'Target language' })).toHaveTextContent('Arabic')
+  })
+
+  it('translates into Arabic and renders the result right to left', async () => {
+    const fetchMock = stubFetch(arabicResponse)
+    renderPage()
+
+    await chooseTarget('Arabic')
+    typeInput('dog')
+
+    const output = await screen.findByText('كلب', {}, { timeout: 2000 })
+    expect(output).toHaveAttribute('dir', 'rtl')
+    expect(output.className).toContain('text-right')
+    expect(String(fetchMock.mock.calls[0][0])).toContain('tl=ar')
+  })
+
+  it('renders an Arabic source right to left', async () => {
+    renderPage()
+
+    await chooseSource('Arabic')
+
+    expect(screen.getByPlaceholderText(/اكتب أو الصق/)).toHaveAttribute('dir', 'rtl')
+  })
+
+  it('marks a saved Arabic word right to left', async () => {
+    stubFetch(arabicResponse)
+    renderPage()
+
+    await chooseTarget('Arabic')
+    typeInput('dog')
+    await screen.findByText('كلب', {}, { timeout: 2000 })
+
+    fireEvent.click(screen.getByRole('button', { name: /Add to Vocab Bank/ }))
+
+    expect(screen.getByLabelText('Word')).toHaveAttribute('dir', 'rtl')
+    expect(screen.getByLabelText('Translation')).toHaveAttribute('dir', 'ltr')
+  })
+
   it('swaps the source and target languages', async () => {
     renderPage()
 
@@ -149,13 +197,14 @@ describe('Translate', () => {
     stubFetch()
     renderPage()
 
+    await chooseTarget('Swedish')
     typeInput('hello')
     await screen.findByText('hej', {}, { timeout: 2000 })
 
     fireEvent.click(screen.getByRole('button', { name: /Add to Vocab Bank/ }))
 
-    fireEvent.click(screen.getByRole('combobox', { name: 'Vocab language' }))
-    fireEvent.click(await screen.findByRole('option', { name: 'Swedish' }))
+    // The dialog opens on the target language, so the row is saved as Swedish.
+    expect(screen.getByRole('combobox', { name: 'Vocab language' })).toHaveTextContent('Swedish')
     fireEvent.click(screen.getByRole('button', { name: 'Save Word' }))
 
     await waitFor(() =>

@@ -1,4 +1,5 @@
 const LANG_BADGE: Record<string, string> = {
+  Arabic: 'bg-[#4a8a5c]/20 text-[#9fc7a8] border-[#4a8a5c]/50',
   Danish: 'bg-[#d4552b]/15 text-[#e9a184] border-[#d4552b]/40',
   Japanese: 'bg-[#8a5a7a]/20 text-[#c79bb6] border-[#8a5a7a]/50',
   Spanish: 'bg-[#d19a2a]/15 text-[#e6c37a] border-[#d19a2a]/40',
@@ -9,6 +10,7 @@ const LANG_BADGE: Record<string, string> = {
 const FALLBACK_BADGE = 'bg-[#8a8f7a]/15 text-[#c2c4b4] border-[#8a8f7a]/40'
 
 const LANG_DOT: Record<string, string> = {
+  Arabic: 'bg-[#4a8a5c]',
   Danish: 'bg-[#d4552b]',
   Japanese: 'bg-[#8a5a7a]',
   Spanish: 'bg-[#d19a2a]',

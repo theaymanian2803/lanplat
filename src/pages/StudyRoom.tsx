@@ -1,6 +1,6 @@
 import AddWordPanel from '@/components/AddWordPanel'
 import AddLessonContentPanel from '@/components/AddLessonContentPanel'
-import TutorChatBubble from '@/components/ai/TutorChatBubble'
+import { useRegisterAiTutor } from '@/lib/aiTutor'
 import Layout from '@/components/Layout'
 import NoteEditor from '@/components/NoteEditor'
 import TranscriptStrip from '@/components/TranscriptStrip'
@@ -17,7 +17,12 @@ import {
   enableCaptions,
   readActiveCaptionTrack,
 } from '@/lib/youtubeCaptions'
-import { buildPlayerVars } from '@/lib/youtubePlayer'
+import {
+  buildPlayerVars,
+  type YouTubeNamespace,
+  type YouTubePlayer,
+  type YouTubePlayerEvent,
+} from '@/lib/youtubePlayer'
 import { toCaptionCode } from '@/lib/youtubeTranscript'
 import { compressImageToDataUrl } from '@/lib/imageCompression'
 import { TextSpeaker, splitSentences } from '@/lib/tts'
@@ -30,8 +35,8 @@ import { toast } from 'sonner'
 
 declare global {
   interface Window {
-    YT: any
-    onYouTubeIframeAPIReady: () => void
+    YT?: YouTubeNamespace
+    onYouTubeIframeAPIReady?: () => void
   }
 }
 
@@ -42,7 +47,7 @@ const SPEAK_SPEEDS = [1, 1.25, 1.5, 0.75, 0.5]
 const StudyRoom = () => {
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
-  const playerRef = useRef<any>(null)
+  const playerRef = useRef<YouTubePlayer | null>(null)
   const playerContainerRef = useRef<HTMLDivElement>(null)
   const [apiReady, setApiReady] = useState(false)
   const [playerError, setPlayerError] = useState<number | null>(null)
@@ -261,6 +266,16 @@ const StudyRoom = () => {
 
   const isText = video?.media_type === 'text'
 
+  // The open word form registers a more specific context on top of this one,
+  // so Ask AI keeps the video's title/transcript and adds the form's word.
+  useRegisterAiTutor({
+    context: {
+      language: video?.language,
+      title: video?.title,
+      transcript: isText && video?.content ? video.content.slice(0, 4000) : undefined,
+    },
+  })
+
   const captionCode = useMemo(() => toCaptionCode(video?.language ?? ''), [video?.language])
 
   // A different video starts with captions off, matching the transcript strip.
@@ -313,9 +328,9 @@ const StudyRoom = () => {
       playerRef.current = null
       return
     }
-    if (!apiReady || !videoId || !playerContainerRef.current) return
+    if (!apiReady || !videoId || !playerContainerRef.current || !window.YT?.Player) return
     if (playerRef.current) {
-      playerRef.current.destroy()
+      playerRef.current.destroy?.()
       playerRef.current = null
     }
     setPlayerError(null)
@@ -340,8 +355,8 @@ const StudyRoom = () => {
           setCaptionsOn(true)
         }
       },
-      onError: (e: any) => setPlayerError(e?.data ?? -1),
-      onStateChange: (e: any) => {
+      onError: (e: YouTubePlayerEvent) => setPlayerError(e.data ?? -1),
+      onStateChange: (e: YouTubePlayerEvent) => {
         if (e?.data === 1) setPlayerError(null)
         setIsPlaying(e?.data === 1)
       },
@@ -1267,16 +1282,6 @@ const StudyRoom = () => {
         </div>
         </>
       )}
-
-      {!noteOpen && !addWordOpen && !addLessonOpen ? (
-        <TutorChatBubble
-          context={{
-            language: video?.language,
-            title: video?.title,
-            transcript: isText && video?.content ? video.content : undefined,
-          }}
-        />
-      ) : null}
 
       </Layout>
   )

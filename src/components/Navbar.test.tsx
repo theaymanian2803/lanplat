@@ -39,6 +39,16 @@ describe('sidebar collapse', () => {
     expect(localStorage.getItem(SIDEBAR_COLLAPSED_KEY)).toBe('1')
   })
 
+  it('offers Ask AI in both the sidebar and the mobile header', () => {
+    renderNavbar()
+
+    expect(screen.getAllByRole('button', { name: 'Ask AI' })).toHaveLength(2)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Collapse sidebar' }))
+
+    expect(screen.getAllByRole('button', { name: 'Ask AI' }).length).toBeGreaterThan(0)
+  })
+
   it('restores a collapsed sidebar and expands it again', () => {
     localStorage.setItem(SIDEBAR_COLLAPSED_KEY, '1')
     renderNavbar()

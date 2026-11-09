@@ -1,4 +1,5 @@
 const TTS_LANG_CODES: Record<string, string> = {
+  Arabic: 'ar',
   Danish: 'da',
   Swedish: 'sv',
   sweeden: 'sv',

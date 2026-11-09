@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import AddWordPanel from '@/components/AddWordPanel'
+import AiTutorPanel from '@/components/ai/AiTutorPanel'
 import { askTutor } from '@/lib/aiChat'
+import { resetAiTutor } from '@/lib/aiTutor'
 import { vocabularyDb } from '@/integrations/turso/db'
 
 vi.mock('@/integrations/turso/db', () => ({
@@ -38,9 +40,24 @@ function renderPanel(initialWord?: string) {
   return { ...view, onClose, onSaved, showWord: (word?: string) => view.rerender(tree(word)) }
 }
 
+function renderPanelWithAi(initialWord?: string) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(
+    <QueryClientProvider client={client}>
+      <AddWordPanel
+        defaultLanguage="Danish"
+        onClose={vi.fn()}
+        initialWord={initialWord}
+      />
+      <AiTutorPanel />
+    </QueryClientProvider>
+  )
+}
+
 describe('AddWordPanel', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetAiTutor()
     vi.mocked(vocabularyDb.insert).mockResolvedValue(undefined)
   })
 
@@ -183,24 +200,48 @@ describe('AddWordPanel', () => {
     )
   })
 
-  it('opens the AI tutor chat for the word', () => {
-    renderPanel('hund')
+  it('opens the global Ask AI panel with the word from the form', async () => {
+    renderPanelWithAi('hund')
 
     fireEvent.click(screen.getByRole('button', { name: 'Ask AI about this word' }))
 
-    expect(screen.getByText('AI Tutor')).toBeInTheDocument()
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Ask AI' })).toBeInTheDocument()
+    expect(screen.getByText(/About “hund”/)).toBeInTheDocument()
     expect(screen.getByLabelText('Message the AI tutor')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Explain this word' })).toBeInTheDocument()
   })
 
-  it('appends an AI answer to the existing context note', async () => {
-    renderPanel('hund')
+  it('sends the live form fields as Ask AI context', async () => {
+    renderPanelWithAi('hund')
+    fireEvent.change(screen.getByPlaceholderText('e.g. dog'), { target: { value: 'dog' } })
     fireEvent.change(screen.getByPlaceholderText('Where you encountered this word'), {
       target: { value: 'chapter 1' },
     })
 
     fireEvent.click(screen.getByRole('button', { name: 'Ask AI about this word' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Explain this word' }))
+    const input = screen.getByLabelText('Message the AI tutor')
+    fireEvent.change(input, { target: { value: 'Explain' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+
+    await waitFor(() => expect(askTutor).toHaveBeenCalled())
+    expect(vi.mocked(askTutor).mock.calls[0][1]).toMatchObject({
+      word: 'hund',
+      translation: 'dog',
+      language: 'Danish',
+      answerLanguage: 'English',
+      note: 'chapter 1',
+    })
+  })
+
+  it('appends a global AI answer to the existing context note', async () => {
+    renderPanelWithAi('hund')
+    fireEvent.change(screen.getByPlaceholderText('Where you encountered this word'), {
+      target: { value: 'chapter 1' },
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ask AI about this word' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Explain this word' }))
     await screen.findByText('A long explanation.')
     fireEvent.click(screen.getByRole('button', { name: 'Add this answer to the context note' }))
 
@@ -209,14 +250,14 @@ describe('AddWordPanel', () => {
     )
   })
 
-  it('appends a second AI answer with one blank line between them', async () => {
+  it('appends a second global AI answer with one blank line between them', async () => {
     vi.mocked(askTutor)
       .mockResolvedValueOnce('First answer.')
       .mockResolvedValueOnce('Second answer.')
-    renderPanel('hund')
+    renderPanelWithAi('hund')
 
     fireEvent.click(screen.getByRole('button', { name: 'Ask AI about this word' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Explain this word' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Explain this word' }))
     await screen.findByText('First answer.')
     fireEvent.click(screen.getByRole('button', { name: 'Add this answer to the context note' }))
 

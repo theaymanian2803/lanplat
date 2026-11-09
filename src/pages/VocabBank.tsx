@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { languagesDb, vocabularyDb } from "@/integrations/turso/db";
 import { getLangBadgeClasses, getLangDotClass } from "@/lib/langColors";
 import { getTargetLanguage } from "@/lib/targetLanguage";
+import { openAiTutor, useRegisterAiTutor } from "@/lib/aiTutor";
 import { computeSrs, type SrsGrade } from "@/lib/srs";
 import { useAutoTranslate } from "@/hooks/useAutoTranslate";
 import Layout from "@/components/Layout";
@@ -19,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Trash2, Search, Download, Pencil, Loader2, FileText, StickyNote, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { Plus, Trash2, Search, Download, Pencil, Loader2, FileText, StickyNote, ChevronLeft, ChevronRight, MoreHorizontal, Sparkles } from "lucide-react";
 import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import type { VocabWord } from "@/integrations/turso/types";
 import { jsPDF } from "jspdf";
@@ -53,6 +54,7 @@ const VocabBank = () => {
   const [translation, setTranslation] = useState("");
   const [contextNote, setContextNote] = useState("");
   const [lang, setLang] = useState<string>("Danish");
+  const [focusedWord, setFocusedWord] = useState<VocabWord | null>(null);
   const wordInputRef = useRef<HTMLTextAreaElement>(null);
 
   const clearForm = () => {
@@ -61,6 +63,59 @@ const VocabBank = () => {
   };
 
   const { translating, markUserEdit, error } = useAutoTranslate(word, lang, translation, setTranslation);
+
+  const appendAddNote = (text: string) => {
+    setContextNote((prev) => (prev.trim() ? `${prev.replace(/\s+$/, "")}\n\n${text}` : text));
+  };
+  const appendEditNote = (text: string) => {
+    setEditContextNote((prev) => (prev.trim() ? `${prev.replace(/\s+$/, "")}\n\n${text}` : text));
+  };
+
+  // Ask AI reads whichever form or word is currently open.
+  useRegisterAiTutor(
+    {
+      context: { title: "Vocabulary Bank", word, translation, language: lang, note: contextNote },
+      onAddToContext: appendAddNote,
+    },
+    dialogOpen
+  );
+  useRegisterAiTutor(
+    {
+      context: {
+        title: "Vocabulary Bank",
+        word: editWord,
+        translation: editTranslation,
+        language: editLang,
+        note: editContextNote,
+      },
+      onAddToContext: appendEditNote,
+    },
+    !!editDialog
+  );
+  useRegisterAiTutor(
+    {
+      context: {
+        title: "Vocabulary Bank",
+        word: contextDialog?.word,
+        translation: contextDialog?.translation,
+        language: contextDialog?.language,
+        note: contextDialog?.context_note ?? undefined,
+      },
+    },
+    !!contextDialog
+  );
+  useRegisterAiTutor(
+    {
+      context: {
+        title: "Vocabulary Bank",
+        word: focusedWord?.word,
+        translation: focusedWord?.translation,
+        language: focusedWord?.language,
+        note: focusedWord?.context_note ?? undefined,
+      },
+    },
+    !!focusedWord && !dialogOpen && !editDialog && !contextDialog
+  );
 
   const { data: vocab = [], isLoading } = useQuery({
     queryKey: ["vocabulary", langFilter],
@@ -325,6 +380,17 @@ const VocabBank = () => {
                         <Button
                           variant="ghost" size="icon"
                           className="h-7 w-7 text-muted-foreground hover:text-primary"
+                          title="Ask AI about this word"
+                          onClick={() => {
+                            setFocusedWord(v);
+                            openAiTutor();
+                          }}
+                        >
+                          <Sparkles className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost" size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-primary"
                           title="Edit word"
                           onClick={() => openEdit(v)}
                         >
@@ -372,6 +438,17 @@ const VocabBank = () => {
                       Lv {v.mastery_level}
                     </Badge>
                     <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost" size="icon"
+                        className="h-9 w-9 text-muted-foreground hover:text-primary"
+                        title="Ask AI about this word"
+                        onClick={() => {
+                          setFocusedWord(v);
+                          openAiTutor();
+                        }}
+                      >
+                        <Sparkles className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost" size="icon"
                         className="h-9 w-9 text-muted-foreground hover:text-primary"
@@ -516,10 +593,16 @@ const VocabBank = () => {
               <AutoGrowTextarea placeholder="Where you encountered this word" value={contextNote} onChange={(e) => setContextNote(e.target.value)} />
             </div>
           </div>
-          <DialogFooter className="sm:justify-between">
-            <Button variant="ghost" onClick={clearForm} disabled={!word.trim() && !translation.trim() && !contextNote.trim()} className="text-muted-foreground hover:text-foreground">
-              Clear
-            </Button>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <div className="flex flex-wrap gap-2">
+              <Button variant="ghost" onClick={clearForm} disabled={!word.trim() && !translation.trim() && !contextNote.trim()} className="text-muted-foreground hover:text-foreground">
+                Clear
+              </Button>
+              <Button variant="outline" onClick={openAiTutor} className="gap-2">
+                <Sparkles className="h-3.5 w-3.5" />
+                Ask AI
+              </Button>
+            </div>
             <Button onClick={() => addWord.mutate()} disabled={!word || !translation || addWord.isPending} className="text-sm font-semibold">
               {addWord.isPending ? "Saving…" : "Add Word"}
             </Button>
@@ -548,7 +631,11 @@ const VocabBank = () => {
               </div>
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={openAiTutor} className="gap-2">
+              <Sparkles className="h-3.5 w-3.5" />
+              Ask AI about this word
+            </Button>
             <Button onClick={() => setContextDialog(null)}>Done</Button>
           </DialogFooter>
         </DialogContent>
@@ -583,10 +670,16 @@ const VocabBank = () => {
               <AutoGrowTextarea placeholder="Where you encountered this word" value={editContextNote} onChange={(e) => setEditContextNote(e.target.value)} />
             </div>
           </div>
-          <DialogFooter className="sm:justify-between">
-            <Button variant="ghost" onClick={() => setEditDialog(null)} className="text-muted-foreground hover:text-foreground">
-              Cancel
-            </Button>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <div className="flex flex-wrap gap-2">
+              <Button variant="ghost" onClick={() => setEditDialog(null)} className="text-muted-foreground hover:text-foreground">
+                Cancel
+              </Button>
+              <Button variant="outline" onClick={openAiTutor} className="gap-2">
+                <Sparkles className="h-3.5 w-3.5" />
+                Ask AI
+              </Button>
+            </div>
             <Button onClick={() => updateWord.mutate()} disabled={!editWord.trim() || !editTranslation.trim() || updateWord.isPending} className="text-sm font-semibold">
               {updateWord.isPending ? "Saving…" : "Save changes"}
             </Button>

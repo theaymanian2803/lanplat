@@ -3,6 +3,7 @@ import { splitSentences, ttsLangCode } from '@/lib/tts'
 
 describe('ttsLangCode', () => {
   it('maps known languages to Google TTS codes', () => {
+    expect(ttsLangCode('Arabic')).toBe('ar')
     expect(ttsLangCode('Danish')).toBe('da')
     expect(ttsLangCode('Swedish')).toBe('sv')
     expect(ttsLangCode('sweeden')).toBe('sv')

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type TouchEvent } from 'react'
-import { BookMarked, ChevronLeft, ChevronRight, Loader2, X } from 'lucide-react'
+import { BookMarked, ChevronLeft, ChevronRight, Loader2, Sparkles, X } from 'lucide-react'
 
 import AddWordPanel from '@/components/AddWordPanel'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { displayAuthorName, getDownloadLinks, type Book } from '@/lib/bookCatalog'
+import { openAiTutor, useRegisterAiTutor } from '@/lib/aiTutor'
 import { extractBookBody, fetchBookText, isChapterHeading, splitIntoChapters } from '@/lib/bookReader'
 import {
   getFloatingButtonPosition,
@@ -49,6 +50,8 @@ interface TouchSelection {
 /** Match `getFloatingButtonPosition`'s defaults so clamping uses the same box as placement. */
 const PILL_WIDTH = 128
 const PILL_HEIGHT = 36
+/** Hold this long on a word to start a drag selection on touch devices. */
+const LONG_PRESS_MS = 320
 
 const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) => {
   const [status, setStatus] = useState<Status>('loading')
@@ -66,6 +69,9 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
   } | null>(null)
   const [touchSelection, setTouchSelection] = useState<TouchSelection | null>(null)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const touchSelectingRef = useRef(false)
+  const touchAnchorRef = useRef<Range | null>(null)
+  const longPressTimerRef = useRef<number | null>(null)
   const coarsePointer = useCoarsePointer()
   const scrollRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
@@ -102,6 +108,15 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
   const sections = useMemo(() => splitIntoChapters(body), [body])
   const current = sections[page]
   const sectionCount = sections.length
+
+  // The open word form adds the selected word on top of this book context.
+  useRegisterAiTutor({
+    context: {
+      title: book.title,
+      language,
+      transcript: current?.text ? current.text.slice(0, 3000) : undefined,
+    },
+  })
 
   useEffect(() => {
     setPage(0)
@@ -204,23 +219,163 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
     )
   }, [coarsePointer])
 
-  // Touch devices never create a native selection: the browser's copy menu would
-  // cover the reader. A tap selects the word under the finger, and a second tap
-  // extends that word to a phrase.
-  const handleTouchStart = useCallback((e: TouchEvent<HTMLDivElement>) => {
-    const touch = e.touches[0]
-    touchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null
+  const clearLongPress = useCallback(() => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
   }, [])
+
+  /** Turn a range into the touch pill plus its highlight rectangles. */
+  const presentTouchSelection = useCallback(
+    (range: Range, anchor: Range, isPhrase: boolean) => {
+      const container = scrollRef.current
+      const content = contentRef.current
+      if (!container || !content) return false
+
+      const text = getRangeText(range)
+      if (!text) return false
+
+      const contentRect = content.getBoundingClientRect()
+      const containerRect = container.getBoundingClientRect()
+      const clientRects =
+        typeof range.getClientRects === 'function' ? Array.from(range.getClientRects()) : []
+      const rects = clientRects
+        .filter((r) => r.width > 0 && r.height > 0)
+        .map((r) => ({
+          top: r.top - contentRect.top,
+          bottom: r.bottom - contentRect.top,
+          left: r.left - contentRect.left,
+          width: r.width,
+          height: r.height,
+        }))
+      if (rects.length === 0) {
+        const fallback = range.getBoundingClientRect()
+        rects.push({
+          top: fallback.top - contentRect.top,
+          bottom: fallback.bottom - contentRect.top,
+          left: fallback.left - contentRect.left,
+          width: fallback.width,
+          height: fallback.height,
+        })
+      }
+
+      const pill = getLineStartButtonPosition(
+        rects,
+        {
+          top: containerRect.top - contentRect.top,
+          left: containerRect.left - contentRect.left,
+          width: containerRect.width,
+          height: containerRect.height,
+        },
+        { width: 140, height: 40 },
+      )
+
+      setTouchSelection({
+        text,
+        anchor,
+        rects,
+        isPhrase,
+        pillTop: pill.top,
+        pillLeft: pill.left,
+      })
+      window.getSelection()?.removeAllRanges()
+      return true
+    },
+    [],
+  )
+
+  const startTouchSelection = useCallback(
+    (x: number, y: number) => {
+      const container = scrollRef.current
+      if (!container) return false
+      const word = getWordRangeAtPoint(container, x, y)
+      if (!word) return false
+      const anchor = word.range.cloneRange()
+      if (!presentTouchSelection(word.range, anchor, false)) return false
+      touchSelectingRef.current = true
+      touchAnchorRef.current = anchor
+      return true
+    },
+    [presentTouchSelection],
+  )
+
+  // Touch devices never create a native selection: the browser's copy menu would
+  // cover the reader. A tap selects a word and a second tap extends it; holding a
+  // word starts a drag selection so a whole phrase or sentence can be swept out.
+  const handleTouchStart = useCallback(
+    (e: TouchEvent<HTMLDivElement>) => {
+      const touch = e.touches[0]
+      touchStartRef.current = touch ? { x: touch.clientX, y: touch.clientY } : null
+      touchSelectingRef.current = false
+      touchAnchorRef.current = null
+      clearLongPress()
+      if (!coarsePointer || !touch) return
+      longPressTimerRef.current = window.setTimeout(() => {
+        longPressTimerRef.current = null
+        const point = touchStartRef.current
+        if (point) startTouchSelection(point.x, point.y)
+      }, LONG_PRESS_MS)
+    },
+    [clearLongPress, coarsePointer, startTouchSelection],
+  )
+
+  const handleTouchMove = useCallback(
+    (e: TouchEvent<HTMLDivElement>) => {
+      if (touchSelectingRef.current) return
+      const touch = e.touches[0]
+      const start = touchStartRef.current
+      if (!touch || !start) return
+      if (Math.hypot(touch.clientX - start.x, touch.clientY - start.y) > 10) clearLongPress()
+    },
+    [clearLongPress],
+  )
+
+  const handleTouchCancel = useCallback(() => {
+    clearLongPress()
+    touchSelectingRef.current = false
+    touchAnchorRef.current = null
+    touchStartRef.current = null
+  }, [clearLongPress])
+
+  useEffect(() => () => clearLongPress(), [clearLongPress])
+
+  // React's touch listeners are passive, so they cannot stop the reader from
+  // scrolling while a drag selection is under the finger. Bind a non-passive
+  // handler to the scroll container and only prevent scrolling once selecting.
+  useEffect(() => {
+    if (!coarsePointer || status !== 'ready') return
+    const el = scrollRef.current
+    if (!el) return
+    const onMove = (e: globalThis.TouchEvent) => {
+      if (!touchSelectingRef.current) return
+      e.preventDefault()
+      const touch = e.touches[0]
+      const anchor = touchAnchorRef.current
+      const container = scrollRef.current
+      if (!touch || !anchor || !container) return
+      const word = getWordRangeAtPoint(container, touch.clientX, touch.clientY)
+      if (!word) return
+      presentTouchSelection(mergeWordRanges(anchor, word.range), anchor, true)
+    }
+    el.addEventListener('touchmove', onMove, { passive: false })
+    return () => el.removeEventListener('touchmove', onMove)
+  }, [coarsePointer, status, presentTouchSelection])
 
   const handleTouchEnd = useCallback(
     (e: TouchEvent<HTMLDivElement>) => {
+      clearLongPress()
       if (!coarsePointer) return
+      if (touchSelectingRef.current) {
+        touchSelectingRef.current = false
+        touchAnchorRef.current = null
+        return
+      }
       const container = scrollRef.current
-      const content = contentRef.current
       const start = touchStartRef.current
       touchStartRef.current = null
       const touch = e.changedTouches[0]
-      if (!container || !content || !start || !touch) return
+      if (!container || !start || !touch) return
       if (Math.hypot(touch.clientX - start.x, touch.clientY - start.y) > 10) return
 
       const word = getWordRangeAtPoint(container, touch.clientX, touch.clientY)
@@ -247,69 +402,18 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
         return
       }
 
-      let nextRange: Range
-      let isPhrase = false
       if (!touchSelection || touchSelection.isPhrase) {
-        nextRange = word.range
-      } else {
-        nextRange = mergeWordRanges(touchSelection.anchor, word.range)
-        isPhrase = true
-      }
-
-      const text = getRangeText(nextRange)
-      if (!text) {
-        setTouchSelection(null)
+        presentTouchSelection(word.range, word.range.cloneRange(), false)
         return
       }
 
-      const contentRect = content.getBoundingClientRect()
-      const containerRect = container.getBoundingClientRect()
-      const clientRects =
-        typeof nextRange.getClientRects === 'function'
-          ? Array.from(nextRange.getClientRects())
-          : []
-      const rects = clientRects
-        .filter((r) => r.width > 0 && r.height > 0)
-        .map((r) => ({
-          top: r.top - contentRect.top,
-          bottom: r.bottom - contentRect.top,
-          left: r.left - contentRect.left,
-          width: r.width,
-          height: r.height,
-        }))
-      if (rects.length === 0) {
-        const fallback = word.range.getBoundingClientRect()
-        rects.push({
-          top: fallback.top - contentRect.top,
-          bottom: fallback.bottom - contentRect.top,
-          left: fallback.left - contentRect.left,
-          width: fallback.width,
-          height: fallback.height,
-        })
-      }
-
-      const pill = getLineStartButtonPosition(
-        rects,
-        {
-          top: containerRect.top - contentRect.top,
-          left: containerRect.left - contentRect.left,
-          width: containerRect.width,
-          height: containerRect.height,
-        },
-        { width: 140, height: 40 },
+      presentTouchSelection(
+        mergeWordRanges(touchSelection.anchor, word.range),
+        touchSelection.anchor,
+        true,
       )
-
-      setTouchSelection({
-        text,
-        anchor: isPhrase ? touchSelection!.anchor : word.range.cloneRange(),
-        rects,
-        isPhrase,
-        pillTop: pill.top,
-        pillLeft: pill.left,
-      })
-      window.getSelection()?.removeAllRanges()
     },
-    [coarsePointer, touchSelection],
+    [clearLongPress, coarsePointer, presentTouchSelection, touchSelection],
   )
 
   const openVocabForSelection = useCallback(() => {
@@ -367,7 +471,9 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
       <DialogContent
         ref={contentRef}
         showCloseButton={false}
-        className="flex h-[85vh] max-w-6xl flex-col gap-0 p-0">
+        className="flex h-[100dvh] max-h-[100dvh] w-full max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 sm:rounded-none"
+        onInteractOutside={(event) => event.preventDefault()}
+        onEscapeKeyDown={(event) => event.preventDefault()}>
         <div role="status" aria-live="polite" className="sr-only">
           {touchSelection || textSelection
             ? 'Phrase selected. Press Add to vocab to save it.'
@@ -430,14 +536,24 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
               </DialogTitle>
               <p className="mt-1 text-sm text-muted-foreground">{authors}</p>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0 text-muted-foreground"
-              onClick={onClose}
-              aria-label="Close reader">
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex shrink-0 items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground"
+                onClick={openAiTutor}
+                aria-label="Ask AI about this book">
+                <Sparkles className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground"
+                onClick={onClose}
+                aria-label="Close reader">
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {status === 'ready' && sectionCount > 1 ? (
@@ -496,11 +612,19 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
               }`}
               onMouseUp={readTextSelection}
               onScroll={() => {
-                if (coarsePointer) setTouchSelection(null)
-                else if (textSelection) readTextSelection()
+                if (coarsePointer) {
+                  clearLongPress()
+                  touchSelectingRef.current = false
+                  touchAnchorRef.current = null
+                  setTouchSelection(null)
+                } else if (textSelection) {
+                  readTextSelection()
+                }
               }}
               onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
               onContextMenu={(e) => {
                 if (coarsePointer) e.preventDefault()
               }}>

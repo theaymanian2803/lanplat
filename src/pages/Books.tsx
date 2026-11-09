@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
-import { BookOpen, ExternalLink, Loader2, Search, X } from 'lucide-react'
+import { BookOpen, Loader2, Search, X } from 'lucide-react'
 
 import BookReaderDialog from '@/components/books/BookReaderDialog'
 import Layout from '@/components/Layout'
@@ -20,18 +20,20 @@ import {
   fetchAllBooks,
   fetchBookPage,
   getCoverUrl,
-  getDownloadLinks,
   searchBooks,
   type Book,
 } from '@/lib/bookCatalog'
 
 const BookCard = ({ book, onRead }: { book: Book; onRead: (book: Book) => void }) => {
   const cover = getCoverUrl(book)
-  const links = getDownloadLinks(book)
 
   return (
-    <Card className="group flex flex-col overflow-hidden border-border/50 transition-colors hover:border-primary/30">
-      <div className="relative aspect-[3/4] bg-muted">
+    <button
+      type="button"
+      onClick={() => onRead(book)}
+      aria-label={`Read ${book.title}`}
+      className="group flex w-full cursor-pointer flex-col overflow-hidden rounded-lg border border-border/50 bg-card text-left text-card-foreground shadow-sm transition-colors hover:border-primary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+      <span className="relative block aspect-[3/4] bg-muted">
         {cover ? (
           <img
             src={cover}
@@ -40,44 +42,22 @@ const BookCard = ({ book, onRead }: { book: Book; onRead: (book: Book) => void }
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center">
+          <span className="flex h-full w-full items-center justify-center">
             <BookOpen className="h-5 w-5 text-muted-foreground/40" />
-          </div>
+          </span>
         )}
-      </div>
-      <div className="flex flex-1 flex-col gap-1 p-2">
-        <p className="line-clamp-2 font-medium text-[11px] leading-tight">{book.title}</p>
-        <p className="line-clamp-1 text-[9px] leading-tight text-muted-foreground">
+      </span>
+      <span className="flex flex-1 flex-col gap-1 p-2">
+        <span className="line-clamp-2 block font-medium text-[11px] leading-tight">
+          {book.title}
+        </span>
+        <span className="line-clamp-1 block text-[9px] leading-tight text-muted-foreground">
           {book.authors.length > 0
             ? book.authors.map((a) => displayAuthorName(a.name)).join(', ')
             : 'Unknown author'}
-        </p>
-        <div className="mt-auto flex flex-wrap gap-1 pt-1">
-          {links.html || links.text ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-5 gap-1 rounded px-1.5 text-[9px] font-mono [&_svg]:size-2.5"
-              onClick={() => onRead(book)}>
-              <BookOpen className="h-2.5 w-2.5" />
-              Read
-            </Button>
-          ) : null}
-          {links.epub ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-5 gap-1 rounded px-1.5 text-[9px] font-mono [&_svg]:size-2.5"
-              asChild>
-              <a href={links.epub} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-2.5 w-2.5" />
-                EPUB
-              </a>
-            </Button>
-          ) : null}
-        </div>
-      </div>
-    </Card>
+        </span>
+      </span>
+    </button>
   )
 }
 

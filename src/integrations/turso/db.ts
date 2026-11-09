@@ -152,6 +152,7 @@ ALTER TABLE parts_new RENAME TO parts;
   }
   await turso.batch(
     [
+      { sql: "INSERT OR IGNORE INTO languages (name, created_at) VALUES ('Arabic', ?)", args: [now()] },
       { sql: "INSERT OR IGNORE INTO languages (name, created_at) VALUES ('Danish', ?)", args: [now()] },
       { sql: "INSERT OR IGNORE INTO languages (name, created_at) VALUES ('Japanese', ?)", args: [now()] },
       { sql: "INSERT OR IGNORE INTO languages (name, created_at) VALUES ('Spanish', ?)", args: [now()] },

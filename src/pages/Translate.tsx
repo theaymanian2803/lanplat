@@ -27,8 +27,11 @@ import { getLangDotClass } from '@/lib/langColors'
 import { getTargetLanguage } from '@/lib/targetLanguage'
 import { translateWord } from '@/lib/translate'
 
-const LANGUAGES = ['English', 'Danish', 'Spanish', 'Japanese', 'French', 'Swedish']
+const LANGUAGES = ['English', 'Arabic', 'Danish', 'Spanish', 'Japanese', 'French', 'Swedish']
 const DEBOUNCE_MS = 600
+
+/** Arabic is the only right-to-left language the translator supports today. */
+const isRtl = (language: string) => language === 'Arabic'
 
 const Translate = () => {
   const queryClient = useQueryClient()
@@ -191,7 +194,10 @@ const Translate = () => {
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type or paste text to translate…"
+              dir={isRtl(from) ? 'rtl' : 'ltr'}
+              placeholder={
+                isRtl(from) ? 'اكتب أو الصق النص للترجمة…' : 'Type or paste text to translate…'
+              }
               rows={9}
               className="mt-2 min-h-[220px] resize-none border-ink/20 bg-transparent text-[17px] leading-relaxed text-ink placeholder:text-ink/65 focus-visible:ring-ink/30"
             />
@@ -246,7 +252,13 @@ const Translate = () => {
 
             <div className="flex flex-1 items-center py-6">
               {output ? (
-                <p className="whitespace-pre-wrap text-[clamp(1.7rem,2.8vw,2.6rem)] font-semibold leading-[1.12] tracking-[-0.025em]">
+                <p
+                  dir={isRtl(to) ? 'rtl' : 'ltr'}
+                  className={`w-full whitespace-pre-wrap text-[clamp(1.7rem,2.8vw,2.6rem)] font-semibold ${
+                    isRtl(to)
+                      ? 'text-right leading-[1.5] tracking-normal'
+                      : 'leading-[1.12] tracking-[-0.025em]'
+                  }`}>
                   {output}
                 </p>
               ) : (
@@ -283,6 +295,7 @@ const Translate = () => {
               </Label>
               <Input
                 id="vocab-word"
+                dir={isRtl(saveLanguage) ? 'rtl' : 'ltr'}
                 value={saveWord}
                 onChange={(e) => setSaveWord(e.target.value.toLowerCase())}
               />
@@ -295,6 +308,7 @@ const Translate = () => {
               </Label>
               <Input
                 id="vocab-translation"
+                dir={isRtl(from) ? 'rtl' : 'ltr'}
                 value={saveTranslation}
                 onChange={(e) => setSaveTranslation(e.target.value)}
               />

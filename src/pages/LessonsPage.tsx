@@ -50,7 +50,7 @@ const LessonsPage = () => {
 
   const { data: videos = [] } = useQuery({
     queryKey: ['videos'],
-    queryFn: videosDb.list,
+    queryFn: () => videosDb.list(),
   })
 
   const videoTitles = useMemo(() => {

@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import VocabBank from '@/pages/VocabBank'
+import AiTutorPanel from '@/components/ai/AiTutorPanel'
+import { resetAiTutor } from '@/lib/aiTutor'
 import { vocabularyDb } from '@/integrations/turso/db'
 import type { VocabWord } from '@/integrations/turso/types'
 
@@ -25,6 +27,10 @@ vi.mock('@/hooks/useAutoTranslate', () => ({
 }))
 
 vi.mock('@/lib/dictionary', () => ({ openDictionary: vi.fn() }))
+
+vi.mock('@/lib/aiChat', () => ({
+  askTutor: vi.fn().mockResolvedValue('A helpful answer.'),
+}))
 
 vi.mock('jspdf', () => ({
   default: class {
@@ -60,6 +66,17 @@ function renderPage(words: VocabWord[]) {
   )
 }
 
+function renderPageWithAi(words: VocabWord[]) {
+  vi.mocked(vocabularyDb.list).mockResolvedValue(words)
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={client}>
+      <VocabBank />
+      <AiTutorPanel />
+    </QueryClientProvider>
+  )
+}
+
 function desktopTable() {
   return within(screen.getByRole('table'))
 }
@@ -71,6 +88,37 @@ function mobileCards() {
 describe('VocabBank', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetAiTutor()
+  })
+
+  it('opens Ask AI with the word from the row', async () => {
+    renderPageWithAi([word()])
+
+    await waitFor(() => expect(desktopTable().getByText('hund')).toBeInTheDocument())
+
+    fireEvent.click(desktopTable().getByTitle('Ask AI about this word'))
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Ask AI' })).toBeInTheDocument()
+    expect(await screen.findByText(/About “hund”/)).toBeInTheDocument()
+  })
+
+  it('opens Ask AI from the add form with the current fields', async () => {
+    renderPageWithAi([])
+
+    fireEvent.click(screen.getByRole('button', { name: 'Add Word' }))
+    const dialog = screen.getByRole('dialog')
+    fireEvent.change(within(dialog).getByPlaceholderText('e.g. hund'), {
+      target: { value: 'kat' },
+    })
+    fireEvent.change(within(dialog).getByPlaceholderText('e.g. dog'), {
+      target: { value: 'cat' },
+    })
+
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Ask AI' }))
+
+    expect(await screen.findByRole('heading', { name: 'Ask AI' })).toBeInTheDocument()
+    expect(await screen.findByText(/About “kat”/)).toBeInTheDocument()
   })
 
   it('opens a dialog with the context note when the sticky note icon is clicked', async () => {
@@ -252,6 +300,7 @@ describe('VocabBank', () => {
 describe('VocabBank language filter', () => {
   beforeEach(() => {
     localStorage.clear()
+    resetAiTutor()
   })
 
   it('lists every language when nothing was chosen on the landing page', async () => {

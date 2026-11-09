@@ -162,8 +162,11 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
   })
 
   useEffect(() => {
-    setPage(0)
-  }, [body])
+    // Open at the first titled section: Gutenberg front matter (production credits)
+    // should not be the first page the learner sees. It stays reachable with Prev.
+    const firstTitled = sections.findIndex((section) => section.title !== null)
+    setPage(firstTitled > 0 ? firstTitled : 0)
+  }, [sections])
 
   const updateProgress = useCallback(() => {
     const el = scrollRef.current

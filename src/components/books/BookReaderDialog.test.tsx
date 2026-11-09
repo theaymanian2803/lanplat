@@ -166,6 +166,18 @@ describe('BookReaderDialog', () => {
     expect(screen.getByText('Gaston Leroux')).toBeInTheDocument()
   })
 
+  it('opens at the first titled section instead of the production front matter', async () => {
+    stubFetch({
+      ok: true,
+      text: async () =>
+        '*** START OF THE PROJECT GUTENBERG EBOOK ***\n\nProduced by a volunteer.\n\nCHAPITRE PREMIER\n\nLe fantôme existait.\n\n*** END OF THE PROJECT GUTENBERG EBOOK ***',
+    })
+    renderDialog()
+
+    expect(await screen.findByText('CHAPITRE PREMIER')).toBeInTheDocument()
+    expect(screen.queryByText('Produced by a volunteer.')).toBeNull()
+  })
+
   it('renders chapter headings with emphasis', async () => {
     stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
     renderDialog()

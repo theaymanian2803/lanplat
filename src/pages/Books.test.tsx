@@ -172,6 +172,18 @@ describe('Books', () => {
     expect(fn).toHaveBeenCalled()
   })
 
+  it('makes the whole book card the link with no separate Read or EPUB buttons', async () => {
+    stubFetch([['/books/fr/1.json', jsonResponse({ books: five('Livre'), hasMore: false })]])
+    renderPage()
+
+    await screen.findByText('Livre 1')
+    const card = screen.getByRole('button', { name: 'Read Livre 1' })
+
+    expect(within(card).queryByRole('button')).toBeNull()
+    expect(within(card).queryByText(/^Read$/)).toBeNull()
+    expect(within(card).queryByText(/^EPUB$/)).toBeNull()
+  })
+
   it('opens the reader in place when a book card is clicked', async () => {
     stubFetch([
       ['/books/fr/1.json', jsonResponse({ books: five('Livre'), hasMore: false })],

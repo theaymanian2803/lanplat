@@ -671,6 +671,15 @@ describe('BookReaderDialog', () => {
     expect(await screen.findByText('Le fantôme existait.')).toBeInTheDocument()
   })
 
+  it('fills the viewport instead of using a capped dialog size', async () => {
+    stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
+    renderDialog()
+
+    await screen.findByText('Le fantôme existait.')
+
+    expect(screen.getByRole('dialog')).toHaveClass('h-[100dvh]', 'max-w-none', 'w-full')
+  })
+
   it('opens the reader with a single close control', async () => {
     stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
     renderDialog()

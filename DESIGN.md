@@ -35,6 +35,12 @@ typography:
     fontWeight: 400
     lineHeight: 1.2
     letterSpacing: "0.2em"
+  reading:
+    fontFamily: "Spectral, Georgia, Cambria, serif"
+    fontSize: "19px"
+    fontWeight: 400
+    lineHeight: 1.78
+    letterSpacing: "0em"
 rounded:
   xs: "2px"
   sm: "4px"
@@ -121,19 +127,23 @@ A warm workshop palette: graphite and olive grounds, bone enamel panels, one hot
 
 **Display Font:** Archivo (with ui-sans-serif, system-ui)
 **Body Font:** Archivo (same family, 400–500)
+**Reading Font:** Spectral (book page only, 400–500 + italic)
 **Label/Mono Font:** Courier Prime (with ui-monospace)
 
-**Character:** One industrial grotesque does all speaking; a typewriter mono counts. The pairing reads as equipment labels on an enamel panel, not as editorial serif.
+**Character:** One industrial grotesque does all speaking; a typewriter mono counts. The pairing reads as equipment labels on an enamel panel. The book reader is the one surface with its own voice: its prose is printed in Spectral while the chrome around it stays Archivo.
 
 ### Hierarchy
 - **Display** (800, `clamp(2rem, 4vw, 3.4rem)`, 0.95–1.0): dashboard greeting, the next word, quiz word, book titles.
 - **Headline** (800, 30–34px, 1.05): page titles.
 - **Title** (700, 18–20px, 1.25): card and row titles.
 - **Body** (400, 15–17px, 1.6): prose and descriptions; reading measure 65–75ch.
+- **Reading** (400, 19px/1.78, 65–75ch): book prose on the enamel sheet; a two-line drop cap opens the first substantial paragraph of a chapter.
 - **Label** (400, 10px, 0.2em uppercase, mono): counters, section labels, timestamps.
 
 ### Named Rules
 **The One Voice Rule.** Archivo speaks; Courier Prime only measures. Mono is never used for prose or to look technical.
+
+**The Reader's Sheet Rule.** The book reader is one full-bleed enamel sheet with printed furniture — running head, chapter opener, rule, folio — set in Spectral with an Archivo chapter title. No card, header bar, shadow or gradient may sit on the page; a selection raises one signal block, and the vocab form takes a margin on a tonal enamel step rather than covering the text.
 
 ## Layout
 
@@ -177,6 +187,9 @@ Corners are near-square: 2px on ticks and chips, 4px on panels, buttons and inpu
 - **Style:** 224px olive-graphite rail, grouped labels in Courier Prime, 14px Archivo items.
 - **Default / Hover / Active:** muted sage → cream on hover → signal orange field with ink text when active.
 - **Mobile:** a 56px top bar with the wordmark, settings and a menu sheet; the same groups inside.
+
+### Reader Sheet (signature surface)
+The book reader opens edge to edge as a single enamel sheet, never as a card in a dialog frame. A 56px running head carries the language dot, book title, Ask AI and Close over a hairline; a 2px reading-progress hairline runs along the top edge. The chapter opener is an Archivo 800 title at `clamp(1.85rem, 3.6vw, 2.9rem)` over a 56px rule; prose is Spectral at 19px/1.78 in a 68ch measure, first-line indented, with a two-line drop cap on the first substantial paragraph. A 44px folio row reads Prev · page x/y · Next in Courier Prime. Selecting a phrase raises one signal block; on desktop the vocab form opens as a margin column on a tonal enamel step, and below `lg` it stacks as a bottom sheet.
 
 ### Review Tape (signature)
 The dashboard's single dense object: a 96px graphite strip inside an enamel panel. Every saved word is a 3px tick whose horizontal position is its real review time, whose colour is its language, whose height is mastery, and whose opacity drops when it is still in the future. A signal playhead marks NOW; a Courier counter reports due, overdue and later. It is the one place where time becomes length.

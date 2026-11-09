@@ -18,6 +18,7 @@ export default {
         sans: ['Archivo', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         display: ['Archivo', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['Courier Prime', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        reading: ['Spectral', 'Georgia', 'Cambria', 'serif'],
       },
       colors: {
         enamel: {

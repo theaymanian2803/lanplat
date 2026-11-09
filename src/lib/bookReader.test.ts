@@ -5,6 +5,7 @@ import {
   fetchBookText,
   isChapterHeading,
   splitIntoChapters,
+  splitIntoParagraphs,
   toProxyPath,
 } from '@/lib/bookReader'
 
@@ -153,5 +154,29 @@ describe('splitIntoChapters', () => {
     expect(sections[0].title).toBeNull()
     expect(sections[0].text.split('\n')).toHaveLength(4)
     expect(sections[2].text.split('\n')).toHaveLength(2)
+  })
+})
+
+describe('splitIntoParagraphs', () => {
+  it('joins hard-wrapped lines back into one paragraph', () => {
+    const text = 'Le fantôme\n existait depuis\n longtemps.\n\nOn ne le\n croyait pas.'
+
+    expect(splitIntoParagraphs(text)).toEqual([
+      { kind: 'paragraph', text: 'Le fantôme existait depuis longtemps.' },
+      { kind: 'paragraph', text: 'On ne le croyait pas.' },
+    ])
+  })
+
+  it('keeps a standalone all-caps line as a heading', () => {
+    const text = 'ACTE DEUX\n\nLe rideau tomba.'
+
+    expect(splitIntoParagraphs(text)).toEqual([
+      { kind: 'heading', text: 'ACTE DEUX' },
+      { kind: 'paragraph', text: 'Le rideau tomba.' },
+    ])
+  })
+
+  it('ignores blank runs and trailing whitespace', () => {
+    expect(splitIntoParagraphs('\n\n  \n')).toEqual([])
   })
 })

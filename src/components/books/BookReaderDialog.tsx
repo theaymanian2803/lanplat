@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type TouchEvent } from 'react'
-import { BookMarked, ChevronLeft, ChevronRight, Loader2, Sparkles, X } from 'lucide-react'
+import { BookMarked, ChevronLeft, ChevronRight, Sparkles, X } from 'lucide-react'
 
 import AddWordPanel from '@/components/AddWordPanel'
 import { Button } from '@/components/ui/button'
@@ -11,7 +11,12 @@ import {
 } from '@/components/ui/dialog'
 import { displayAuthorName, getDownloadLinks, type Book } from '@/lib/bookCatalog'
 import { openAiTutor, useRegisterAiTutor } from '@/lib/aiTutor'
-import { extractBookBody, fetchBookText, isChapterHeading, splitIntoChapters } from '@/lib/bookReader'
+import {
+  extractBookBody,
+  fetchBookText,
+  splitIntoChapters,
+  splitIntoParagraphs,
+} from '@/lib/bookReader'
 import {
   getFloatingButtonPosition,
   getLineStartButtonPosition,
@@ -53,6 +58,21 @@ const PILL_HEIGHT = 36
 /** Hold this long on a word to start a drag selection on touch devices. */
 const LONG_PRESS_MS = 320
 
+/** A language's ink is identity, never a field: it colours the running-head dot only. */
+const LANGUAGE_INK: Record<string, string> = {
+  French: 'hsl(var(--tape))',
+  Spanish: 'hsl(38 66% 44%)',
+  Swedish: 'hsl(82 28% 38%)',
+  Danish: 'hsl(var(--ink) / 0.45)',
+}
+
+const LANGUAGE_TAG: Record<string, string> = {
+  French: 'fr',
+  Spanish: 'es',
+  Swedish: 'sv',
+  Danish: 'da',
+}
+
 const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) => {
   const [status, setStatus] = useState<Status>('loading')
   const [body, setBody] = useState('')
@@ -68,6 +88,7 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
     left?: number
   } | null>(null)
   const [touchSelection, setTouchSelection] = useState<TouchSelection | null>(null)
+  const [progress, setProgress] = useState(0)
   const touchStartRef = useRef<{ x: number; y: number } | null>(null)
   const touchSelectingRef = useRef(false)
   const touchAnchorRef = useRef<Range | null>(null)
@@ -108,6 +129,28 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
   const sections = useMemo(() => splitIntoChapters(body), [body])
   const current = sections[page]
   const sectionCount = sections.length
+  const blocks = useMemo(
+    () => (current ? splitIntoParagraphs(current.text) : []),
+    [current],
+  )
+  const ledeIndex = useMemo(
+    () => blocks.findIndex((block) => block.kind === 'paragraph'),
+    [blocks],
+  )
+  const dropCapIndex = useMemo(
+    () =>
+      blocks.findIndex(
+        (block) =>
+          block.kind === 'paragraph' &&
+          block.text.length >= 180 &&
+          /^[\p{L}\p{N}]/u.test(block.text),
+      ),
+    [blocks],
+  )
+  const proseLength = blocks.reduce(
+    (total, block) => total + (block.kind === 'paragraph' ? block.text.length : 0),
+    0,
+  )
 
   // The open word form adds the selected word on top of this book context.
   useRegisterAiTutor({
@@ -122,16 +165,32 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
     setPage(0)
   }, [body])
 
+  const updateProgress = useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const max = el.scrollHeight - el.clientHeight
+    const next = max > 0 ? Math.min(1, Math.max(0, el.scrollTop / max)) : 0
+    setProgress((prev) => (Math.abs(prev - next) < 0.01 ? prev : next))
+  }, [])
+
   useEffect(() => {
     const el = scrollRef.current
     if (el) {
       if (typeof el.scrollTo === 'function') el.scrollTo({ top: 0 })
       else el.scrollTop = 0
     }
+    setProgress(0)
     setVocabOpen(false)
     setTextSelection(null)
     setTouchSelection(null)
   }, [page])
+
+  useEffect(() => {
+    document.body.dataset.readerOpen = 'true'
+    return () => {
+      delete document.body.dataset.readerOpen
+    }
+  }, [])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -465,15 +524,28 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
   }, [vocabOpen, vocabSession])
 
   const authors = book.authors.map((a) => displayAuthorName(a.name)).join(', ')
+  const errorMessage = error
+    ? /failed to fetch|networkerror|load failed/i.test(error)
+      ? 'Could not reach the text archive. Check your connection and try again.'
+      : error
+    : null
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
         ref={contentRef}
         showCloseButton={false}
-        className="flex h-[100dvh] max-h-[100dvh] w-full max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 sm:rounded-none"
+        className="reader-sheet fixed flex h-[100dvh] max-h-[100dvh] w-full max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 p-0 sm:rounded-none"
         onInteractOutside={(event) => event.preventDefault()}
         onEscapeKeyDown={(event) => event.preventDefault()}>
+        {status === 'ready' ? (
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 z-[62] h-0.5 bg-ink/20">
+            <div
+              className="h-full bg-ink/60 transition-[width] duration-150"
+              style={{ width: `${Math.round(progress * 100)}%` }}
+            />
+          </div>
+        ) : null}
         <div role="status" aria-live="polite" className="sr-only">
           {touchSelection || textSelection
             ? 'Phrase selected. Press Add to vocab to save it.'
@@ -494,28 +566,32 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
                 }}
               />
             ))}
-            <button
-              ref={selectionBtnRef}
-              type="button"
-              data-testid="reader-touch-pill"
-              className="absolute z-[60] flex touch-manipulation items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
-              style={{ top: touchSelection.pillTop, left: touchSelection.pillLeft }}
-              onPointerDown={(e) => e.preventDefault()}
-              onMouseDown={(e) => e.preventDefault()}
-              onTouchEnd={(e) => {
-                e.preventDefault()
-                openVocabForSelection()
-              }}
-              onClick={openVocabForSelection}>
-              <BookMarked className="h-4 w-4" />
-              Add to vocab
-            </button>
+            <div
+              data-testid="reader-touch-bar"
+              className="absolute inset-x-0 bottom-11 z-[60] flex justify-center border-t border-ink/15 bg-enamel px-4 py-3"
+              onPointerDown={(e) => e.stopPropagation()}>
+              <button
+                ref={selectionBtnRef}
+                type="button"
+                data-testid="reader-touch-pill"
+                className="flex min-h-11 touch-manipulation items-center gap-1.5 rounded-sm bg-primary px-4 text-sm font-semibold text-black transition-colors hover:bg-primary/90"
+                onPointerDown={(e) => e.preventDefault()}
+                onMouseDown={(e) => e.preventDefault()}
+                onTouchEnd={(e) => {
+                  e.preventDefault()
+                  openVocabForSelection()
+                }}
+                onClick={openVocabForSelection}>
+                <BookMarked className="h-4 w-4" />
+                Add to vocab
+              </button>
+            </div>
           </>
         ) : !coarsePointer && textSelection ? (
           <button
             ref={selectionBtnRef}
             type="button"
-            className="absolute z-[60] flex touch-manipulation items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground shadow-lg transition-colors hover:bg-primary/90"
+            className="absolute z-[60] flex touch-manipulation items-center gap-1.5 rounded-sm bg-primary px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-black ring-2 ring-enamel transition-colors hover:bg-primary/90"
             style={{ top: textSelection.top, left: textSelection.left }}
             onPointerDown={(e) => e.preventDefault()}
             onMouseDown={(e) => e.preventDefault()}
@@ -528,19 +604,23 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
             Add to vocab
           </button>
         ) : null}
-        <DialogHeader className="border-b border-border/40 px-6 py-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <DialogTitle className="font-display text-xl font-semibold tracking-tight">
+        <DialogHeader className="shrink-0 space-y-0 border-b border-ink/15 px-5 pb-3 pt-4 md:px-10 lg:px-14">
+          <div className="mx-auto flex w-full max-w-[84rem] items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <span
+                aria-hidden
+                className="h-2 w-2 shrink-0 rounded-full"
+                style={{ backgroundColor: LANGUAGE_INK[language] ?? 'hsl(var(--ink) / 0.45)' }}
+              />
+              <DialogTitle className="truncate text-[11px] font-semibold uppercase tracking-[0.18em] text-ink">
                 {book.title}
               </DialogTitle>
-              <p className="mt-1 text-sm text-muted-foreground">{authors}</p>
             </div>
             <div className="flex shrink-0 items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-muted-foreground"
+                className="h-11 w-11 rounded-sm text-ink/50 md:h-8 md:w-8 hover:bg-ink/10 hover:text-ink"
                 onClick={openAiTutor}
                 aria-label="Ask AI about this book">
                 <Sparkles className="h-4 w-4" />
@@ -548,70 +628,54 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-muted-foreground"
+                className="h-11 w-11 rounded-sm text-ink/50 md:h-8 md:w-8 hover:bg-ink/10 hover:text-ink"
                 onClick={onClose}
                 aria-label="Close reader">
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </div>
-
-          {status === 'ready' && sectionCount > 1 ? (
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => setPage((p) => p - 1)}
-                disabled={page === 0}>
-                <ChevronLeft className="h-4 w-4" />
-                Prev
-              </Button>
-              <span className="truncate font-mono text-xs text-muted-foreground">
-                {current?.title ? 'Chapter' : 'Part'} {page + 1} / {sectionCount}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1"
-                onClick={() => setPage((p) => p + 1)}
-                disabled={page === sectionCount - 1}>
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : null}
         </DialogHeader>
 
         {status === 'loading' ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted-foreground">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <p className="text-sm">Loading the book…</p>
+          <div className="flex flex-1 flex-col items-center justify-center gap-4">
+            <div className="h-px w-28 overflow-hidden bg-ink/15">
+              <div className="h-full w-1/2 animate-pulse bg-ink/45" />
+            </div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink/65">
+              Fetching the text
+            </p>
           </div>
         ) : status === 'error' ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
-            <p className="text-sm text-destructive" role="alert">
-              {error}
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
+            <div aria-hidden className="h-px w-16 bg-ink/25" />
+            <p className="max-w-sm font-reading text-base leading-relaxed text-ink/75" role="alert">
+              {errorMessage}
             </p>
-            <Button variant="outline" size="sm" onClick={() => setRetryToken((v) => v + 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-sm border-ink/25 bg-transparent text-ink hover:bg-ink/5 hover:text-ink"
+              onClick={() => setRetryToken((v) => v + 1)}>
               Retry
             </Button>
           </div>
         ) : status === 'none' ? (
-          <div className="flex flex-1 items-center justify-center p-6 text-center">
-            <p className="text-sm text-muted-foreground">
+          <div className="flex flex-1 items-center justify-center px-6 text-center">
+            <p className="max-w-sm font-reading text-base leading-relaxed text-ink/70">
               No readable text is available for this book.
             </p>
           </div>
         ) : (
-          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden lg:flex-row">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
             <div
               ref={scrollRef}
-              className={`reader-scroll min-h-0 min-w-0 flex-1 overflow-y-auto px-6 py-8 lg:px-10 ${
+              className={`reader-scroll reader-sheet-scroll min-h-0 min-w-0 flex-1 overflow-y-auto ${
                 coarsePointer ? 'select-none touch-manipulation [-webkit-touch-callout:none]' : ''
               }`}
               onMouseUp={readTextSelection}
               onScroll={() => {
+                updateProgress()
                 if (coarsePointer) {
                   clearLongPress()
                   touchSelectingRef.current = false
@@ -628,44 +692,93 @@ const BookReaderDialog = ({ book, language, onClose }: BookReaderDialogProps) =>
               onContextMenu={(e) => {
                 if (coarsePointer) e.preventDefault()
               }}>
-              <div className="mx-auto max-w-prose font-serif text-[15px] leading-7 text-foreground/90">
+              <article
+                lang={LANGUAGE_TAG[language]}
+                className="reader-prose mx-auto w-full max-w-[68ch] px-6 pb-16 pt-9 md:px-8 md:pt-12">
                 {current.title ? (
-                  <p className="mb-8 mt-2 text-center text-lg font-semibold tracking-wide">
-                    {current.title}
-                  </p>
+                  <header className="mb-9 md:mb-12">
+                    <h2 className="font-display text-[clamp(1.85rem,3.6vw,2.9rem)] font-extrabold leading-[1.02] tracking-[-0.045em] text-ink">
+                      {current.title}
+                    </h2>
+                    <div aria-hidden className="mt-5 h-px w-14 bg-ink/35" />
+                    {page === 0 && authors ? (
+                      <p className="mt-4 font-reading text-sm italic text-ink/65">{authors}</p>
+                    ) : null}
+                  </header>
                 ) : null}
-                {current.text.split('\n').map((line, i) =>
-                  isChapterHeading(line) ? (
-                    <p
-                      key={i}
-                      className="mb-6 mt-10 text-center text-lg font-semibold tracking-wide">
-                      {line.trim()}
-                    </p>
-                  ) : (
-                    <p key={i} className={line.trim() ? 'min-h-[1.75rem]' : 'h-[1.75rem]'}>
-                      {line}
-                    </p>
-                  )
-                )}
-              </div>
+                <div className="font-reading text-[1.1875rem] leading-[1.78] text-ink/90">
+                  {blocks.map((block, index) =>
+                    block.kind === 'heading' ? (
+                      <h3
+                        key={index}
+                        className="mb-5 mt-10 font-display text-base font-bold uppercase tracking-[0.16em] text-ink md:text-lg">
+                        {block.text}
+                      </h3>
+                    ) : (
+                      <p
+                        key={index}
+                        data-dropcap={index === dropCapIndex ? 'true' : undefined}
+                        className={
+                          index === ledeIndex || index === dropCapIndex ? 'reader-lede' : undefined
+                        }>
+                        {block.text}
+                      </p>
+                    ),
+                  )}
+                </div>
+                {proseLength > 600 ? (
+                  <div aria-hidden className="mt-14 flex items-center justify-center gap-3">
+                    <span className="h-px w-12 bg-ink/20" />
+                    <span className="h-1 w-1 rotate-45 bg-ink/30" />
+                    <span className="h-px w-12 bg-ink/20" />
+                  </div>
+                ) : null}
+              </article>
             </div>
 
             {vocabOpen ? (
               <div
                 ref={vocabPanelRef}
-                className="flex h-[60%] min-h-0 shrink-0 flex-col overflow-hidden border-t border-border/40 p-3 lg:h-full lg:max-h-none lg:w-[26rem] lg:border-l lg:border-t-0 lg:p-4">
+                className="flex h-[58%] min-h-0 shrink-0 flex-col overflow-hidden border-t border-ink/15 bg-[hsl(44_28%_85%)] px-5 py-5 md:px-8 lg:h-auto lg:w-[22rem] lg:border-l lg:border-t-0 lg:px-7 lg:py-7">
                 <AddWordPanel
                   key={vocabSession}
+                  tone="paper"
                   defaultLanguage={language}
                   position="right"
                   initialWord={pendingWord}
-                  widthClassName="h-full lg:w-full"
+                  widthClassName="mx-auto w-full max-w-xl lg:max-w-none"
                   onClose={() => setVocabOpen(false)}
                 />
               </div>
             ) : null}
           </div>
         )}
+
+        {status === 'ready' ? (
+          <footer className="shrink-0 border-t border-ink/15 px-3 py-0 md:px-10 lg:px-14">
+            <div className="mx-auto flex w-full max-w-[84rem] items-center justify-between gap-4">
+              <button
+                type="button"
+                onClick={() => setPage((p) => p - 1)}
+                disabled={page === 0}
+                className="flex min-h-11 items-center gap-1.5 rounded-sm px-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink/65 transition-colors hover:text-ink disabled:pointer-events-none disabled:opacity-30">
+                <ChevronLeft className="h-3.5 w-3.5" />
+                Prev
+              </button>
+              <span className="font-mono text-[11px] tracking-[0.16em] text-ink/65">
+                {page + 1} / {sectionCount || 1}
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page === sectionCount - 1}
+                className="flex min-h-11 items-center gap-1.5 rounded-sm px-2 font-mono text-[10px] uppercase tracking-[0.18em] text-ink/65 transition-colors hover:text-ink disabled:pointer-events-none disabled:opacity-30">
+                Next
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </footer>
+        ) : null}
       </DialogContent>
     </Dialog>
   )

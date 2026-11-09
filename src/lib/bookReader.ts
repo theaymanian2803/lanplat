@@ -80,6 +80,44 @@ export interface BookSection {
   text: string
 }
 
+export interface ReaderBlock {
+  kind: 'heading' | 'paragraph'
+  text: string
+}
+
+/**
+ * Reflows a section into print paragraphs. Project Gutenberg files are hard-wrapped
+ * at a fixed column, so joining wrapped lines restores the paragraph the author wrote;
+ * blank lines mark the real breaks. Standalone all-caps lines stay headings.
+ */
+export function splitIntoParagraphs(text: string): ReaderBlock[] {
+  const blocks: ReaderBlock[] = []
+  let pending: string[] = []
+
+  const flush = () => {
+    if (pending.length === 0) return
+    const joined = pending.join(' ').replace(/\s+/g, ' ').trim()
+    pending = []
+    if (joined) blocks.push({ kind: 'paragraph', text: joined })
+  }
+
+  for (const raw of text.split('\n')) {
+    const line = raw.trim()
+    if (!line) {
+      flush()
+      continue
+    }
+    if (isChapterHeading(line)) {
+      flush()
+      blocks.push({ kind: 'heading', text: line })
+      continue
+    }
+    pending.push(line)
+  }
+  flush()
+  return blocks
+}
+
 /**
  * Splits a book into readable sections: one per chapter heading when the book has them,
  * otherwise fixed-size chunks of lines. Empty front matter before the first heading is

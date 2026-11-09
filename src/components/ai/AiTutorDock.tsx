@@ -110,6 +110,7 @@ const AiTutorDock = () => {
         type="button"
         aria-label={open ? 'Close Ask AI' : 'Ask AI'}
         aria-expanded={open}
+        data-ai-dock
         onClick={open ? closeAiTutor : openAiTutor}
         className="fixed bottom-4 right-4 z-[90] flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-orange-500/30 transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2">
         {open ? <X className="h-4 w-4" /> : <MessageCircle className="h-4 w-4" />}

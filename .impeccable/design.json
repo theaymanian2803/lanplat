@@ -44,7 +44,8 @@
     "typographyMeta": {
       "display": { "displayName": "Display", "purpose": "Page titles, the next word, quiz word, book titles." },
       "body": { "displayName": "Body", "purpose": "Prose, descriptions and row copy." },
-      "label": { "displayName": "Counter label", "purpose": "Counters, timestamps, section labels; Courier Prime only." }
+      "label": { "displayName": "Counter label", "purpose": "Counters, timestamps, section labels; Courier Prime only." },
+      "reading": { "displayName": "Reading", "purpose": "Book prose on the reader sheet only; Spectral at 19px/1.78 in a 68ch measure." }
     },
     "shadows": [],
     "motion": [
@@ -90,6 +91,14 @@
       "css": ".ds-input { background: #20241d; color: #e9e2d1; border: 1px solid #343a2d; border-radius: 4px; padding: 8px 12px; font-family: Archivo, sans-serif; font-size: 14px; } .ds-input::placeholder { color: #9a9d86; } .ds-input:focus-visible { outline: 2px solid #d4552b; outline-offset: 2px; border-color: #d4552b; }"
     },
     {
+      "name": "Reader Sheet",
+      "kind": "custom",
+      "refersTo": "reader-sheet",
+      "description": "The book reader's full-bleed enamel page: running head, chapter opener, Spectral prose, folio.",
+      "html": "<article class=\"ds-reader\"><header class=\"ds-reader-head\"><span class=\"ds-dot\"></span> LA CHARTREUSE DE PARME <span class=\"ds-folio\">Close</span></header><h2 class=\"ds-reader-title\">CHAPITRE PREMIER</h2><p class=\"ds-reader-lede\">Le 15 mai 1796, le général Bonaparte fit son entrée dans Milan à la tête de cette jeune armée…</p><footer class=\"ds-reader-foot\">PREV · 4 / 35 · NEXT</footer></article>",
+      "css": ".ds-reader { background: #e9e2d1; color: #1b1d16; min-height: 100dvh; display: flex; flex-direction: column; } .ds-reader-head { display: flex; align-items: center; gap: 10px; padding: 16px 20px 12px; border-bottom: 1px solid rgba(27,29,22,.15); font-family: Archivo, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; } .ds-dot { width: 8px; height: 8px; border-radius: 50%; background: #2e6b63; } .ds-reader-title { margin: 36px 24px 0; font-family: Archivo, sans-serif; font-size: clamp(1.85rem, 3.6vw, 2.9rem); font-weight: 800; letter-spacing: -.045em; line-height: 1.02; } .ds-reader-lede { margin: 24px 24px 0; max-width: 68ch; font-family: Spectral, Georgia, serif; font-size: 19px; line-height: 1.78; } .ds-reader-lede::first-letter { float: left; font-size: 3.6em; line-height: .8; font-weight: 500; margin: .06em .08em 0 0; } .ds-reader-foot { margin-top: auto; border-top: 1px solid rgba(27,29,22,.15); padding: 12px 20px; font-family: 'Courier Prime', monospace; font-size: 10px; letter-spacing: .18em; text-transform: uppercase; }"
+    },
+    {
       "name": "Review Tape",
       "kind": "custom",
       "refersTo": "review-tape",
@@ -106,12 +115,14 @@
       "Signal orange reserved for the primary action and due state.",
       "One dense data object per viewport, ruled by hairlines.",
       "Archivo for every voice; Courier Prime only for counters and machine labels.",
+      "The book reader is a printed enamel sheet: Spectral prose, Archivo title, Courier folio.",
       "2–4px corners, no decorative shadows."
     ],
     "rules": [
       { "name": "The Enamel Rule", "body": "Enamel is a promise of work: if a surface is bone-coloured, the learner can read or act on it. Graphite never carries body copy.", "section": "colors" },
       { "name": "The Signal Rule", "body": "Signal orange marks exactly one primary action per viewport; everything else is outline, ghost or ink.", "section": "colors" },
       { "name": "The One Voice Rule", "body": "Archivo speaks; Courier Prime only measures. Mono is never used for prose or to look technical.", "section": "typography" },
+      { "name": "The Reader's Sheet Rule", "body": "The book reader is one full-bleed enamel sheet with printed furniture — running head, chapter opener, rule, folio — set in Spectral with an Archivo chapter title. No card, header bar, shadow or gradient may sit on the page; a selection raises one signal block, and the vocab form takes a margin on a tonal enamel step rather than covering the text.", "section": "typography" },
       { "name": "The Hairline Rule", "body": "If two surfaces need separating, use a 1px border or a tonal step; a shadow is a costume from another world.", "section": "elevation" }
     ],
     "dos": [

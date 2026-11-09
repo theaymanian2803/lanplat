@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 
@@ -171,8 +171,8 @@ describe('BookReaderDialog', () => {
     renderDialog()
 
     const heading = await screen.findByText('CHAPITRE PREMIER')
-    expect(heading.tagName).toBe('P')
-    expect(heading.className).toContain('text-lg')
+    expect(heading.tagName).toBe('H2')
+    expect(heading.className).toContain('font-display')
   })
 
   it('shows an error with a retry when the fetch fails', async () => {
@@ -260,7 +260,7 @@ describe('BookReaderDialog', () => {
     )
   })
 
-  it('selects a word on a tap without a native selection and shows the pill at the line start', async () => {
+  it('selects a word on a tap without a native selection and shows the capture bar', async () => {
     const restore = makeCoarsePointer()
     try {
       stubFetch({ ok: true, text: async () => SAMPLE_TEXT })
@@ -288,8 +288,8 @@ describe('BookReaderDialog', () => {
 
       tap(paragraph)
 
-      const pill = await screen.findByRole('button', { name: 'Add to vocab' })
-      expect(pill.style.left).toBe('90px')
+      const bar = await screen.findByTestId('reader-touch-bar')
+      const pill = within(bar).getByRole('button', { name: 'Add to vocab' })
       fireEvent.click(pill)
 
       await waitFor(() =>

@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 import AddWordPanel from '@/components/AddWordPanel'
-import AiTutorPanel from '@/components/ai/AiTutorPanel'
+import AiTutorDock from '@/components/ai/AiTutorDock'
 import { askTutor } from '@/lib/aiChat'
 import { resetAiTutor } from '@/lib/aiTutor'
 import { vocabularyDb } from '@/integrations/turso/db'
@@ -44,12 +45,14 @@ function renderPanelWithAi(initialWord?: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
-      <AddWordPanel
-        defaultLanguage="Danish"
-        onClose={vi.fn()}
-        initialWord={initialWord}
-      />
-      <AiTutorPanel />
+      <MemoryRouter>
+        <AddWordPanel
+          defaultLanguage="Danish"
+          onClose={vi.fn()}
+          initialWord={initialWord}
+        />
+        <AiTutorDock />
+      </MemoryRouter>
     </QueryClientProvider>
   )
 }
@@ -200,10 +203,19 @@ describe('AddWordPanel', () => {
     )
   })
 
-  it('opens the global Ask AI panel with the word from the form', async () => {
+  it('does not render an Ask AI control inside the form', () => {
+    renderPanel('hund')
+
+    expect(
+      screen.queryByRole('button', { name: 'Ask AI about this word' })
+    ).not.toBeInTheDocument()
+    expect(screen.queryByText('Ask AI')).not.toBeInTheDocument()
+  })
+
+  it('opens the global Ask AI chat with the word from the form', async () => {
     renderPanelWithAi('hund')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask AI about this word' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ask AI' }))
 
     expect(await screen.findByRole('dialog')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Ask AI' })).toBeInTheDocument()
@@ -219,7 +231,7 @@ describe('AddWordPanel', () => {
       target: { value: 'chapter 1' },
     })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask AI about this word' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ask AI' }))
     const input = screen.getByLabelText('Message the AI tutor')
     fireEvent.change(input, { target: { value: 'Explain' } })
     fireEvent.keyDown(input, { key: 'Enter' })
@@ -240,7 +252,7 @@ describe('AddWordPanel', () => {
       target: { value: 'chapter 1' },
     })
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask AI about this word' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ask AI' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Explain this word' }))
     await screen.findByText('A long explanation.')
     fireEvent.click(screen.getByRole('button', { name: 'Add this answer to the context note' }))
@@ -256,7 +268,7 @@ describe('AddWordPanel', () => {
       .mockResolvedValueOnce('Second answer.')
     renderPanelWithAi('hund')
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask AI about this word' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ask AI' }))
     fireEvent.click(await screen.findByRole('button', { name: 'Explain this word' }))
     await screen.findByText('First answer.')
     fireEvent.click(screen.getByRole('button', { name: 'Add this answer to the context note' }))

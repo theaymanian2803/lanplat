@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 
 import BookReaderDialog from '@/components/books/BookReaderDialog'
-import AiTutorPanel from '@/components/ai/AiTutorPanel'
+import AiTutorDock from '@/components/ai/AiTutorDock'
 import { resetAiTutor } from '@/lib/aiTutor'
 import type { Book } from '@/lib/bookCatalog'
 
@@ -695,8 +696,10 @@ describe('BookReaderDialog', () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(
       <QueryClientProvider client={client}>
-        <BookReaderDialog book={book} language="French" onClose={vi.fn()} />
-        <AiTutorPanel />
+        <MemoryRouter>
+          <BookReaderDialog book={book} language="French" onClose={vi.fn()} />
+          <AiTutorDock />
+        </MemoryRouter>
       </QueryClientProvider>
     )
 

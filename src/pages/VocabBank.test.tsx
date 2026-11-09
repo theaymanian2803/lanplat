@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter } from 'react-router-dom'
 import VocabBank from '@/pages/VocabBank'
-import AiTutorPanel from '@/components/ai/AiTutorPanel'
+import AiTutorDock from '@/components/ai/AiTutorDock'
 import { resetAiTutor } from '@/lib/aiTutor'
 import { vocabularyDb } from '@/integrations/turso/db'
 import type { VocabWord } from '@/integrations/turso/types'
@@ -71,8 +72,10 @@ function renderPageWithAi(words: VocabWord[]) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
-      <VocabBank />
-      <AiTutorPanel />
+      <MemoryRouter>
+        <VocabBank />
+        <AiTutorDock />
+      </MemoryRouter>
     </QueryClientProvider>
   )
 }

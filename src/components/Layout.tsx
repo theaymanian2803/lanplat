@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Database, WifiOff, X } from 'lucide-react'
 import Navbar from './Navbar'
 import LessonsPanel from './LessonsPanel'
-import AiTutorPanel from './ai/AiTutorPanel'
 import { LessonsDrawerContext } from '@/lib/lessonsDrawer'
 import { useOpenSettingsDialog } from '@/lib/settingsDialog'
 import { lock } from '@/lib/access'
@@ -86,7 +85,6 @@ const Layout = ({ children }: { children: ReactNode }) => {
       </main>
       </div>
       <LessonsPanel open={lessonsOpen} onOpenChange={setLessonsOpen} />
-      <AiTutorPanel />
       {offline && (
         <div className="fixed bottom-4 left-4 z-50 flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-mono text-muted-foreground">
           <WifiOff className="h-3.5 w-3.5 text-amber-400" />

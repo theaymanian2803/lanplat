@@ -10,6 +10,7 @@ import ErrorBoundary from '@/components/ErrorBoundary'
 import OnboardingDialog from '@/components/OnboardingDialog'
 import RequireAccess from '@/components/RequireAccess'
 import SettingsDialogProvider from '@/components/SettingsDialogProvider'
+import AiTutorDock from '@/components/ai/AiTutorDock'
 import { isOnboardingDone } from '@/lib/onboarding'
 
 const Landing = lazy(() => import('./pages/Landing'))
@@ -66,6 +67,7 @@ const App = () => {
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>
+            <AiTutorDock />
           </ErrorBoundary>
         </BrowserRouter>
       </TooltipProvider>

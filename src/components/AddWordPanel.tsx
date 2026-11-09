@@ -10,12 +10,12 @@ import {
 } from '@/components/ui/select'
 import { languagesDb, vocabularyDb } from '@/integrations/turso/db'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { BookMarked, Loader2, Sparkles, Volume2, X } from 'lucide-react'
+import { BookMarked, Loader2, Volume2, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { toast } from 'sonner'
 import { useAutoTranslate } from '@/hooks/useAutoTranslate'
 import { speakWord } from '@/lib/tts'
-import { openAiTutor, useRegisterAiTutor } from '@/lib/aiTutor'
+import { useRegisterAiTutor } from '@/lib/aiTutor'
 import type { PanelPosition } from '@/components/NoteEditor'
 
 /** Translation targets offered by the form. English stays the default. */
@@ -267,19 +267,9 @@ const AddWordPanel = ({
         </Select>
       </div>
       <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
-            Context Note (optional)
-          </Label>
-          <button
-            type="button"
-            aria-label="Ask AI about this word"
-            onClick={openAiTutor}
-            className="flex items-center gap-1 rounded-full border border-border/60 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground">
-            <Sparkles className="h-3 w-3" />
-            Ask AI
-          </button>
-        </div>
+        <Label className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+          Context Note (optional)
+        </Label>
         <AutoGrowTextarea
           placeholder="Where you encountered this word"
           value={contextNote}

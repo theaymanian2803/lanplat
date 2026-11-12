@@ -1,12 +1,10 @@
 import Layout from '@/components/Layout'
-import LessonBlocks from '@/components/LessonBlocks'
-import TableBlock from '@/components/TableBlock'
 import LessonEditDialog from '@/components/LessonEditDialog'
+import LessonReaderDialog from '@/components/LessonReaderDialog'
 import { useOpenLessonsDrawer } from '@/lib/lessonsDrawer'
 import { lessonsDb, videosDb } from '@/integrations/turso/db'
-import type { NestedLesson } from '@/lib/lessonTree'
+import { partSnippet, type NestedLesson } from '@/lib/lessonTree'
 import type { Video as VideoRow } from '@/integrations/turso/types'
-import { parseBlocks } from '@/lib/lessonBlocks'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,8 +20,8 @@ import { Button } from '@/components/ui/button'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   BookOpen,
-  ChevronDown,
   ChevronLeft,
+  ChevronRight,
   FileText,
   GraduationCap,
   Languages,
@@ -262,16 +260,7 @@ interface LessonDetailProps {
 }
 
 const LessonDetail = ({ lesson, onBack, onEdit, onDelete }: LessonDetailProps) => {
-  const [expandedParts, setExpandedParts] = useState<Set<string>>(new Set())
-
-  const togglePart = (partId: string) => {
-    setExpandedParts((prev) => {
-      const next = new Set(prev)
-      if (next.has(partId)) next.delete(partId)
-      else next.add(partId)
-      return next
-    })
-  }
+  const [openPartId, setOpenPartId] = useState<string | null>(null)
 
   return (
     <div className="space-y-6">
@@ -322,75 +311,31 @@ const LessonDetail = ({ lesson, onBack, onEdit, onDelete }: LessonDetailProps) =
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {lesson.parts.map((part, idx) => {
-            const isOpen = expandedParts.has(part.id)
-            const blocks = parseBlocks(part.content)
-            const tableBlocks = blocks.filter((b) => b.type === 'table' && b.table)
-            const textBlocks = blocks.filter((b) => b.type !== 'table')
-            const hiddenRows = tableBlocks.reduce(
-              (acc, b) => acc + Math.max(0, (b.table?.rows.length ?? 0) - 3),
-              0
-            )
-            return (
-              <div
-                key={part.id}
-                className={`rounded-2xl border bg-card p-4 cursor-pointer transition-all shadow-sm ${
-                  isOpen
-                    ? 'border-primary/40 shadow-md shadow-primary/5'
-                    : 'border-border/40 hover:border-primary/30'
-                }`}
-                onClick={() => togglePart(part.id)}>
-                <div className="flex items-center justify-between gap-2 mb-2.5">
-                  <h4 className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground">
-                    Part {idx + 1}
-                  </h4>
-                  <ChevronDown
-                    className={`h-3.5 w-3.5 text-muted-foreground transition-transform ${
-                      isOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                </div>
-                {blocks.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Empty part.</p>
-                ) : isOpen ? (
-                  <LessonBlocks blocks={blocks} />
-                ) : (
-                  <div>
-                    {tableBlocks.length > 0 && (
-                      <div className="space-y-3 mb-3">
-                        {tableBlocks.map((b) => (
-                          <TableBlock key={b.id} table={b.table!} previewRows={3} />
-                        ))}
-                      </div>
-                    )}
-                    <div className="line-clamp-4">
-                      <LessonBlocks blocks={textBlocks} />
-                    </div>
-                    <div className="flex items-center justify-between mt-1.5">
-                      {hiddenRows > 0 && (
-                        <span className="text-[10px] font-mono text-muted-foreground">
-                          +{hiddenRows} more row{hiddenRows === 1 ? '' : 's'}
-                        </span>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 px-1.5 text-[10px] font-mono text-primary/80 hover:text-primary"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          togglePart(part.id)
-                        }}>
-                        Read more
-                        <ChevronDown className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
-          })}
+        <div className="border-y border-border/60">
+          {lesson.parts.map((part, idx) => (
+            <button
+              key={part.id}
+              type="button"
+              onClick={() => setOpenPartId(part.id)}
+              className="group flex w-full items-center gap-4 border-b border-border/60 px-3 py-3 text-left transition-colors last:border-b-0 hover:bg-muted/30">
+              <span className="mono-label w-14 shrink-0 text-muted-foreground">
+                Part {idx + 1}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-sm text-foreground/90">
+                {partSnippet(part)}
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+            </button>
+          ))}
         </div>
+      )}
+
+      {openPartId && (
+        <LessonReaderDialog
+          lesson={lesson}
+          initialPartId={openPartId}
+          onClose={() => setOpenPartId(null)}
+        />
       )}
     </div>
   )

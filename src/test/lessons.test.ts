@@ -9,7 +9,7 @@ import {
   serializeBlocks,
   tableToJson,
 } from '@/lib/lessonBlocks'
-import { buildLessonTree } from '@/lib/lessonTree'
+import { buildLessonTree, partSnippet } from '@/lib/lessonTree'
 import type { Lesson, Part } from '@/integrations/turso/types'
 
 const lesson = (id: string, title = id): Lesson => ({
@@ -222,5 +222,26 @@ describe('table blocks', () => {
       { Verb: 'at spise', Present: 'spiser' },
       { Verb: 'at drikke', Present: 'drikker', Past: 'drakk' },
     ])
+  })
+})
+
+describe('partSnippet', () => {
+  it('returns the first non-table block text on one line', () => {
+    const content = serializeBlocks([
+      createBlock('h1', '  Verbs\n  and tenses '),
+      createBlock('p', 'second'),
+    ])
+    expect(partSnippet({ ...part('p', 'l'), content })).toBe('Verbs and tenses')
+  })
+
+  it('falls back to table headers when the part has no text blocks', () => {
+    const content = serializeBlocks([
+      createTableBlock(['Infinitive', 'Present'], [['at spise', 'spiser']]),
+    ])
+    expect(partSnippet({ ...part('p', 'l'), content })).toBe('Infinitive · Present')
+  })
+
+  it('returns Empty part for empty content', () => {
+    expect(partSnippet({ ...part('p', 'l'), content: '[]' })).toBe('Empty part')
   })
 })

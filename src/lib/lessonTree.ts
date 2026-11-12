@@ -22,3 +22,13 @@ export function buildLessonTree(lessons: Lesson[], parts: Part[]): NestedLesson[
 export function partBlocks(part: Part) {
   return parseBlocks(part.content)
 }
+
+/** One-line preview for the compact parts list. */
+export function partSnippet(part: Part): string {
+  const blocks = parseBlocks(part.content)
+  const text = blocks.find((block) => block.type !== 'table' && block.text.trim())
+  if (text) return text.text.replace(/\s+/g, ' ').trim()
+  const headers = blocks.find((block) => block.type === 'table' && block.table)?.table?.headers
+  if (headers?.length) return headers.filter(Boolean).join(' · ')
+  return 'Empty part'
+}

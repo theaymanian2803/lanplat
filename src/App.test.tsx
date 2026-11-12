@@ -117,7 +117,7 @@ describe('App routing', () => {
 
     for (const { to } of landingModules) {
       const view = renderAt(to)
-      expect(await screen.findByRole('navigation')).toBeInTheDocument()
+      expect(await screen.findByRole('navigation', { name: 'Primary' })).toBeInTheDocument()
       expect(screen.queryByText('Oops! Page not found')).toBeNull()
       view.unmount()
     }

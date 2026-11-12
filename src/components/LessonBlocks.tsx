@@ -13,7 +13,7 @@ const LessonBlocks = ({ blocks, className }: LessonBlocksProps) => (
     {blocks.map((block) => {
       if (block.type === 'table') {
         if (!block.table) return null
-        return <TableBlock key={block.id} table={block.table} />
+        return <TableBlock key={block.id} table={block.table} expandable={false} />
       }
       const Tag = block.type as keyof JSX.IntrinsicElements
       return (

@@ -51,9 +51,9 @@ const STEPS: Step[] = [
   {
     selector: '[data-tour="nav-lessons"]',
     icon: <ListChecks className="h-5 w-5" />,
-    title: 'Lessons',
+    title: 'Lessons Library',
     description:
-      'Create structured lessons with rich-text parts — perfect for planning a study path.',
+      'Open the Lessons Library to add a video, a text, or a lesson, then read it full width with its parts beside it.',
   },
   {
     selector: '[data-tour="connect-button"]',

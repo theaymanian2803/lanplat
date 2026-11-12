@@ -1,14 +1,7 @@
+import AddLessonDialog from '@/components/AddLessonDialog'
 import PartEditor from '@/components/PartEditor'
 import LessonEditDialog from '@/components/LessonEditDialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -24,7 +17,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { lessonsDb, videosDb, languagesDb } from '@/integrations/turso/db'
+import { lessonsDb, videosDb } from '@/integrations/turso/db'
 import type { Lesson, Part } from '@/integrations/turso/types'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { BookOpen, FileText, GraduationCap, Languages, Library, Pencil, Plus, Trash2, Video } from 'lucide-react'
@@ -53,8 +46,6 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
   const [lessonDialogOpen, setLessonDialogOpen] = useState(false)
   const [editLesson, setEditLesson] = useState<Lesson | null>(null)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
-  const [lessonTitle, setLessonTitle] = useState('')
-  const [lessonLanguage, setLessonLanguage] = useState<string>('none')
 
   const { data: lessons = [], isLoading } = useQuery({
     queryKey: ['lessons'],
@@ -64,11 +55,6 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
   const { data: videos = [] } = useQuery({
     queryKey: ['videos'],
     queryFn: () => videosDb.list(),
-  })
-
-  const { data: languages = [] } = useQuery({
-    queryKey: ['languages'],
-    queryFn: languagesDb.list,
   })
 
   const selectedLesson = useMemo(
@@ -86,28 +72,6 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
   }
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['lessons'] })
-
-  const addLesson = useMutation({
-    mutationFn: async () => {
-      const title = lessonTitle.trim()
-      if (!title) throw new Error('Lesson title is required')
-      return lessonsDb.createLesson({
-        title,
-        media_type: null,
-        media_id: null,
-        language: lessonLanguage === 'none' ? null : lessonLanguage,
-      })
-    },
-    onSuccess: (id) => {
-      invalidate()
-      setLessonDialogOpen(false)
-      setLessonTitle('')
-      setLessonLanguage('none')
-      setSelectedLessonId(id)
-      toast.success('Lesson created')
-    },
-    onError: (e) => toast.error(e.message),
-  })
 
   const updateMedia = useMutation({
     mutationFn: async ({
@@ -330,49 +294,14 @@ const LessonsPanel = ({ open, onOpenChange }: LessonsPanelProps) => {
         </div>
       </SheetContent>
 
-      <Dialog open={lessonDialogOpen} onOpenChange={setLessonDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add Lesson</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-2">
-            <Label>Lesson title</Label>
-            <Input
-              placeholder="e.g. Unit 1 — Introductions"
-              value={lessonTitle}
-              onChange={(e) => setLessonTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && lessonTitle.trim()) addLesson.mutate()
-              }}
-              autoFocus
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Language</Label>
-            <Select value={lessonLanguage} onValueChange={setLessonLanguage}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select language" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">— No language —</SelectItem>
-                {languages.map((lang) => (
-                  <SelectItem key={lang} value={lang}>
-                    {lang}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button
-              onClick={() => addLesson.mutate()}
-              disabled={!lessonTitle.trim() || addLesson.isPending}
-              className="text-sm font-semibold">
-              {addLesson.isPending ? 'Saving…' : 'Add Lesson'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddLessonDialog
+        open={lessonDialogOpen}
+        onOpenChange={setLessonDialogOpen}
+        onCreated={({ lessonId, partId }) => {
+          setSelectedLessonId(lessonId)
+          setSelectedPartId(partId)
+        }}
+      />
 
       <LessonEditDialog
         open={editDialogOpen}

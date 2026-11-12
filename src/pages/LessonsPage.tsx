@@ -1,9 +1,11 @@
+import AddLessonDialog from '@/components/AddLessonDialog'
+import AddMediaDialog from '@/components/AddMediaDialog'
 import Layout from '@/components/Layout'
 import LessonEditDialog from '@/components/LessonEditDialog'
-import LessonReaderDialog from '@/components/LessonReaderDialog'
+import LessonReader from '@/components/LessonReader'
 import { useOpenLessonsDrawer } from '@/lib/lessonsDrawer'
 import { lessonsDb, videosDb } from '@/integrations/turso/db'
-import { partSnippet, type NestedLesson } from '@/lib/lessonTree'
+import type { NestedLesson } from '@/lib/lessonTree'
 import type { Video as VideoRow } from '@/integrations/turso/types'
 import {
   AlertDialog,
@@ -16,30 +18,62 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  ArrowLeft,
+  ArrowRight,
   BookOpen,
-  ChevronLeft,
-  ChevronRight,
+  ChevronDown,
   FileText,
   GraduationCap,
   Languages,
   Layers,
+  Library,
   Pencil,
+  Play,
   Plus,
   Trash2,
   Video,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 const LessonsPage = () => {
   const openDrawer = useOpenLessonsDrawer()
   const queryClient = useQueryClient()
-  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const selectedLessonId = searchParams.get('lesson')
+  const selectedPartId = searchParams.get('part') ?? undefined
   const [editingLesson, setEditingLesson] = useState<NestedLesson | null>(null)
   const [deletingLesson, setDeletingLesson] = useState<NestedLesson | null>(null)
+  const [addMediaOpen, setAddMediaOpen] = useState(false)
+  const [addMediaMode, setAddMediaMode] = useState<'video' | 'text'>('video')
+  const [addLessonOpen, setAddLessonOpen] = useState(false)
+
+  const openLesson = (id: string) => setSearchParams({ lesson: id })
+  const closeLesson = () => setSearchParams({})
+  const selectPart = (id: string) => {
+    if (!selectedLessonId) return
+    setSearchParams({ lesson: selectedLessonId, part: id })
+  }
+
+  const lastLessonRef = useRef<{ lessonId: string; partId?: string } | null>(null)
 
   const { data: lessons = [], isLoading } = useQuery({
     queryKey: ['lessons'],
@@ -67,6 +101,46 @@ const LessonsPage = () => {
     () => lessons.find((l) => l.id === selectedLessonId) ?? null,
     [lessons, selectedLessonId],
   )
+  const selectedPartIndex = selectedLesson
+    ? Math.max(0, selectedLesson.parts.findIndex((p) => p.id === selectedPartId))
+    : -1
+  const selectedPart = selectedLesson?.parts[selectedPartIndex]
+
+  useEffect(() => {
+    if (selectedLessonId) {
+      lastLessonRef.current = { lessonId: selectedLessonId, partId: selectedPartId }
+    }
+  }, [selectedLessonId, selectedPartId])
+
+  const canGoBack = !!selectedLesson
+  const canGoForward = selectedLesson
+    ? selectedPartIndex < selectedLesson.parts.length - 1
+    : !!lastLessonRef.current
+
+  const goBack = () => {
+    if (!selectedLesson) return
+    if (selectedPartIndex > 0) {
+      selectPart(selectedLesson.parts[selectedPartIndex - 1].id)
+    } else {
+      closeLesson()
+    }
+  }
+
+  const goForward = () => {
+    if (selectedLesson) {
+      if (selectedPartIndex < selectedLesson.parts.length - 1) {
+        selectPart(selectedLesson.parts[selectedPartIndex + 1].id)
+      }
+      return
+    }
+    const last = lastLessonRef.current
+    if (!last) return
+    setSearchParams(
+      last.partId
+        ? { lesson: last.lessonId, part: last.partId }
+        : { lesson: last.lessonId },
+    )
+  }
 
   const totalParts = useMemo(
     () => lessons.reduce((acc, l) => acc + l.parts.length, 0),
@@ -78,30 +152,150 @@ const LessonsPage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lessons'] })
       setDeletingLesson(null)
-      setSelectedLessonId(null)
+      closeLesson()
       toast.success('Lesson deleted')
     },
     onError: (e) => toast.error(e.message),
   })
 
+  // A video or text added from this page becomes a lesson straight away, so it
+  // shows up in the library and opens in the reader.
+  const wrapMediaInLesson = useMutation({
+    mutationFn: async (media: VideoRow) => {
+      const lessonId = await lessonsDb.createLesson({
+        title: media.title,
+        media_type: 'video',
+        media_id: media.id,
+        language: media.language || null,
+      })
+      await lessonsDb.createPart({ lesson_id: lessonId })
+      return lessonId
+    },
+    onSuccess: async (lessonId) => {
+      await queryClient.invalidateQueries({ queryKey: ['lessons'] })
+      openLesson(lessonId)
+      toast.success('Lesson created')
+    },
+    onError: (e) => toast.error(e.message),
+  })
+
+  const openMediaDialog = (mode: 'video' | 'text') => {
+    setAddMediaMode(mode)
+    setAddMediaOpen(true)
+  }
+
+  const addMenu = (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button className="gap-2 text-sm font-semibold">
+          <Plus className="h-4 w-4" />
+          Add
+          <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuItem className="gap-2" onSelect={() => openMediaDialog('video')}>
+          <Video className="h-4 w-4" />
+          Video
+        </DropdownMenuItem>
+        <DropdownMenuItem className="gap-2" onSelect={() => openMediaDialog('text')}>
+          <FileText className="h-4 w-4" />
+          Text
+        </DropdownMenuItem>
+        <DropdownMenuItem className="gap-2" onSelect={() => setAddLessonOpen(true)}>
+          <GraduationCap className="h-4 w-4" />
+          Lesson
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+
   return (
     <Layout>
       <div className="mx-auto w-full max-w-[1500px] space-y-4">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-0.5">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              aria-label="Go back"
+              title="Go back"
+              onClick={goBack}
+              disabled={!canGoBack}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              aria-label="Go forward"
+              title="Go forward"
+              onClick={goForward}
+              disabled={!canGoForward}>
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                {selectedLesson ? (
+                  <BreadcrumbLink asChild>
+                    <Link to="/lessons">Lessons Library</Link>
+                  </BreadcrumbLink>
+                ) : (
+                  <BreadcrumbPage>Lessons Library</BreadcrumbPage>
+                )}
+              </BreadcrumbItem>
+              {selectedLesson && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    {selectedPart ? (
+                      <BreadcrumbLink asChild>
+                        <Link to={`/lessons?lesson=${selectedLesson.id}`}>
+                          {selectedLesson.title}
+                        </Link>
+                      </BreadcrumbLink>
+                    ) : (
+                      <BreadcrumbPage>{selectedLesson.title}</BreadcrumbPage>
+                    )}
+                  </BreadcrumbItem>
+                </>
+              )}
+              {selectedLesson && selectedPart && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Part {selectedPartIndex + 1}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              )}
+            </BreadcrumbList>
+          </Breadcrumb>
+        </div>
+
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="flex items-center gap-2 text-[30px] font-extrabold leading-tight tracking-[-0.035em]">
               <GraduationCap className="h-6 w-6 text-primary" />
-              Lesson Library
+              Lessons Library
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              {lessons.length} lessons · {totalParts} parts. Use the Lessons drawer to build
-              content, read it here in full screen.
+              {lessons.length} lessons · {totalParts} parts. Open a lesson to read it here.
             </p>
           </div>
-          <Button variant="outline" size="sm" className="gap-2 text-sm font-medium" onClick={openDrawer}>
-            <Plus className="h-4 w-4" />
-            Manage Lessons
-          </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 text-sm font-medium"
+              onClick={openDrawer}>
+              <Library className="h-4 w-4" />
+              Manage
+            </Button>
+            {addMenu}
+          </div>
         </div>
 
         {isLoading ? (
@@ -111,17 +305,16 @@ const LessonsPage = () => {
             <GraduationCap className="h-10 w-10 text-muted-foreground/30 mb-3" />
             <p className="text-muted-foreground text-sm font-medium">No lessons yet.</p>
             <p className="text-xs text-muted-foreground mt-1 mb-4">
-              Create lessons and rich-text parts from the management drawer.
+              Add a video, a text, or a blank lesson to start.
             </p>
-            <Button size="sm" className="gap-2" onClick={openDrawer}>
-              <Plus className="h-4 w-4" />
-              Create First Lesson
-            </Button>
+            {addMenu}
           </div>
         ) : selectedLesson ? (
           <LessonDetail
             lesson={selectedLesson}
-            onBack={() => setSelectedLessonId(null)}
+            mediaTypes={mediaTypes}
+            partId={selectedPartId}
+            onPartChange={selectPart}
             onEdit={() => setEditingLesson(selectedLesson)}
             onDelete={() => setDeletingLesson(selectedLesson)}
           />
@@ -133,7 +326,7 @@ const LessonsPage = () => {
                 lesson={lesson}
                 videoTitle={lesson.media_id ? videoTitles.get(lesson.media_id) : undefined}
                 mediaTypes={mediaTypes}
-                onClick={() => setSelectedLessonId(lesson.id)}
+                onClick={() => openLesson(lesson.id)}
                 onEdit={() => setEditingLesson(lesson)}
                 onDelete={() => setDeletingLesson(lesson)}
               />
@@ -141,6 +334,19 @@ const LessonsPage = () => {
           </div>
         )}
       </div>
+
+      <AddMediaDialog
+        open={addMediaOpen}
+        onOpenChange={setAddMediaOpen}
+        initialMode={addMediaMode}
+        onSaved={(media) => wrapMediaInLesson.mutate(media)}
+      />
+
+      <AddLessonDialog
+        open={addLessonOpen}
+        onOpenChange={setAddLessonOpen}
+        onCreated={({ lessonId }) => openLesson(lessonId)}
+      />
 
       <LessonEditDialog
         open={!!editingLesson}
@@ -254,21 +460,25 @@ const LessonCard = ({ lesson, videoTitle, mediaTypes, onClick, onEdit, onDelete 
 
 interface LessonDetailProps {
   lesson: NestedLesson
-  onBack: () => void
+  mediaTypes: Map<string, string>
+  partId?: string
+  onPartChange: (id: string) => void
   onEdit: () => void
   onDelete: () => void
 }
 
-const LessonDetail = ({ lesson, onBack, onEdit, onDelete }: LessonDetailProps) => {
-  const [openPartId, setOpenPartId] = useState<string | null>(null)
-
+const LessonDetail = ({
+  lesson,
+  mediaTypes,
+  partId,
+  onPartChange,
+  onEdit,
+  onDelete,
+}: LessonDetailProps) => {
+  const mediaIsText = lesson.media_id ? mediaTypes.get(lesson.media_id) === 'text' : false
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 flex-wrap">
-        <Button variant="ghost" size="sm" className="gap-1 text-sm" onClick={onBack}>
-          <ChevronLeft className="h-4 w-4" />
-          Library
-        </Button>
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-3 border-b border-border pb-3">
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-xl font-semibold tracking-tight truncate">
             {lesson.title}
@@ -285,6 +495,18 @@ const LessonDetail = ({ lesson, onBack, onEdit, onDelete }: LessonDetailProps) =
           </p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          {lesson.media_id && (
+            <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
+              <Link to={`/video/${lesson.media_id}`}>
+                {mediaIsText ? (
+                  <FileText className="h-3.5 w-3.5" />
+                ) : (
+                  <Play className="h-3.5 w-3.5" />
+                )}
+                Open {mediaIsText ? 'text' : 'video'}
+              </Link>
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"
@@ -304,39 +526,12 @@ const LessonDetail = ({ lesson, onBack, onEdit, onDelete }: LessonDetailProps) =
         </div>
       </div>
 
-      {lesson.parts.length === 0 ? (
-        <div className="border border-dashed border-border/50 rounded-2xl py-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            This lesson has no parts yet. Manage it from the Lessons drawer.
-          </p>
-        </div>
-      ) : (
-        <div className="border-y border-border/60">
-          {lesson.parts.map((part, idx) => (
-            <button
-              key={part.id}
-              type="button"
-              onClick={() => setOpenPartId(part.id)}
-              className="group flex w-full items-center gap-4 border-b border-border/60 px-3 py-3 text-left transition-colors last:border-b-0 hover:bg-muted/30">
-              <span className="mono-label w-14 shrink-0 text-muted-foreground">
-                Part {idx + 1}
-              </span>
-              <span className="min-w-0 flex-1 truncate text-sm text-foreground/90">
-                {partSnippet(part)}
-              </span>
-              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
-            </button>
-          ))}
-        </div>
-      )}
-
-      {openPartId && (
-        <LessonReaderDialog
-          lesson={lesson}
-          initialPartId={openPartId}
-          onClose={() => setOpenPartId(null)}
-        />
-      )}
+      <LessonReader
+        key={lesson.id}
+        lesson={lesson}
+        partId={partId}
+        onPartChange={onPartChange}
+      />
     </div>
   )
 }

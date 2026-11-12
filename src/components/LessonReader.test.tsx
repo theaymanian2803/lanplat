@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useState } from 'react'
 
-import LessonReaderDialog from '@/components/LessonReaderDialog'
+import LessonReader from '@/components/LessonReader'
 import { createBlock, serializeBlocks } from '@/lib/lessonBlocks'
 import type { NestedLesson } from '@/lib/lessonTree'
 import type { Lesson } from '@/integrations/turso/types'
@@ -51,23 +52,29 @@ const makeLesson = (overrides: Partial<Lesson> = {}): NestedLesson => ({
   ],
 })
 
-const renderReader = (lesson: NestedLesson, onClose = vi.fn()) => {
+const makeEmptyLesson = (): NestedLesson => ({ ...lessonRow(), parts: [] })
+
+const ReaderHarness = ({ lesson }: { lesson: NestedLesson }) => {
+  const [partId, setPartId] = useState(lesson.parts[0]?.id)
+  return <LessonReader lesson={lesson} partId={partId} onPartChange={setPartId} />
+}
+
+const renderReader = (lesson: NestedLesson) => {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: 0 } },
   })
   render(
     <QueryClientProvider client={client}>
-      <LessonReaderDialog lesson={lesson} initialPartId="p1" onClose={onClose} />
+      <ReaderHarness lesson={lesson} />
     </QueryClientProvider>,
   )
-  return onClose
 }
 
-describe('LessonReaderDialog', () => {
-  it('renders the lesson and its initial part', () => {
+describe('LessonReader', () => {
+  it('renders the lesson and its first part inline, without a dialog', () => {
     renderReader(makeLesson())
 
-    expect(screen.getAllByText('Unit 1').length).toBeGreaterThan(0)
+    expect(screen.queryByRole('dialog')).toBeNull()
     expect(screen.getByText('Part 1 of 2')).toBeInTheDocument()
     expect(screen.getAllByText('First part text').length).toBeGreaterThan(1)
   })
@@ -80,21 +87,18 @@ describe('LessonReaderDialog', () => {
     expect(screen.getByText('Part 2 of 2')).toBeInTheDocument()
   })
 
-  it('does not close on Escape', () => {
-    const onClose = renderReader(makeLesson())
+  it('moves between parts with Prev and Next', () => {
+    renderReader(makeLesson())
 
-    fireEvent.keyDown(document, { key: 'Escape', code: 'Escape' })
+    fireEvent.click(screen.getByRole('button', { name: /next/i }))
 
-    expect(onClose).not.toHaveBeenCalled()
-    expect(screen.getAllByText('Unit 1').length).toBeGreaterThan(0)
+    expect(screen.getByText('Part 2 of 2')).toBeInTheDocument()
   })
 
-  it('closes from the Close button', () => {
-    const onClose = renderReader(makeLesson())
+  it('shows an empty state when the lesson has no parts', () => {
+    renderReader(makeEmptyLesson())
 
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }))
-
-    expect(onClose).toHaveBeenCalledTimes(1)
+    expect(screen.getByText('This lesson has no parts yet.')).toBeInTheDocument()
   })
 
   it('hides Add Note for a lesson without video media', () => {

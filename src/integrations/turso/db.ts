@@ -200,20 +200,31 @@ export const videosDb = {
     title: string
     language: string
     content: string | null
-  }): Promise<void> {
+  }): Promise<Video> {
+    const video: Video = {
+      id: newId(),
+      user_id: LOCAL_USER_ID,
+      media_type: input.media_type,
+      youtube_url: input.youtube_url,
+      content: input.content,
+      title: input.title,
+      language: input.language,
+      created_at: now(),
+    }
     await turso.execute({
       sql: 'INSERT INTO videos (id, user_id, youtube_url, media_type, content, title, language, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       args: [
-        newId(),
-        LOCAL_USER_ID,
-        input.youtube_url,
-        input.media_type,
-        input.content,
-        input.title,
-        input.language,
-        now(),
+        video.id,
+        video.user_id,
+        video.youtube_url,
+        video.media_type,
+        video.content,
+        video.title,
+        video.language,
+        video.created_at,
       ],
     })
+    return video
   },
 
   async remove(id: string): Promise<void> {

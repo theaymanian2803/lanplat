@@ -1,17 +1,7 @@
+import AddMediaDialog from '@/components/AddMediaDialog'
 import Layout from '@/components/Layout'
-import LanguageSelect from '@/components/LanguageSelect'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -29,9 +19,6 @@ import { BookOpen, FileText, Play, Plus, Trash2 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-
-type Language = string
-type AddMode = 'choose' | 'video' | 'text'
 
 const TICK_COLORS: Record<string, string> = {
   Danish: '#d4552b',
@@ -61,11 +48,6 @@ const Index = () => {
   const [filter, setFilter] = useState<string>(() => getTargetLanguage() ?? 'all')
   const [typeFilter, setTypeFilter] = useState<'all' | 'video' | 'text'>('all')
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [addMode, setAddMode] = useState<AddMode>('choose')
-  const [newUrl, setNewUrl] = useState('')
-  const [newText, setNewText] = useState('')
-  const [newTitle, setNewTitle] = useState('')
-  const [newLang, setNewLang] = useState<Language>('')
 
   const { data: videos = [], isLoading } = useQuery({
     queryKey: ['videos', filter],
@@ -157,52 +139,6 @@ const Index = () => {
   const bookLanguage =
     BOOK_LANGUAGES.find((language) => language.name === targetName) ?? BOOK_LANGUAGES[0]
 
-  const addVideo = useMutation({
-    mutationFn: async () => {
-      const videoId = extractVideoId(newUrl)
-      if (!videoId) throw new Error('Invalid YouTube URL')
-      await videosDb.insert({
-        media_type: 'video',
-        youtube_url: newUrl,
-        title: newTitle,
-        language: newLang,
-        content: null,
-      })
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['videos'] })
-      setDialogOpen(false)
-      setAddMode('choose')
-      setNewUrl('')
-      setNewTitle('')
-      toast.success('Video added')
-    },
-    onError: (e) => toast.error(e.message),
-  })
-
-  const addText = useMutation({
-    mutationFn: async () => {
-      const content = newText.trim()
-      if (!content) throw new Error('Text content is required')
-      await videosDb.insert({
-        media_type: 'text',
-        youtube_url: null,
-        title: newTitle.trim(),
-        language: newLang,
-        content,
-      })
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['videos'] })
-      setDialogOpen(false)
-      setAddMode('choose')
-      setNewText('')
-      setNewTitle('')
-      toast.success('Text added')
-    },
-    onError: (e) => toast.error(e.message),
-  })
-
   const deleteVideo = useMutation({
     mutationFn: async (id: string) => {
       await videosDb.remove(id)
@@ -213,10 +149,7 @@ const Index = () => {
     },
   })
 
-  const openAdd = () => {
-    setAddMode('choose')
-    setDialogOpen(true)
-  }
+  const openAdd = () => setDialogOpen(true)
 
   const hour = now.getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
@@ -612,127 +545,7 @@ const Index = () => {
         </section>
       </div>
 
-      <Dialog
-        open={dialogOpen}
-        onOpenChange={(o) => {
-          setDialogOpen(o)
-          if (!o) setAddMode('choose')
-        }}>
-        <DialogContent>
-          {addMode === 'choose' ? (
-            <>
-              <DialogHeader>
-                <DialogTitle>Add media</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-1 gap-3 py-2 sm:grid-cols-2">
-                <Button
-                  variant="outline"
-                  className="h-28 flex-col gap-2 text-sm font-semibold"
-                  onClick={() => setAddMode('video')}>
-                  <Play className="h-6 w-6 text-primary" />
-                  Add Video
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-28 flex-col gap-2 text-sm font-semibold"
-                  onClick={() => setAddMode('text')}>
-                  <FileText className="h-6 w-6 text-primary" />
-                  Add Text
-                </Button>
-              </div>
-            </>
-          ) : addMode === 'video' ? (
-            <>
-              <DialogHeader>
-                <DialogTitle>Add YouTube video</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>YouTube URL</Label>
-                  <Input
-                    placeholder="https://youtube.com/watch?v=..."
-                    value={newUrl}
-                    onChange={(e) => setNewUrl(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Title</Label>
-                  <Input
-                    placeholder="Video title"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-video-language">Language</Label>
-                  <LanguageSelect
-                    id="add-video-language"
-                    languages={languages}
-                    value={newLang}
-                    onChange={setNewLang}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="ghost" onClick={() => setAddMode('choose')} className="text-sm">
-                  Back
-                </Button>
-                <Button
-                  onClick={() => addVideo.mutate()}
-                  disabled={!newUrl || !newTitle || !newLang || addVideo.isPending}
-                  className="text-sm font-semibold">
-                  {addVideo.isPending ? 'Saving…' : 'Add Video'}
-                </Button>
-              </DialogFooter>
-            </>
-          ) : (
-            <>
-              <DialogHeader>
-                <DialogTitle>Add text</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Title</Label>
-                  <Input
-                    placeholder="e.g. Chapter 1 — The Journey"
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="add-text-language">Language</Label>
-                  <LanguageSelect
-                    id="add-text-language"
-                    languages={languages}
-                    value={newLang}
-                    onChange={setNewLang}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Text content</Label>
-                  <Textarea
-                    placeholder="Paste the full text here…"
-                    value={newText}
-                    onChange={(e) => setNewText(e.target.value)}
-                    className="min-h-[200px]"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="ghost" onClick={() => setAddMode('choose')} className="text-sm">
-                  Back
-                </Button>
-                <Button
-                  onClick={() => addText.mutate()}
-                  disabled={!newTitle.trim() || !newText.trim() || addText.isPending}
-                  className="text-sm font-semibold">
-                  {addText.isPending ? 'Saving…' : 'Add Text'}
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <AddMediaDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </Layout>
   )
 }

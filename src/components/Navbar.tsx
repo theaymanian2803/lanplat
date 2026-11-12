@@ -49,8 +49,6 @@ const persistSidebarCollapsed = (collapsed: boolean) => {
 interface NavbarProps {
   onOpenSettings: () => void;
   onSignOut: () => void;
-  lessonsOpen: boolean;
-  onToggleLessons: () => void;
 }
 
 type NavItem = {
@@ -71,6 +69,7 @@ const groups: { label: string; items: NavItem[] }[] = [
     items: [
       { to: "/dashboard#library", label: "Video & text", icon: BookOpen, tour: "nav-library", exact: false },
       { to: "/books", label: "Books", icon: Library, tour: "nav-books" },
+      { to: "/lessons", label: "Lessons library", icon: GraduationCap, tour: "nav-lessons" },
     ],
   },
   {
@@ -90,7 +89,7 @@ const groups: { label: string; items: NavItem[] }[] = [
   },
 ];
 
-const Navbar = ({ onOpenSettings, onSignOut, lessonsOpen, onToggleLessons }: NavbarProps) => {
+const Navbar = ({ onOpenSettings, onSignOut }: NavbarProps) => {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readSidebarCollapsed);
@@ -148,25 +147,6 @@ const Navbar = ({ onOpenSettings, onSignOut, lessonsOpen, onToggleLessons }: Nav
           <p className="mono-label mb-1.5 px-2.5 text-muted-foreground">{group.label}</p>
           <div className="flex flex-col gap-0.5">
             {group.items.map((item) => navLink(item, onNavigate))}
-            {group.label === "Reference" ? (
-              <button
-                type="button"
-                onClick={() => {
-                  onNavigate?.();
-                  onToggleLessons();
-                }}
-                aria-pressed={lessonsOpen}
-                data-tour="nav-lessons"
-                className={`flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-left text-sm transition-colors ${
-                  lessonsOpen
-                    ? "bg-sidebar-accent font-semibold text-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground"
-                }`}
-              >
-                <GraduationCap className="h-4 w-4 shrink-0" strokeWidth={1.6} />
-                Lessons
-              </button>
-            ) : null}
           </div>
         </div>
       ))}

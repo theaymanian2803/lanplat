@@ -41,6 +41,13 @@ describe('TableBlock', () => {
     expect(within(dialog).getByRole('cell', { name: 'drakk' })).toBeInTheDocument()
   })
 
+  it('hides the expand control when expansion is disabled', () => {
+    render(<TableBlock table={table} expandable={false} />)
+
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /expand table/i })).not.toBeInTheDocument()
+  })
+
   it('closes the dialog', async () => {
     render(<TableBlock table={table} />)
     fireEvent.click(screen.getByRole('button', { name: /expand table/i }))

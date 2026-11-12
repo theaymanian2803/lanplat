@@ -9,12 +9,7 @@ const SIDEBAR_COLLAPSED_KEY = 'lingovault_sidebar_collapsed'
 function renderNavbar() {
   return render(
     <MemoryRouter>
-      <Navbar
-        onOpenSettings={vi.fn()}
-        onSignOut={vi.fn()}
-        lessonsOpen={false}
-        onToggleLessons={vi.fn()}
-      />
+      <Navbar onOpenSettings={vi.fn()} onSignOut={vi.fn()} />
     </MemoryRouter>
   )
 }
@@ -37,6 +32,15 @@ describe('sidebar collapse', () => {
     )
     expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull()
     expect(localStorage.getItem(SIDEBAR_COLLAPSED_KEY)).toBe('1')
+  })
+
+  it('links straight to the lessons library', () => {
+    renderNavbar()
+
+    expect(screen.getByRole('link', { name: 'Lessons library' })).toHaveAttribute(
+      'href',
+      '/lessons'
+    )
   })
 
   it('offers Ask AI in both the sidebar and the mobile header', () => {
